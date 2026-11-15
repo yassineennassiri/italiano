@@ -1,21 +1,21 @@
-import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { AccentLink } from "@/components/accent-link";
 import { Breadcrumb } from "@/components/breadcrumb";
+import { MediaFrame } from "@/components/media-frame";
 import { NoteRow } from "@/components/note-row";
 import { ScenePoster } from "@/components/scene-poster";
 import { ScriptToggle } from "@/components/script-toggle";
 import { StepInstruction } from "@/components/step-instruction";
 import { type ErrorTag, loadErrorTags, loadLessonBySlug } from "@/content/load";
 import { stepPage } from "@/content/lesson-nav";
-import { mediaUrl } from "@/content/media";
 import type { Item, Lesson, Step } from "@/content/schema";
+import { stepScript } from "@/content/script";
 import { lessonExercises } from "@/scoring/lesson";
 import { ui } from "@/ui-it";
-import { lessonFromParams } from "../../lesson-params";
+import { type LessonRouteParams, lessonFromParams } from "../../lesson-params";
 
-export function generateStaticParams({ params }: { params: { level: string; lesson: string } }) {
+export function generateStaticParams({ params }: { params: LessonRouteParams }) {
   const lesson = loadLessonBySlug(params.level, params.lesson);
   return (lesson?.steps ?? []).map((_, index) => ({ n: String(index + 1) }));
 }
@@ -35,6 +35,7 @@ async function StepView({ params }: Pick<PageProps<"/[level]/[lesson]/esercizi/[
   const { step, number, total, nextHref } = page;
   const exercises = lessonExercises(lesson).filter((exercise) => exercise.stepId === step.id);
   const counter = ui.lesson.stepCounter(number, total);
+  const script = stepScript(lesson, step);
   const errorTags = new Map(loadErrorTags().map((tag) => [tag.id, tag]));
 
   return (
@@ -46,7 +47,7 @@ async function StepView({ params }: Pick<PageProps<"/[level]/[lesson]/esercizi/[
           <p className="mt-6 text-center text-sm tracking-widest text-muted">{counter}</p>
           <h1 className="mt-2 text-2xl font-bold text-brand">{step.title}</h1>
           <StepInstruction instruction={step.instruction} instructionEn={step.instruction_en} />
-          {step.script && <ScriptToggle lines={step.script === "scene" ? lesson.scene.lines : step.script} />}
+          {script && <ScriptToggle lines={script} />}
           <div className="mt-8 space-y-10">
             {step.items.map((item) => (
               <ItemSlot key={item.id} item={item} errorTags={errorTags} />
@@ -57,12 +58,9 @@ async function StepView({ params }: Pick<PageProps<"/[level]/[lesson]/esercizi/[
       <div className="mt-10 bg-tint py-8 text-center">
         {/* Zeros until the item engine feeds the scoring core's counts (SPEC §6.2). */}
         <p>{ui.lesson.footerCounter({ completed: 0, total: exercises.length, points: 0 })}</p>
-        <Link
-          href={nextHref}
-          className="mt-5 inline-block rounded-full bg-accent px-8 py-2 font-bold text-foreground hover:brightness-95"
-        >
+        <AccentLink href={nextHref} className="mt-5">
           {ui.lesson.next}
-        </Link>
+        </AccentLink>
         <p className="mt-5 text-sm tracking-widest text-muted">{counter}</p>
       </div>
     </>
@@ -74,11 +72,7 @@ function StepMedia({ step, lesson }: { step: Step; lesson: Lesson }) {
     case "scene":
       return <ScenePoster scene={lesson.scene} lessonTitle={lesson.title} />;
     case "image":
-      return (
-        <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-tint">
-          <Image src={mediaUrl(step.media.src)} alt={step.media.alt} fill sizes="(min-width: 1024px) 960px, 100vw" className="object-contain" />
-        </div>
-      );
+      return <MediaFrame src={step.media.src} alt={step.media.alt} fit="contain" />;
     default:
       // No media, or a clip (M2).
       return null;
@@ -90,7 +84,7 @@ function ItemSlot({ item, errorTags }: { item: Item; errorTags: ReadonlyMap<stri
   return (
     <section data-item-id={item.id} data-item-type={item.type}>
       {item.prompt && (
-        <p className="relative inline-block rounded-lg border-2 border-accent bg-white px-4 py-3 font-semibold text-brand">
+        <p className="relative ml-2 inline-block rounded-lg border-2 border-accent bg-background px-4 py-3 font-semibold text-brand after:absolute after:-left-[9px] after:bottom-3 after:size-4 after:rotate-45 after:border-b-2 after:border-l-2 after:border-accent after:bg-background">
           {item.prompt}
         </p>
       )}

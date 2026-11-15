@@ -1,12 +1,15 @@
 /**
- * Where a lesson's pages live and how they link (SPEC §3, §4). Pure: it reads
- * a loaded lesson and returns URLs, so the pages and the menu agree.
+ * Where a lesson's pages live and which ones it has (SPEC §3, §4). Pure: it
+ * reads a loaded lesson and returns URLs, so the pages and the menu agree.
  */
 import { parseLessonId } from "./ids";
 import type { Lesson } from "./schema";
 
 /** The pages of the lesson menu (SPEC §3.1), in order. */
 export type LessonPage = "info" | "esercizi" | "grammatica" | "vocabolario" | "cultura" | "copione" | "corso";
+
+/** Pages a lesson may lack: numbered ones (one per step or grammar page) and optional ones. */
+export type ContentPage = "esercizi" | "grammatica" | "vocabolario" | "cultura";
 
 export type MenuEntry = { page: LessonPage; href: string };
 
@@ -22,19 +25,50 @@ export function lessonPath(lesson: LessonRef): string {
   return `${levelPath(lesson)}/${lesson.slug}`;
 }
 
+/** A page of the lesson: `lessonPageHref(lesson, "esercizi", 3)` → `/a2/benvenuto-a-genova/esercizi/3`. */
+export function lessonPageHref(
+  lesson: LessonRef,
+  page: Exclude<LessonPage, "corso"> | "risultati" | "fine",
+  number?: number,
+): string {
+  return `${lessonPath(lesson)}/${page}${number === undefined ? "" : `/${number}`}`;
+}
+
+/** Parses a 1-based page number from a URL segment: "3" → 3; "03", "0", "x" → undefined. */
+export function pageNumber(segment: string, count: number): number | undefined {
+  if (!/^[1-9]\d*$/.test(segment)) return undefined;
+  const number = Number(segment);
+  return number <= count ? number : undefined;
+}
+
+type PagedLesson = Pick<Lesson, "steps" | "grammar" | "vocab" | "culture">;
+
+/** Whether the lesson has this page; numbered pages need the URL segment ("2" for grammatica/2). */
+export function hasPage(lesson: PagedLesson, page: ContentPage, segment?: string): boolean {
+  switch (page) {
+    case "esercizi":
+      return segment !== undefined && pageNumber(segment, lesson.steps.length) !== undefined;
+    case "grammatica":
+      return segment !== undefined && pageNumber(segment, lesson.grammar.length) !== undefined;
+    case "vocabolario":
+      return lesson.vocab.length > 0;
+    case "cultura":
+      return lesson.culture !== undefined;
+  }
+}
+
 /**
  * The lesson menu's entries. Grammatica, Vocabolario and Cultura are hidden
  * when the lesson has none. Azzera gli esercizi and Altri strumenti join later.
  */
 export function lessonMenu(lesson: Lesson): MenuEntry[] {
-  const base = lessonPath(lesson);
   const entries: (MenuEntry | false)[] = [
-    { page: "info", href: `${base}/info` },
-    { page: "esercizi", href: `${base}/esercizi/1` },
-    lesson.grammar.length > 0 && { page: "grammatica", href: `${base}/grammatica/1` },
-    lesson.vocab.length > 0 && { page: "vocabolario", href: `${base}/vocabolario` },
-    lesson.culture !== undefined && { page: "cultura", href: `${base}/cultura` },
-    { page: "copione", href: `${base}/copione` },
+    { page: "info", href: lessonPageHref(lesson, "info") },
+    { page: "esercizi", href: lessonPageHref(lesson, "esercizi", 1) },
+    hasPage(lesson, "grammatica", "1") && { page: "grammatica", href: lessonPageHref(lesson, "grammatica", 1) },
+    hasPage(lesson, "vocabolario") && { page: "vocabolario", href: lessonPageHref(lesson, "vocabolario") },
+    hasPage(lesson, "cultura") && { page: "cultura", href: lessonPageHref(lesson, "cultura") },
+    { page: "copione", href: lessonPageHref(lesson, "copione") },
     { page: "corso", href: levelPath(lesson) },
   ];
   return entries.filter((entry) => entry !== false);
@@ -49,23 +83,15 @@ export type StepPage<S> = {
   nextHref: string;
 };
 
-/** Parses a 1-based page number from a URL segment: "3" → 3; "03", "0", "x" → undefined. */
-export function pageNumber(segment: string, count: number): number | undefined {
-  if (!/^[1-9]\d*$/.test(segment)) return undefined;
-  const number = Number(segment);
-  return number <= count ? number : undefined;
-}
-
 /** The step at `/esercizi/:n`, or undefined when the lesson has no step n. */
 export function stepPage<S>(lesson: LessonRef & { steps: readonly S[] }, segment: string): StepPage<S> | undefined {
   const total = lesson.steps.length;
   const number = pageNumber(segment, total);
   if (number === undefined) return undefined;
-  const base = lessonPath(lesson);
   return {
     step: lesson.steps[number - 1],
     number,
     total,
-    nextHref: number < total ? `${base}/esercizi/${number + 1}` : `${base}/risultati`,
+    nextHref: number < total ? lessonPageHref(lesson, "esercizi", number + 1) : lessonPageHref(lesson, "risultati"),
   };
 }

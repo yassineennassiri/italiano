@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { loadLesson } from "./load";
-import { lessonMenu, stepPage } from "./lesson-nav";
+import { hasPage, lessonMenu, stepPage } from "./lesson-nav";
 import { copyContent, editJson, LESSON_FILE } from "./test-content";
 
 const lesson = () => loadLesson("a2.u01.l01")!;
@@ -43,5 +43,26 @@ describe("stepPage", () => {
 
   it("has no page for a step number the lesson doesn't have", () => {
     for (const n of ["0", "7", "-1", "1.5", "01", "due", ""]) expect(stepPage(lesson(), n)).toBeUndefined();
+  });
+});
+
+describe("hasPage", () => {
+  it("knows which pages the example lesson has, numbered pages included", () => {
+    expect(hasPage(lesson(), "cultura")).toBe(true);
+    expect(hasPage(lesson(), "grammatica", "2")).toBe(true);
+    expect(hasPage(lesson(), "grammatica", "3")).toBe(false);
+    expect(hasPage(lesson(), "grammatica")).toBe(false);
+    expect(hasPage(lesson(), "esercizi", "6")).toBe(true);
+  });
+
+  it("has no Cultura or Vocabolario page for a lesson without them", () => {
+    const dir = copyContent();
+    editJson(dir, LESSON_FILE, (data) => {
+      data.vocab = [];
+      delete data.culture;
+    });
+    const bare = loadLesson("a2.u01.l01", dir)!;
+    expect(hasPage(bare, "cultura")).toBe(false);
+    expect(hasPage(bare, "vocabolario")).toBe(false);
   });
 });

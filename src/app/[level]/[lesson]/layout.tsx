@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { LessonMenu } from "@/components/lesson-menu";
 import { lessonMenu } from "@/content/lesson-nav";
 import { ui } from "@/ui-it";
-import { allLessonParams, type LessonParams, lessonFromParams } from "./lesson-params";
+import { allLessonParams, type LessonRouteParams, lessonFromParams } from "./lesson-params";
 
 export function generateStaticParams() {
   return allLessonParams();
@@ -27,7 +27,7 @@ export default function LessonLayout({ params, children }: LayoutProps<"/[level]
   );
 }
 
-async function LessonBar({ params }: { params: LessonParams }) {
+async function LessonBar({ params }: { params: Promise<LessonRouteParams> }) {
   const lesson = await lessonFromParams(params);
   return (
     <div className="mx-auto grid h-14 max-w-6xl grid-cols-[2.5rem_1fr_2.5rem] items-center gap-2 px-4">

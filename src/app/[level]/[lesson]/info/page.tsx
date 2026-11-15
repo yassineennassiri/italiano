@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { Suspense } from "react";
+import { AccentLink } from "@/components/accent-link";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { ScenePoster } from "@/components/scene-poster";
-import { lessonPath } from "@/content/lesson-nav";
+import { lessonPageHref } from "@/content/lesson-nav";
 import { ui } from "@/ui-it";
-import { type LessonParams, lessonFromParams } from "../lesson-params";
+import { type LessonRouteParams, lessonFromParams } from "../lesson-params";
 
 /** The intro page (SPEC §4.1): poster, topic, summary, objectives and Inizia. */
 export default function IntroPage({ params }: PageProps<"/[level]/[lesson]/info">) {
@@ -15,7 +15,7 @@ export default function IntroPage({ params }: PageProps<"/[level]/[lesson]/info"
   );
 }
 
-async function Intro({ params }: { params: LessonParams }) {
+async function Intro({ params }: { params: Promise<LessonRouteParams> }) {
   const lesson = await lessonFromParams(params);
   return (
     <>
@@ -31,12 +31,9 @@ async function Intro({ params }: { params: LessonParams }) {
               <li key={objective}>{objective}</li>
             ))}
           </ul>
-          <Link
-            href={`${lessonPath(lesson)}/esercizi/1`}
-            className="mt-8 inline-block rounded-full bg-accent px-8 py-2 font-bold text-foreground hover:brightness-95"
-          >
+          <AccentLink href={lessonPageHref(lesson, "esercizi", 1)} className="mt-8">
             {ui.lesson.start}
-          </Link>
+          </AccentLink>
         </div>
       </div>
     </>

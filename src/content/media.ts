@@ -25,14 +25,11 @@ export function mediaUrl(mediaPath: string): string {
 }
 
 /** The file for a `/media/...` request, or undefined if it is unsafe, of an unknown type, or missing. */
-export function mediaFile(
-  segments: readonly string[],
-  contentDir = CONTENT_DIR,
-): { file: string; contentType: string } | undefined {
+export function mediaFile(segments: readonly string[]): { file: string; contentType: string } | undefined {
   if (segments.length === 0 || !segments.every((segment) => SEGMENT.test(segment))) return undefined;
   const contentType = CONTENT_TYPES[path.extname(segments[segments.length - 1]).toLowerCase()];
   if (!contentType) return undefined;
-  const file = path.join(contentDir, "media", ...segments);
+  const file = path.join(CONTENT_DIR, "media", ...segments);
   try {
     return statSync(file).isFile() ? { file, contentType } : undefined;
   } catch {

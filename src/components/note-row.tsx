@@ -20,11 +20,11 @@ export function NoteRow({ note, errorTag }: { note: Note; errorTag?: ErrorTag })
     <p className="flex items-start gap-3 text-sm">
       <svg
         viewBox="0 0 24 24"
-        className={`mt-0.5 size-5 shrink-0 rounded-full ${warning ? "bg-bad" : "bg-brand"}`}
+        className={`mt-0.5 size-5 shrink-0 rounded-full text-white ${warning ? "bg-bad" : "bg-brand"}`}
         aria-hidden="true"
         focusable="false"
       >
-        <path d={ICON_PATHS[note.kind]} fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
+        <path d={ICON_PATHS[note.kind]} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       </svg>
       <span>
         <strong>{ui.lesson.notes[note.kind]}</strong> <span lang="en">{note.text_en}</span>

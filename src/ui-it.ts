@@ -48,14 +48,15 @@ export const ui = {
 
   comingSoon: "In arrivo",
 
+  draft: "Bozza",
+  /** The round level badge: "A2", "B1", "B2". */
+  levelBadge: (levelId: LevelId) => levelId.toUpperCase(),
+
   notFound: {
     heading: "Pagina non trovata",
     text: "Questa pagina non esiste, o la lezione non la prevede.",
     home: "Torna alla home",
   },
-  draft: "Bozza",
-  /** The round level badge: "A2", "B1", "B2". */
-  levelBadge: (levelId: LevelId) => levelId.toUpperCase(),
 
   home: {
     heading: "Scegli il livello",

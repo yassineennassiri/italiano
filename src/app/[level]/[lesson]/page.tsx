@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { lessonPath } from "@/content/lesson-nav";
-import { type LessonParams, lessonFromParams } from "./lesson-params";
+import { lessonPageHref } from "@/content/lesson-nav";
+import { type LessonRouteParams, lessonFromParams } from "./lesson-params";
 
 /** `/:level/:lesson` opens the intro; resuming at the last visited step comes with progress. */
 export default function LessonEntry({ params }: PageProps<"/[level]/[lesson]">) {
@@ -12,6 +12,6 @@ export default function LessonEntry({ params }: PageProps<"/[level]/[lesson]">) 
   );
 }
 
-async function RedirectToIntro({ params }: { params: LessonParams }): Promise<never> {
-  redirect(`${lessonPath(await lessonFromParams(params))}/info`);
+async function RedirectToIntro({ params }: { params: Promise<LessonRouteParams> }): Promise<never> {
+  redirect(lessonPageHref(await lessonFromParams(params), "info"));
 }

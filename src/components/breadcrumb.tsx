@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { parseLessonId } from "@/content/ids";
-import { lessonPath, levelPath } from "@/content/lesson-nav";
+import { lessonPageHref, levelPath } from "@/content/lesson-nav";
 import type { Lesson } from "@/content/schema";
 import { ui } from "@/ui-it";
 
@@ -12,7 +12,7 @@ export function Breadcrumb({ lesson, stepTitle }: { lesson: Lesson; stepTitle?: 
   const crumbs: { label: string; href?: string }[] = [
     { label: ui.levelBadge(parseLessonId(lesson.id)!.level), href: "/" },
     { label: ui.lesson.course, href: levelPath(lesson) },
-    { label: lesson.title, href: stepTitle === undefined ? undefined : `${lessonPath(lesson)}/info` },
+    { label: lesson.title, href: stepTitle === undefined ? undefined : lessonPageHref(lesson, "info") },
     ...(stepTitle === undefined ? [] : [{ label: stepTitle }]),
   ];
   return (
