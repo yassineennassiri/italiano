@@ -365,7 +365,7 @@ Rejected: Vite + React SPA plus a Hono API server (two processes, hand-rolled ro
 
 **Databases.** One Neon project with two branches: `main` holds my real progress (`DATABASE_URL`), `dev` is for experiments and Playwright runs (`DATABASE_URL_TEST`). There is no login: the seed script creates one `profile` row with a fixed UUID, and every request uses it.
 
-Per-computer setup: `git clone` → `npm i` → copy `.env.example` to `.env.local` and set `DATABASE_URL` and `DATABASE_URL_TEST` → `npm run db:migrate` (once per branch) → `npm run db:seed` → `npm run dev`. Never commit `.env*`.
+Per-computer setup: `git clone` → `npm i` → copy `.env.example` to `.env.local` and set `DATABASE_URL` and `DATABASE_URL_TEST` → `npm run db:migrate` (once per branch; add `-- --test` for the `dev` branch) → `npm run db:seed` (likewise) → `npm run dev`. Never commit `.env*`.
 
 **Sync resilience.** Progress writes are optimistic: the UI updates first, the write follows.
 - **M1:** a failed write is kept in memory and retried every 30 s until it succeeds or the tab closes. The footer shows *Salvato* / *In attesa* / *Offline: non salvato*.
