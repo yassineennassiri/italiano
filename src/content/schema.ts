@@ -2,7 +2,8 @@
  * Zod schemas for the content files (SPEC §9.1). The app's content types are
  * inferred from these schemas, so the schema is the single source of truth.
  *
- * Field language follows ADR-0003: no suffix = Italian, `_en` = English.
+ * Field language follows ADR-0003: no suffix = Italian, `_en` = English,
+ * except the `md` prose of grammar text blocks and the culture page (English).
  */
 import { z } from "zod";
 import { LESSON_ID_PATTERN, unitId } from "./ids";
