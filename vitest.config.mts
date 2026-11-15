@@ -8,7 +8,5 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts", "scripts/**/*.test.ts"],
-    // Until the scoring core (issue #5) adds the first tests.
-    passWithNoTests: true,
   },
 });
