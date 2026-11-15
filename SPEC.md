@@ -769,7 +769,7 @@ There's a single user, but every table keeps a `user_id` so a second profile sta
 | resolved | bool | set after 3 successful reviews in a row |
 | created_at | timestamptz | |
 
-The initial tags (in `content/error-tags.json`, each with an English explanation and a link to its grammar page) come from the course plan's "weak points" table: `article.elision`, `article.lo`, `article.plural_gli`, `partitive.masc_plural`, `gender.anglicism`, `prep.articulated`, `agreement.plural`, `congiuntivo.volere_che`, `lexis.invented_word`, `lexis.english_fallback`, `register.lei`, `verb.conjugation`, `spelling.accent`, `speaking`.
+The initial tags (in `content/error-tags.json`, each with an English explanation and a link to its grammar page; `spelling.accent` and `speaking` have no teaching unit for now, so no link) come from the course plan's "weak points" table: `article.elision`, `article.lo`, `article.plural_gli`, `partitive.masc_plural`, `gender.anglicism`, `prep.articulated`, `agreement.plural`, `congiuntivo.volere_che`, `lexis.invented_word`, `lexis.english_fallback`, `register.lei`, `verb.conjugation`, `spelling.accent`, `speaking`.
 
 The `manual` source lets me paste corrections from voice sessions with my Italian tutor bot (e.g. "*voglio che tu esse* → *voglio che tu sia*") into a small form in the Review hub.
 
@@ -923,11 +923,11 @@ The decisions below are already applied in the sections they reference.
 9. The DW lesson order wins over the course plan's "Anatomy of a lesson"; Parla! stays the last exercise step.
 10. *Hai capito?* types reuse `single_choice`, `dropdown` and `word_order` (lines layout, M2) (5.2.13).
 11. Lessons are drafted as JSON by an AI and reviewed by me; `status: "draft"` shows a *Bozza* badge, with no hidden route (3.3, 9.1).
-12. The course plan (`docs/course-plan.md`) is the source for units, story beats and error tags. The 14 tags in 10.4 each link to the unit that teaches them; tags whose unit doesn't exist yet show no link.
+12. The course plan (`docs/course-plan.md`) is the source for units, story beats and error tags. The 14 tags in 10.4 each link to the unit that teaches them; tags whose unit doesn't exist yet show no link. *Amended after #4:* `spelling.accent` and `speaking` have no teaching unit for now, so they never show a link; `register.lei` is taught in A2.1 (`a2.u01`).
 13. The course plan's own open questions (protagonist, employer, time budget, work-topic order) are parked as content decisions.
 
 **Language and UI**
-14. Language rule: teaching text and translations in English, everything else in Italian (6.3, ADR-0003). Optional `instruction_en` behind an EN toggle replaces the "Instructions in Italian" setting.
+14. Language rule: teaching text and translations in English, everything else in Italian (6.3, ADR-0003). Optional `instruction_en` behind an EN toggle replaces the "Instructions in Italian" setting. The `md` fields of grammar `text` blocks and the culture page are English by convention, without an `_en` suffix (ADR-0003).
 15. Name *La strada di Adam*; logo = Lanterna SVG + wordmark (3.1).
 16. Layout follows the screenshots: sticky bars, breadcrumb on intro and steps only, one ‹ › review sequence, terms panel at the bottom, full-width `text_gap` layout, no word-sets grid (3.1, 4, 5.2).
 17. Grammar rule images are general `rule` blocks (4.5, 9.1). Steps can carry a `clip` media kind (M2). Notes can attach to an exchange. Vocab gets `sort_key`, and `forms` is free text (4.6, 9.1).
