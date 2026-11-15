@@ -359,7 +359,7 @@ Supporting pieces:
 - **Drizzle ORM** with Neon's **HTTP driver** (`@neondatabase/serverless`, `drizzle-orm/neon-http`). It talks HTTPS on port 443, which a locked-down work network is far more likely to allow than Postgres's port 5432. SQL migrations live in the repo.
 - **Zod** for the content schema, plus `npm run content:check` to validate every lesson file, check ID uniqueness, and check that every referenced media file exists.
 - **Tailwind CSS** + a few headless primitives (dialog, popover, drawer).
-- **Vitest** for answer comparison and scoring (pure functions, no DB); **Playwright** for one end-to-end lesson.
+- **Vitest** for answer comparison and scoring (pure functions, no DB); **Playwright** for one end-to-end lesson. `npm run test:db` (local only) checks migrations and the seed against the `dev` branch.
 
 Rejected: Vite + React SPA plus a Hono API server (two processes, hand-rolled routing).
 

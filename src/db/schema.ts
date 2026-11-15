@@ -21,13 +21,19 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
+import { exerciseStatuses } from "../scoring/exercise";
+import { lessonStatuses } from "../scoring/lesson";
+
+/** The one learner. There is no login: every request uses this profile (SPEC §8, §10.1). */
+export const PROFILE_ID = "00000000-0000-4000-8000-000000000001";
 
 const createdAt = () => timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
 const updatedAt = () => timestamp("updated_at", { withTimezone: true }).notNull().defaultNow();
+// No ON DELETE CASCADE: deleting a profile must never wipe its error log (§10.4).
 const userId = () =>
   uuid("user_id")
     .notNull()
-    .references(() => profile.id, { onDelete: "cascade" });
+    .references(() => profile.id);
 
 /** A `CHECK (column IN (...))` constraint for a text column with fixed values. */
 function oneOf(name: string, column: { name: string }, values: readonly string[]) {
@@ -35,15 +41,6 @@ function oneOf(name: string, column: { name: string }, values: readonly string[]
   return check(name, sql`${sql.identifier(column.name)} in (${list})`);
 }
 
-export const lessonStatuses = ["not_started", "in_progress", "completed"] as const;
-export const itemStatuses = [
-  "untouched",
-  "checked_correct",
-  "checked_wrong",
-  "solved",
-  "rated_good",
-  "rated_not_great",
-] as const;
 export const attemptActions = ["check", "solve", "rate", "reset"] as const;
 export const errorSources = ["exercise", "speak_rate", "parla", "parla_note", "manual", "ai"] as const;
 
@@ -84,7 +81,7 @@ export const itemState = pgTable(
     userId: userId(),
     itemId: text("item_id").notNull(),
     lessonId: text("lesson_id").notNull(),
-    status: text("status", { enum: itemStatuses }).notNull(),
+    status: text("status", { enum: exerciseStatuses }).notNull(),
     firstCheckCorrect: boolean("first_check_correct"),
     points: smallint("points").notNull().default(0),
     answer: jsonb("answer"),
@@ -94,7 +91,7 @@ export const itemState = pgTable(
   (t) => [
     primaryKey({ columns: [t.userId, t.itemId] }),
     index("item_state_lesson_idx").on(t.userId, t.lessonId),
-    oneOf("item_state_status_check", t.status, itemStatuses),
+    oneOf("item_state_status_check", t.status, exerciseStatuses),
     check("item_state_points_check", sql`${t.points} in (0, 1)`),
   ],
 );

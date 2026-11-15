@@ -65,8 +65,8 @@ CREATE TABLE "profile" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-ALTER TABLE "error_log" ADD CONSTRAINT "error_log_user_id_profile_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."profile"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "exercise_attempt" ADD CONSTRAINT "exercise_attempt_user_id_profile_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."profile"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "item_state" ADD CONSTRAINT "item_state_user_id_profile_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."profile"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "lesson_progress" ADD CONSTRAINT "lesson_progress_user_id_profile_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."profile"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "error_log" ADD CONSTRAINT "error_log_user_id_profile_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."profile"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "exercise_attempt" ADD CONSTRAINT "exercise_attempt_user_id_profile_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."profile"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "item_state" ADD CONSTRAINT "item_state_user_id_profile_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."profile"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "lesson_progress" ADD CONSTRAINT "lesson_progress_user_id_profile_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."profile"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "item_state_lesson_idx" ON "item_state" USING btree ("user_id","lesson_id");

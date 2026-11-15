@@ -4,10 +4,11 @@
  * Safe to run again: an existing profile is left as it is.
  */
 import { connect } from "../src/db/connect";
-import { databaseUrl, loadLocalEnv } from "../src/db/env";
-import { PROFILE_ID, seedProfile } from "../src/db/seed";
+import { branchFromArgs, databaseUrl, loadLocalEnv } from "../src/db/env";
+import { PROFILE_ID } from "../src/db/schema";
+import { seedProfile } from "../src/db/seed";
 
 loadLocalEnv();
-const test = process.argv.includes("--test");
-await seedProfile(connect(databaseUrl(process.env, { test })));
-console.log(`db:seed: profile ${PROFILE_ID} is on the ${test ? "dev" : "main"} branch.`);
+const branch = branchFromArgs(process.argv);
+await seedProfile(connect(databaseUrl(branch)));
+console.log(`db:seed: profile ${PROFILE_ID} is on the ${branch} branch.`);

@@ -5,10 +5,10 @@
  * migrations.
  */
 import { connect } from "../src/db/connect";
-import { databaseUrl, loadLocalEnv } from "../src/db/env";
+import { branchFromArgs, databaseUrl, loadLocalEnv } from "../src/db/env";
 import { migrateDatabase } from "../src/db/migrate";
 
 loadLocalEnv();
-const test = process.argv.includes("--test");
-await migrateDatabase(connect(databaseUrl(process.env, { test })));
-console.log(`db:migrate: ${test ? "dev" : "main"} branch is up to date.`);
+const branch = branchFromArgs(process.argv);
+await migrateDatabase(connect(databaseUrl(branch)));
+console.log(`db:migrate: ${branch} branch is up to date.`);

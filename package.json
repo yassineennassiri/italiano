@@ -10,6 +10,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:db": "vitest run --config vitest.db.config.mts",
     "content:check": "tsx scripts/content-check.mts",
     "content:placeholders": "tsx scripts/content-placeholders.mts",
     "db:generate": "drizzle-kit generate",
