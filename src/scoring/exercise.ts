@@ -4,13 +4,16 @@
  * database.
  */
 
-export type ExerciseStatus =
-  | "untouched"
-  | "checked_correct"
-  | "checked_wrong"
-  | "solved"
-  | "rated_good"
-  | "rated_not_great";
+export const exerciseStatuses = [
+  "untouched",
+  "checked_correct",
+  "checked_wrong",
+  "solved",
+  "rated_good",
+  "rated_not_great",
+] as const;
+
+export type ExerciseStatus = (typeof exerciseStatuses)[number];
 
 export type ExerciseState = {
   status: ExerciseStatus;

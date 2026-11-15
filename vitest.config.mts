@@ -1,5 +1,8 @@
 import { fileURLToPath } from "node:url";
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
+
+/** Tests that talk to the Neon `dev` branch. They run only with `npm run test:db`. */
+export const dbTests = "src/**/*.db.test.ts";
 
 export default defineConfig({
   resolve: {
@@ -8,5 +11,6 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts", "scripts/**/*.test.ts"],
+    exclude: [...configDefaults.exclude, dbTests],
   },
 });

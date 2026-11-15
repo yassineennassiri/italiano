@@ -77,7 +77,9 @@ export function lessonProgress(lesson: LessonShape, states: ReadonlyMap<string, 
   };
 }
 
-export type LessonStatus = "not_started" | "in_progress" | "completed";
+export const lessonStatuses = ["not_started", "in_progress", "completed"] as const;
+
+export type LessonStatus = (typeof lessonStatuses)[number];
 
 /** SPEC §6.1: completed once the Finish screen is reached, in progress once any exercise is completed. */
 export function lessonStatus(progress: Pick<LessonProgress, "completed">, finishReached: boolean): LessonStatus {

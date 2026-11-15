@@ -359,13 +359,13 @@ Supporting pieces:
 - **Drizzle ORM** with Neon's **HTTP driver** (`@neondatabase/serverless`, `drizzle-orm/neon-http`). It talks HTTPS on port 443, which a locked-down work network is far more likely to allow than Postgres's port 5432. SQL migrations live in the repo.
 - **Zod** for the content schema, plus `npm run content:check` to validate every lesson file, check ID uniqueness, and check that every referenced media file exists.
 - **Tailwind CSS** + a few headless primitives (dialog, popover, drawer).
-- **Vitest** for answer comparison and scoring (pure functions, no DB); **Playwright** for one end-to-end lesson.
+- **Vitest** for answer comparison and scoring (pure functions, no DB); **Playwright** for one end-to-end lesson. `npm run test:db` (local only) checks migrations and the seed against the `dev` branch.
 
 Rejected: Vite + React SPA plus a Hono API server (two processes, hand-rolled routing).
 
 **Databases.** One Neon project with two branches: `main` holds my real progress (`DATABASE_URL`), `dev` is for experiments and Playwright runs (`DATABASE_URL_TEST`). There is no login: the seed script creates one `profile` row with a fixed UUID, and every request uses it.
 
-Per-computer setup: `git clone` → `npm i` → copy `.env.example` to `.env.local` and set `DATABASE_URL` and `DATABASE_URL_TEST` → `npm run db:migrate` (once per branch) → `npm run db:seed` → `npm run dev`. Never commit `.env*`.
+Per-computer setup: `git clone` → `npm i` → copy `.env.example` to `.env.local` and set `DATABASE_URL` and `DATABASE_URL_TEST` → `npm run db:migrate` (once per branch; add `-- --test` for the `dev` branch) → `npm run db:seed` (likewise) → `npm run dev`. Never commit `.env*`.
 
 **Sync resilience.** Progress writes are optimistic: the UI updates first, the write follows.
 - **M1:** a failed write is kept in memory and retried every 30 s until it succeeds or the tab closes. The footer shows *Salvato* / *In attesa* / *Offline: non salvato*.
