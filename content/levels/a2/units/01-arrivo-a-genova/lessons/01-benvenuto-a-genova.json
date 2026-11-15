@@ -1,0 +1,210 @@
+{
+  "id": "a2.u01.l01",
+  "version": 1,
+  "status": "ready",
+  "slug": "benvenuto-a-genova",
+  "title": "Benvenuto a Genova!",
+  "topic": "Arrivare a Genova e salutare",
+  "grammar_label": "Articoli: il, lo, l', la · i, gli, le",
+  "summary": "Adam scende dal treno a Genova Piazza Principe. La sua padrona di casa, la signora Pina, lo aspetta sul binario. È curiosa, parla veloce e ha le sue opinioni sui bagagli.",
+  "objectives": [
+    "salutare in modo formale e presentarti",
+    "scegliere l'articolo determinativo giusto: il, lo, l', la",
+    "formare gli articoli plurali: i, gli, le",
+    "nominare le cose del viaggio: la valigia, lo zaino, l'ombrello"
+  ],
+  "scene": {
+    "poster": "images/a2/u01/l01/poster.webp",
+    "duration_s": 58,
+    "panels": [
+      { "image": "images/a2/u01/l01/panel-01.webp", "from_line": "L1" },
+      { "image": "images/a2/u01/l01/panel-02.webp", "from_line": "L5" },
+      { "image": "images/a2/u01/l01/panel-03.webp", "from_line": "L8" }
+    ],
+    "lines": [
+      { "id": "L1",  "speaker": "pina", "it": "Buongiorno! Lei è Adam, vero?", "en": "Good morning! You're Adam, right?" },
+      { "id": "L2",  "speaker": "adam", "it": "Sì, sono io. Buongiorno, signora Pina!", "en": "Yes, that's me. Good morning, Signora Pina!" },
+      { "id": "L3",  "speaker": "pina", "it": "Benvenuto a Genova! Com'è andato il viaggio?", "en": "Welcome to Genoa! How was the journey?" },
+      { "id": "L4",  "speaker": "adam", "it": "Bene, grazie. Il treno era un po' in ritardo, ma va bene così.", "en": "Fine, thanks. The train was a bit late, but that's OK." },
+      { "id": "L5",  "speaker": "pina", "it": "Ha tutto? La valigia, lo zaino…?", "en": "Have you got everything? The suitcase, the backpack…?" },
+      { "id": "L6",  "speaker": "adam", "it": "Sì: la valigia, lo zaino e l'ombrello.", "en": "Yes: the suitcase, the backpack and the umbrella." },
+      { "id": "L7",  "speaker": "pina", "it": "L'ombrello? Bravo, a Genova serve!", "en": "The umbrella? Good, you need one in Genoa!" },
+      { "id": "L8",  "speaker": "pina", "it": "Allora andiamo: l'appartamento è vicino, nei caruggi.", "en": "Let's go then: the flat is close by, in the caruggi." },
+      { "id": "L9",  "speaker": "adam", "it": "I caruggi?", "en": "The caruggi?" },
+      { "id": "L10", "speaker": "pina", "it": "Sì, i vicoli del centro storico. Gli stranieri si perdono sempre!", "en": "Yes, the alleys of the old town. Foreigners always get lost!" },
+      { "id": "L11", "speaker": "adam", "it": "Allora resto con Lei, signora!", "en": "Then I'll stick with you, signora!" }
+    ]
+  },
+  "steps": [
+    {
+      "id": "a2.u01.l01.s01",
+      "title": "Arrivo a Genova",
+      "instruction": "Guarda la scena e rispondi alle domande.",
+      "media": { "kind": "scene" },
+      "script": "scene",
+      "items": [
+        {
+          "id": "a2.u01.l01.s01.i01", "type": "single_choice",
+          "prompt": "Prima di guardare: secondo te, chi aspetta Adam alla stazione?",
+          "options": ["La padrona di casa", "Un collega di lavoro", "Nessuno"],
+          "answer": 0
+        },
+        {
+          "id": "a2.u01.l01.s01.i02", "type": "single_choice",
+          "prompt": "Com'è andato il viaggio di Adam?",
+          "options": ["Bene, ma il treno era in ritardo.", "Male: ha perso il treno.", "Benissimo, il treno era in anticipo."],
+          "answer": 0
+        },
+        {
+          "id": "a2.u01.l01.s01.i03", "type": "multi_select",
+          "prompt": "Che cosa ha Adam con sé? Ci sono tre risposte giuste.",
+          "options": ["la valigia", "la bicicletta", "lo zaino", "l'ombrello"],
+          "answers": [0, 2, 3],
+          "notes": [{ "kind": "new_words", "text_en": "con sé = with him, on him" }]
+        }
+      ]
+    },
+    {
+      "id": "a2.u01.l01.s02",
+      "title": "il, lo, l' o la?",
+      "instruction": "Scegli l'articolo determinativo giusto.",
+      "script": "scene",
+      "items": [
+        {
+          "id": "a2.u01.l01.s02.i01", "type": "dropdown",
+          "prompt": "Che cosa ha Adam?",
+          "text": "{{g1}} valigia, {{g2}} zaino, {{g3}} ombrello e {{g4}} computer.",
+          "gaps": [
+            { "id": "g1", "options": ["il", "lo", "l'", "la"], "answer": "la" },
+            { "id": "g2", "options": ["il", "lo", "l'", "la"], "answer": "lo" },
+            { "id": "g3", "options": ["il", "lo", "l'", "la"], "answer": "l'" },
+            { "id": "g4", "options": ["il", "lo", "l'", "la"], "answer": "il" }
+          ],
+          "error_tags": ["article.elision", "article.lo"],
+          "notes": [{ "kind": "attenzione", "text_en": "Before a vowel, il and la become l': l'ombrello, l'appartamento.", "error_tag": "article.elision" }]
+        }
+      ]
+    },
+    {
+      "id": "a2.u01.l01.s03",
+      "title": "Una valigia, due valigie",
+      "instruction": "Scrivi l'articolo plurale: i, gli o le.",
+      "items": [
+        {
+          "id": "a2.u01.l01.s03.i01", "type": "text_gap",
+          "image": "images/a2/u01/l01/caruggi.webp",
+          "prompt": "Scrivi l'articolo plurale.",
+          "text": "il vicolo → {{g1}} vicoli\nlo zaino → {{g2}} zaini\nl'appartamento → {{g3}} appartamenti\nla valigia → {{g4}} valigie\nlo straniero → {{g5}} stranieri",
+          "gaps": [
+            { "id": "g1", "answer": "i" },
+            { "id": "g2", "answer": "gli" },
+            { "id": "g3", "answer": "gli" },
+            { "id": "g4", "answer": "le" },
+            { "id": "g5", "answer": "gli" }
+          ],
+          "error_tags": ["article.plural_gli"],
+          "notes": [{ "kind": "info", "text_en": "Both lo and masculine l' become gli in the plural: gli zaini, gli appartamenti." }]
+        }
+      ]
+    },
+    {
+      "id": "a2.u01.l01.s04",
+      "title": "Com'è andato il viaggio?",
+      "instruction": "Metti le parole nell'ordine giusto per rispondere alla signora Pina.",
+      "items": [
+        {
+          "id": "a2.u01.l01.s04.i01", "type": "word_order",
+          "prompt": "Com'è andato il viaggio?",
+          "tiles": ["Bene,", "grazie,", "ma", "il treno", "era", "in ritardo", "."]
+        },
+        {
+          "id": "a2.u01.l01.s04.i02", "type": "word_order",
+          "prompt": "Dov'è l'appartamento?",
+          "tiles": ["L'appartamento", "è", "vicino,", "nel", "centro storico", "."],
+          "error_tags": ["article.elision", "prep.articulated"]
+        }
+      ]
+    },
+    {
+      "id": "a2.u01.l01.s05",
+      "title": "Tocca a te: incontri la padrona di casa",
+      "instruction": "Ascolta la signora Pina, rispondi ad alta voce e completa con i tuoi dati. Poi valuta come è andata.",
+      "instruction_en": "Listen to Signora Pina, answer aloud and complete with your own details. Then rate yourself.",
+      "items": [
+        {
+          "id": "a2.u01.l01.s05.i01", "type": "speak_rate", "variant": "dialogue",
+          "exchanges": [
+            { "id": "e1", "other": "Buongiorno! Lei è …, vero?", "me": "Sì, sono io. Buongiorno, signora!",
+              "notes": [{ "kind": "tip", "text_en": "Signora Pina uses Lei (formal). Stay formal too: E Lei?" }] },
+            { "id": "e2", "other": "Com'è andato il viaggio?", "me": "Bene, grazie. Il treno / L'aereo era …" },
+            { "id": "e3", "other": "Ha tutto?", "me": "Sì: la valigia, lo zaino e …", "hint": "Nomina 2–3 cose, sempre con l'articolo." }
+          ],
+          "error_tags": ["article.elision", "register.lei"]
+        }
+      ]
+    },
+    {
+      "id": "a2.u01.l01.s06",
+      "title": "Parla! Il tuo arrivo",
+      "instruction": "Parla liberamente per circa un minuto, poi valuta come è andata.",
+      "items": [
+        {
+          "id": "a2.u01.l01.s06.i01", "type": "parla",
+          "task": "Un collega di Energetica Ligure ti chiama e ti chiede com'è andato il tuo arrivo a Genova. Raccontagli il viaggio, che cosa hai portato e la tua prima impressione dell'appartamento e dei caruggi.",
+          "example": "Il viaggio è andato bene, ma il treno era in ritardo. Ho portato la valigia, lo zaino e l'ombrello. L'appartamento è nel centro storico, in un caruggio molto stretto…",
+          "checklist": ["Usa l' davanti a vocale almeno due volte", "Usa un plurale con gli", "Usa era almeno una volta"],
+          "error_tags": ["article.elision", "article.plural_gli"]
+        }
+      ]
+    }
+  ],
+  "grammar": [
+    {
+      "id": "a2.u01.l01.gr1",
+      "title": "Articoli determinativi: il, lo, l', la",
+      "blocks": [
+        { "kind": "example", "image": "images/a2/u01/l01/gr-luggage.webp", "it": "Sì: **la** valigia, **lo** zaino e **l'**ombrello.", "en": "Yes: the suitcase, the backpack and the umbrella." },
+        { "kind": "table", "columns": ["", "Masculine", "Feminine"],
+          "rows": [
+            ["before a consonant", "il treno", "la valigia"],
+            ["before s + consonant, z, gn, ps, y", "lo zaino, lo straniero", "la stazione"],
+            ["before a vowel", "l'ombrello, l'appartamento", "l'agenzia"]
+          ] },
+        { "kind": "text", "md": "Italian chooses the article from the **gender** of the noun and its **first sound**. The most common mistake is *il* before a vowel: it is always **l'**, as in *l'asset*, *l'ufficio*." },
+        { "kind": "terms", "items": [{ "term": "elision", "def_en": "dropping a vowel before another vowel and writing an apostrophe: lo + ombrello → l'ombrello" }] }
+      ]
+    },
+    {
+      "id": "a2.u01.l01.gr2",
+      "title": "Plurale: i, gli, le",
+      "blocks": [
+        { "kind": "table", "columns": ["Singular", "Plural"],
+          "rows": [["il vicolo", "i vicoli"], ["lo zaino", "gli zaini"], ["l'appartamento", "gli appartamenti"], ["la valigia", "le valigie"], ["l'agenzia", "le agenzie"]] },
+        { "kind": "rule",
+          "rows": [
+            [{ "text": "lo", "style": "highlight" }, { "text": " straniero" }],
+            [{ "text": "gli", "style": "highlight" }, { "text": " stranieri" }]
+          ],
+          "arrows": [{ "from": [0, 0], "to": [1, 0], "kind": "down" }] },
+        { "kind": "text", "md": "**lo** and masculine **l'** both become **gli**. Feminine **l'** becomes **le**, with no apostrophe." }
+      ]
+    }
+  ],
+  "vocab": [
+    { "id": "v-appartamento", "it": "l'appartamento", "plural": "gli appartamenti", "gender": "m", "pos": "noun", "en": "flat, apartment" },
+    { "id": "v-caruggio", "it": "il caruggio", "plural": "i caruggi", "gender": "m", "pos": "noun", "forms": "dal genovese", "en": "narrow alley in Genoa's old town" },
+    { "id": "v-ombrello", "it": "l'ombrello", "plural": "gli ombrelli", "gender": "m", "pos": "noun", "en": "umbrella" },
+    { "id": "v-perdersi", "it": "perdersi", "pos": "verb", "forms": "mi perdo, si perde, mi sono perso/a", "en": "to get lost" },
+    { "id": "v-ritardo", "it": "in ritardo", "pos": "phrase", "sort_key": "ritardo", "en": "late, delayed" },
+    { "id": "v-straniero", "it": "lo straniero", "plural": "gli stranieri", "gender": "m", "pos": "noun", "en": "foreigner (male)" },
+    { "id": "v-valigia", "it": "la valigia", "plural": "le valigie", "gender": "f", "pos": "noun", "en": "suitcase" },
+    { "id": "v-viaggio", "it": "il viaggio", "plural": "i viaggi", "gender": "m", "pos": "noun", "en": "journey, trip" },
+    { "id": "v-vicolo", "it": "il vicolo", "plural": "i vicoli", "gender": "m", "pos": "noun", "en": "alley, lane" },
+    { "id": "v-zaino", "it": "lo zaino", "plural": "gli zaini", "gender": "m", "pos": "noun", "en": "backpack" }
+  ],
+  "culture": {
+    "title": "Genova Piazza Principe and the caruggi",
+    "image": "images/a2/u01/l01/culture-caruggi.webp",
+    "md": "Many trains from Milan and Turin arrive at **Genova Piazza Principe**, a short walk from the old town. Genoa's **centro storico** is one of the largest medieval old towns in Europe: a maze of narrow alleys called **caruggi**. Many are too narrow for cars, so moving in often means carrying your suitcase through the alleys and up several flights of stairs."
+  }
+}

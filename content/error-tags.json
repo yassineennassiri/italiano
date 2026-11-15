@@ -1,0 +1,57 @@
+{
+  "article.elision": {
+    "explanation_en": "Before a vowel, il, lo and la become l': l'ombrello, l'appartamento, l'asset. Never il ombrello.",
+    "unit": "a2.u01"
+  },
+  "article.lo": {
+    "explanation_en": "Masculine nouns starting with s + consonant, z, gn, ps or y take lo, not il: lo zaino, lo straniero.",
+    "unit": "a2.u01"
+  },
+  "article.plural_gli": {
+    "explanation_en": "lo and masculine l' both become gli in the plural: gli zaini, gli appartamenti. Feminine l' becomes le.",
+    "unit": "a2.u01",
+    "grammar_page": "a2.u01.l01.gr2"
+  },
+  "partitive.masc_plural": {
+    "explanation_en": "The partitive follows the plural article: dei, degli, delle. Masculine nouns that take gli take degli: degli esercizi, not delle esercizi.",
+    "unit": "a2.u05"
+  },
+  "gender.anglicism": {
+    "explanation_en": "English loanwords are usually masculine in Italian: il meeting, lo step, il budget. Some exceptions are feminine because of an Italian equivalent: la mail.",
+    "unit": "a2.u08"
+  },
+  "prep.articulated": {
+    "explanation_en": "Prepositions merge with the definite article: su + il = sul, in + il = nel, di + la = della, a + gli = agli. Never su il calcolo.",
+    "unit": "a2.u02"
+  },
+  "agreement.plural": {
+    "explanation_en": "Adjectives and nouns agree with their subject in gender and number: siamo responsabili, le relazioni.",
+    "unit": "a2.u03"
+  },
+  "congiuntivo.volere_che": {
+    "explanation_en": "After volere che, sperare che and bisogna che, the verb goes into the congiuntivo: voglio che tu sia, not voglio che tu esse.",
+    "unit": "b1.u08"
+  },
+  "lexis.invented_word": {
+    "explanation_en": "A word built from English or another language that does not exist in Italian: attentivo instead of attento.",
+    "unit": "a2.u08"
+  },
+  "lexis.english_fallback": {
+    "explanation_en": "Falling back on an English word when an Italian one exists: journey (il viaggio), settings (le impostazioni).",
+    "unit": "a2.u08"
+  },
+  "register.lei": {
+    "explanation_en": "With strangers, older people and in formal settings, use Lei (third person singular) consistently: Lei è Adam? E Lei?",
+    "unit": "a2.u01"
+  },
+  "verb.conjugation": {
+    "explanation_en": "The verb ending must match the subject: io vado, tu vai, lui va. Watch the irregular verbs essere, avere, fare, andare, venire, dovere, potere and volere.",
+    "unit": "a2.u04"
+  },
+  "spelling.accent": {
+    "explanation_en": "Accents change meaning: è (is) vs e (and), però (but) vs pero (pear tree). Write the accent; è takes a grave accent."
+  },
+  "speaking": {
+    "explanation_en": "Hesitation or breakdown while speaking: a structure you knew in writing but could not produce aloud."
+  }
+}

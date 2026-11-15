@@ -1,0 +1,73 @@
+{
+  "levels": [
+    {
+      "id": "a2",
+      "title": "Ripasso A2",
+      "description": "Le prime settimane: l'arrivo, la casa, il codice fiscale, i primi giorni in ufficio e i primi amici.",
+      "units": [
+        { "id": "a2.u01", "number": 1, "title": "Arrivo a Genova", "planned_lessons": 3, "lessons": ["a2.u01.l01"] },
+        { "id": "a2.u02", "number": 2, "title": "Una casa nei caruggi", "planned_lessons": 3, "lessons": [] },
+        { "id": "a2.u03", "number": 3, "title": "Il codice fiscale", "planned_lessons": 3, "lessons": [] },
+        { "id": "a2.u04", "number": 4, "title": "Primo giorno in ufficio", "planned_lessons": 3, "lessons": [] },
+        { "id": "a2.u05", "number": 5, "title": "Al bar e in focacceria", "planned_lessons": 3, "lessons": [] },
+        { "id": "a2.u06", "number": 6, "title": "Il weekend a Boccadasse", "planned_lessons": 3, "lessons": [] },
+        { "id": "a2.u07", "number": 7, "title": "Com'era a casa?", "planned_lessons": 3, "lessons": [] },
+        { "id": "a2.u08", "number": 8, "title": "Il meeting? No, la riunione!", "planned_lessons": 3, "lessons": [] },
+        { "id": "a2.u09", "number": 9, "title": "Mi alzo alle sette", "planned_lessons": 3, "lessons": [] },
+        { "id": "a2.u10", "number": 10, "title": "La settimana prossima", "planned_lessons": 3, "lessons": [] }
+      ]
+    },
+    {
+      "id": "b1",
+      "title": "B1",
+      "description": "Il primo progetto: kick-off, Gantt, piano dei costi, il primo SAL e una proposta Horizon.",
+      "units": [
+        { "id": "b1.u01", "number": 1, "title": "Il kick-off", "planned_lessons": 4, "lessons": [] },
+        { "id": "b1.u02", "number": 2, "title": "Il Gantt", "planned_lessons": 4, "lessons": [] },
+        { "id": "b1.u03", "number": 3, "title": "All'ASL", "planned_lessons": 4, "lessons": [] },
+        { "id": "b1.u04", "number": 4, "title": "Il rischio della rete", "planned_lessons": 4, "lessons": [] },
+        { "id": "b1.u05", "number": 5, "title": "Si fa così", "planned_lessons": 4, "lessons": [] },
+        { "id": "b1.u06", "number": 6, "title": "Il piano dei costi", "planned_lessons": 4, "lessons": [] },
+        { "id": "b1.u07", "number": 7, "title": "Penso che sia giusto", "planned_lessons": 4, "lessons": [] },
+        { "id": "b1.u08", "number": 8, "title": "Voglio che tu…", "planned_lessons": 4, "lessons": [] },
+        { "id": "b1.u09", "number": 9, "title": "In Comune", "planned_lessons": 4, "lessons": [] },
+        { "id": "b1.u10", "number": 10, "title": "Pranzo coi colleghi", "planned_lessons": 4, "lessons": [] },
+        { "id": "b1.u11", "number": 11, "title": "Il SAL", "planned_lessons": 4, "lessons": [] },
+        { "id": "b1.u12", "number": 12, "title": "Un problema col fornitore", "planned_lessons": 4, "lessons": [] },
+        { "id": "b1.u13", "number": 13, "title": "Sto lavorando…", "planned_lessons": 4, "lessons": [] },
+        { "id": "b1.u14", "number": 14, "title": "La revisione", "planned_lessons": 4, "lessons": [] },
+        { "id": "b1.u15", "number": 15, "title": "Il product owner", "planned_lessons": 4, "lessons": [] },
+        { "id": "b1.u16", "number": 16, "title": "Bollette e contratto", "planned_lessons": 4, "lessons": [] },
+        { "id": "b1.u17", "number": 17, "title": "Il verbale", "planned_lessons": 4, "lessons": [] },
+        { "id": "b1.u18", "number": 18, "title": "Spero che sia andato bene", "planned_lessons": 4, "lessons": [] },
+        { "id": "b1.u19", "number": 19, "title": "Un anno a Genova", "planned_lessons": 4, "lessons": [] }
+      ]
+    },
+    {
+      "id": "b2",
+      "title": "B2",
+      "description": "Il coordinatore: guidare un consorzio, negoziare il budget, un audit europeo e un progetto finanziato.",
+      "units": [
+        { "id": "b2.u01", "number": 1, "title": "Il nuovo ruolo", "planned_lessons": 4, "lessons": [] },
+        { "id": "b2.u02", "number": 2, "title": "Negoziare il budget", "planned_lessons": 4, "lessons": [] },
+        { "id": "b2.u03", "number": 3, "title": "La riunione di consorzio", "planned_lessons": 4, "lessons": [] },
+        { "id": "b2.u04", "number": 4, "title": "Presentazione tecnica", "planned_lessons": 4, "lessons": [] },
+        { "id": "b2.u05", "number": 5, "title": "Tutto torna", "planned_lessons": 4, "lessons": [] },
+        { "id": "b2.u06", "number": 6, "title": "Va fatto entro venerdì", "planned_lessons": 4, "lessons": [] },
+        { "id": "b2.u07", "number": 7, "title": "Finita la riunione…", "planned_lessons": 4, "lessons": [] },
+        { "id": "b2.u08", "number": 8, "title": "Ha detto che avrebbe…", "planned_lessons": 4, "lessons": [] },
+        { "id": "b2.u09", "number": 9, "title": "Il conflitto", "planned_lessons": 4, "lessons": [] },
+        { "id": "b2.u10", "number": 10, "title": "Il 730", "planned_lessons": 4, "lessons": [] },
+        { "id": "b2.u11", "number": 11, "title": "Il report finale", "planned_lessons": 4, "lessons": [] },
+        { "id": "b2.u12", "number": 12, "title": "Fallo controllare", "planned_lessons": 4, "lessons": [] },
+        { "id": "b2.u13", "number": 13, "title": "Una casa tutta mia", "planned_lessons": 4, "lessons": [] },
+        { "id": "b2.u14", "number": 14, "title": "Come si dice a Zena", "planned_lessons": 4, "lessons": [] },
+        { "id": "b2.u15", "number": 15, "title": "Il miglior team che abbia avuto", "planned_lessons": 4, "lessons": [] },
+        { "id": "b2.u16", "number": 16, "title": "L'audit", "planned_lessons": 4, "lessons": [] },
+        { "id": "b2.u17", "number": 17, "title": "Il workshop", "planned_lessons": 4, "lessons": [] },
+        { "id": "b2.u18", "number": 18, "title": "Al telegiornale", "planned_lessons": 4, "lessons": [] },
+        { "id": "b2.u19", "number": 19, "title": "Finanziato!", "planned_lessons": 4, "lessons": [] }
+      ]
+    }
+  ]
+}
