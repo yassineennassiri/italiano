@@ -3,6 +3,7 @@
  * React, no database.
  */
 import type { ItemType } from "@/content/schema";
+import { exchangeExerciseId } from "@/content/ids";
 import { isCompleted, UNTOUCHED, type ExerciseState } from "./exercise";
 
 /** The parts of a lesson that scoring reads. A loaded `Lesson` fits it. */
@@ -31,7 +32,7 @@ export function lessonExercises(lesson: LessonShape): Exercise[] {
     step.items.flatMap((item): Exercise[] => {
       switch (item.type) {
         case "speak_rate":
-          return item.exchanges.map((exchange) => ({ id: `${item.id}.${exchange.id}`, stepId: step.id, scorable: false }));
+          return item.exchanges.map((exchange) => ({ id: exchangeExerciseId(item.id, exchange.id), stepId: step.id, scorable: false }));
         case "parla":
           return [{ id: item.id, stepId: step.id, scorable: false }];
         default:
@@ -47,8 +48,8 @@ export type LessonProgress = {
   total: number;
   points: number;
   /** The % denominator: exercises that are not self-rated. */
-  scorable: number;
-  /** round-half-up(100 × points ÷ scorable); unattempted items count as 0. */
+  scorableItems: number;
+  /** round-half-up(100 × points ÷ scorableItems); unattempted items count as 0. */
   percent: number;
   /** Results S/M: a step is completed when all its exercises are. */
   completedSteps: number;
@@ -61,19 +62,32 @@ export function lessonProgress(lesson: LessonShape, states: ReadonlyMap<string, 
     ...exercise,
     state: states.get(exercise.id) ?? UNTOUCHED,
   }));
-  const scored = exercises.filter((exercise) => exercise.scorable);
-  const points = scored.reduce((sum, exercise) => sum + exercise.state.points, 0);
-  const done = (stepId: string) =>
+  const scorableExercises = exercises.filter((exercise) => exercise.scorable);
+  const points = scorableExercises.reduce((sum, exercise) => sum + exercise.state.points, 0);
+  const stepCompleted = (stepId: string) =>
     exercises.every((exercise) => exercise.stepId !== stepId || isCompleted(exercise.state));
   return {
     completed: exercises.filter((exercise) => isCompleted(exercise.state)).length,
     total: exercises.length,
     points,
-    scorable: scored.length,
-    percent: roundedPercent(points, scored.length),
-    completedSteps: lesson.steps.filter((step) => done(step.id)).length,
+    scorableItems: scorableExercises.length,
+    percent: roundedPercent(points, scorableExercises.length),
+    completedSteps: lesson.steps.filter((step) => stepCompleted(step.id)).length,
     totalSteps: lesson.steps.length,
   };
+}
+
+export type LessonStatus = "not_started" | "in_progress" | "completed";
+
+/** SPEC §6.1: completed once the Finish screen is reached, in progress once any exercise is completed. */
+export function lessonStatus(progress: Pick<LessonProgress, "completed">, finishReached: boolean): LessonStatus {
+  if (finishReached) return "completed";
+  return progress.completed > 0 ? "in_progress" : "not_started";
+}
+
+/** The `best_percent` to store after a new lesson %; it never drops. */
+export function bestPercent(previousBest: number | null, latest: number): number {
+  return previousBest === null ? latest : Math.max(previousBest, latest);
 }
 
 /** The parts of a level that scoring reads. A loaded `Level` fits it. */

@@ -24,20 +24,23 @@ export type ExerciseEvent =
   | { type: "solve" }
   /** Bene / Non tanto bene on a self-rated exercise. */
   | { type: "rate"; rating: "good" | "not_great" }
-  /** Correggi i miei errori (SPEC §4.4): reopens the item, keeping its spent first Check. */
-  | { type: "reset" };
+  /**
+   * Correggi i miei errori (SPEC §4.4): reopens a wrong or solved item, keeping
+   * its spent first Check. Not Azzera, which deletes the state instead.
+   */
+  | { type: "reopen" };
 
 export const UNTOUCHED: ExerciseState = { status: "untouched", firstCheckCorrect: null, points: 0 };
 
 /** Statuses whose inputs, Solve and Check are disabled. */
 const LOCKED: readonly ExerciseStatus[] = ["checked_correct", "solved", "rated_good", "rated_not_great"];
 
-/**
- * The next state after an event. Learner actions on a locked exercise are
- * ignored; a reset always applies (the caller picks which items to reset).
- */
+/** Statuses that Correggi i miei errori can reopen. */
+const REOPENABLE: readonly ExerciseStatus[] = ["checked_wrong", "solved"];
+
+/** The next state after an event. Events that don't apply to the current status are ignored. */
 export function applyEvent(state: ExerciseState, event: ExerciseEvent): ExerciseState {
-  if (event.type === "reset") return { ...state, status: "untouched" };
+  if (event.type === "reopen") return REOPENABLE.includes(state.status) ? { ...state, status: "untouched" } : state;
   if (LOCKED.includes(state.status)) return state;
   switch (event.type) {
     case "check": {

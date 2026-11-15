@@ -49,16 +49,23 @@ describe("exercise state", () => {
     expect(applyEvents([{ type: "rate", rating: "not_great" }])).toMatchObject({ status: "rated_not_great", points: 0 });
   });
 
-  it("reopens the item on a Correggi reset but keeps the spent first Check, so a fix still scores 0", () => {
+  it("reopens the item for Correggi i miei errori but keeps the spent first Check, so a fix still scores 0", () => {
     const fixed = applyEvents([
       { type: "check", correct: false },
-      { type: "reset" },
+      { type: "reopen" },
       { type: "check", correct: true },
     ]);
     expect(fixed).toEqual({ status: "checked_correct", firstCheckCorrect: false, points: 0 });
-    const reopened = applyEvents([{ type: "solve" }, { type: "reset" }]);
+    const reopened = applyEvents([{ type: "solve" }, { type: "reopen" }]);
     expect(reopened).toEqual({ status: "untouched", firstCheckCorrect: false, points: 0 });
     expect(isCompleted(reopened)).toBe(false);
     expect(applyEvents([{ type: "check", correct: true }], reopened).points).toBe(0);
+  });
+
+  it("does not reopen a correct or self-rated exercise, so no untouched exercise keeps a point", () => {
+    const correct = applyEvents([{ type: "check", correct: true }]);
+    expect(applyEvents([{ type: "reopen" }], correct)).toEqual(correct);
+    const rated = applyEvents([{ type: "rate", rating: "not_great" }]);
+    expect(applyEvents([{ type: "reopen" }], rated)).toEqual(rated);
   });
 });

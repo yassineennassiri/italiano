@@ -5,7 +5,10 @@ import type { Gap } from "@/content/schema";
 
 export type GapVerdict = "correct" | "wrong" | "accent_only";
 
-export function compareTyped(given: string, gap: Pick<Gap, "answer" | "accept" | "case_sensitive">): GapVerdict {
+/** What a typed answer is compared against. */
+export type AnswerKey = Pick<Gap, "answer" | "accept" | "case_sensitive">;
+
+export function compareTyped(given: string, gap: AnswerKey): GapVerdict {
   const fold = (text: string) => {
     const normal = normalize(text);
     return gap.case_sensitive === false ? normal.toLocaleLowerCase("it") : normal;
@@ -36,7 +39,7 @@ export type GapsResult = {
 
 /** Checks every gap of an item; a missing answer counts as wrong. */
 export function checkGaps(
-  gaps: readonly Pick<Gap, "id" | "answer" | "accept" | "case_sensitive">[],
+  gaps: readonly (AnswerKey & Pick<Gap, "id">)[],
   answers: Readonly<Record<string, string>>,
 ): GapsResult {
   const verdicts: Record<string, GapVerdict> = {};

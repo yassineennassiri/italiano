@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { loadCourse, loadLesson } from "@/content/load";
 import { checkGaps } from "./compare";
 import { applyEvents, type ExerciseEvent, type ExerciseState } from "./exercise";
-import { lessonExercises, lessonProgress, levelPercent, type LessonShape } from "./lesson";
+import { bestPercent, lessonExercises, lessonProgress, lessonStatus, levelPercent, type LessonShape } from "./lesson";
 
 const example = loadLesson("a2.u01.l01")!;
 
@@ -43,7 +43,7 @@ describe("lessonProgress", () => {
       completed: 0,
       total: 5,
       points: 0,
-      scorable: 2,
+      scorableItems: 2,
       percent: 0,
       completedSteps: 0,
       totalSteps: 3,
@@ -61,7 +61,7 @@ describe("lessonProgress", () => {
       }),
     );
     // 4 of 5 exercises completed, but the % is 1 point of 2 scorable items, not of 5.
-    expect(progress).toMatchObject({ completed: 4, total: 5, points: 1, scorable: 2, percent: 50 });
+    expect(progress).toMatchObject({ completed: 4, total: 5, points: 1, scorableItems: 2, percent: 50 });
   });
 
   it("scores an accent-only miss 0, like any wrong answer", () => {
@@ -123,7 +123,7 @@ describe("lessonProgress", () => {
   });
 
   it("works on the example lesson: all 11 exercises, 7 of them scorable", () => {
-    expect(lessonProgress(example, new Map())).toMatchObject({ total: 11, scorable: 7, totalSteps: 6, percent: 0 });
+    expect(lessonProgress(example, new Map())).toMatchObject({ total: 11, scorableItems: 7, totalSteps: 6, percent: 0 });
   });
 });
 
@@ -146,5 +146,21 @@ describe("levelPercent", () => {
   it("uses the 30 planned lessons of Ripasso A2", () => {
     const a2 = loadCourse().levels.find((level) => level.id === "a2")!;
     expect(levelPercent(a2, new Set(["a2.u01.l01"]))).toBe(3); // 3.33
+  });
+});
+
+describe("lessonStatus", () => {
+  it("is not_started while nothing is touched, in_progress after any exercise, completed once Finish is reached", () => {
+    expect(lessonStatus(lessonProgress(small, new Map()), false)).toBe("not_started");
+    expect(lessonStatus(lessonProgress(small, states({ "x.s03.i01": bene })), false)).toBe("in_progress");
+    expect(lessonStatus(lessonProgress(small, states({ "x.s03.i01": bene })), true)).toBe("completed");
+  });
+});
+
+describe("bestPercent", () => {
+  it("keeps the highest % so far and starts from the first one", () => {
+    expect(bestPercent(null, 40)).toBe(40);
+    expect(bestPercent(80, 40)).toBe(80);
+    expect(bestPercent(40, 80)).toBe(80);
   });
 });
