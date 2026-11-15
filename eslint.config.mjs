@@ -27,6 +27,22 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  {
+    // All UI text lives in src/ui-it.ts (SPEC §6.3, ADR-0003), never inline in components.
+    files: ["src/app/**/*.tsx", "src/components/**/*.tsx"],
+    rules: {
+      "react/jsx-no-literals": ["error", { noStrings: true, ignoreProps: true }],
+      "no-restricted-syntax": [
+        "error",
+        ...["Literal", "TemplateLiteral", "JSXExpressionContainer > Literal", "JSXExpressionContainer > TemplateLiteral"].map(
+          (value) => ({
+            selector: `JSXAttribute[name.name=/^(aria-label|aria-description|aria-roledescription|title|alt|placeholder)$/] > ${value}`,
+            message: "UI text comes from src/ui-it.ts, not a literal.",
+          }),
+        ),
+      ],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

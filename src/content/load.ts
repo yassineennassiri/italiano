@@ -6,12 +6,9 @@
  * Every function takes an optional content directory (the tests point it at a
  * copy); by default it reads `content/` in the project root.
  */
-import path from "node:path";
-import { findLessonFiles, readContentFile } from "./files";
+import { CONTENT_DIR, findLessonFiles, readContentFile } from "./files";
 import { lessonFilePattern, lessonIdOfGrammarPage, parseLessonId } from "./ids";
 import { type Course, courseSchema, type ErrorTagEntry, errorTagsSchema, type Lesson, lessonSchema } from "./schema";
-
-const CONTENT_DIR = path.join(process.cwd(), "content");
 
 export function loadCourse(contentDir = CONTENT_DIR): Course {
   return readContentFile(contentDir, "course.json", courseSchema);

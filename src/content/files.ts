@@ -3,6 +3,9 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import type { z } from "zod";
 
+/** The real content directory, `content/` in the project root. */
+export const CONTENT_DIR = path.join(process.cwd(), "content");
+
 /** Relative (posix) paths of every lesson file under `levels/`, sorted. */
 export function findLessonFiles(contentDir: string): string[] {
   const levelsDir = path.join(contentDir, "levels");

@@ -69,7 +69,7 @@ All chrome text is Italian (6.3); the labels below are the real UI strings.
 - The top bar and lesson bar are **sticky**: they stay pinned while the page scrolls (`[06]`, `[34]`).
 - **Lesson menu** (drop-down panel on the right, `[23]`): Informazioni · Esercizi · Grammatica · Vocabolario · Cultura · Copione · Altri strumenti (Review hub; vocab trainer later) · Azzera gli esercizi · Panoramica del corso. Hide entries the lesson doesn't have (e.g. Cultura).
 - **Breadcrumb**: `Level / Course / Lesson / Step title` above the content, **only on the intro and exercise step pages** (`[04]`, `[07]`). Results, grammar, vocabulary, culture, script and finish pages have only the lesson bar.
-- **Footer**: minimal (app name, content version, sync status: *Salvato* / *In attesa* / *Offline: non salvato*). DW's footer is not copied.
+- **Footer**: minimal (app name, content version (a short hash of the content JSON files, so both computers can tell they run the same content), sync status: *Salvato* / *In attesa* / *Offline: non salvato*). DW's footer is not copied.
 
 ### 3.2 Home
 A simple page listing the three levels as large cards (level badge, title, short description, % completed), plus a *Continua da dove eri* button that goes to the last lesson/step. It's loosely modelled on `[02]`. Until a level has content, its card is disabled and labelled *In arrivo* (in M1, B1 and B2). The placement test card is a later feature.
