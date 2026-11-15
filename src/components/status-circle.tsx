@@ -1,4 +1,5 @@
-import { type LessonStatus, ui } from "@/ui-it";
+import type { LessonStatus } from "@/scoring/lesson";
+import { ui } from "@/ui-it";
 
 /**
  * The status circle on lesson cards and the level overview (SPEC §3.3): empty,

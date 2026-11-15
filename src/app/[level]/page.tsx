@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { LanternaLogo } from "@/components/lanterna-logo";
 import { StatusCircle } from "@/components/status-circle";
+import type { LevelId } from "@/content/ids";
 import { loadCourse } from "@/content/load";
 import { type LessonCard, levelOverview, type UnitGroup } from "@/content/overview";
 import { ui } from "@/ui-it";
@@ -59,7 +60,7 @@ async function LevelOverviewView({ params }: Pick<PageProps<"/[level]">, "params
   );
 }
 
-function Hero({ levelId, title }: { levelId: string; title: string }) {
+function Hero({ levelId, title }: { levelId: LevelId; title: string }) {
   return (
     <div className="relative flex h-44 sm:h-auto sm:aspect-[16/7] items-end overflow-hidden rounded-lg bg-gradient-to-b from-brand-light to-brand p-4 sm:p-8">
       {/* Placeholder illustration until the real one exists: the sea and the hills of Genoa. */}

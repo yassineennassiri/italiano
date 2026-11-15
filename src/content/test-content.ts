@@ -3,8 +3,9 @@ import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:f
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach } from "vitest";
+import { CONTENT_DIR } from "./files";
 
-export const CONTENT_DIR = path.join(process.cwd(), "content");
+export { CONTENT_DIR };
 export const LESSON_FILE = "levels/a2/units/01-arrivo-a-genova/lessons/01-benvenuto-a-genova.json";
 
 const copies: string[] = [];

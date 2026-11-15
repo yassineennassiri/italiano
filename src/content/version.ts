@@ -10,9 +10,7 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { findLessonFiles } from "./files";
-
-const CONTENT_DIR = path.join(process.cwd(), "content");
+import { CONTENT_DIR, findLessonFiles } from "./files";
 
 export function contentVersion(contentDir = CONTENT_DIR): string {
   const hash = createHash("sha256");

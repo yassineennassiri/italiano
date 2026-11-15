@@ -4,22 +4,33 @@
  * Content text (titles, topics, descriptions) comes from the content files.
  */
 
-export type LessonStatus = "not_started" | "in_progress" | "completed";
+import type { LevelId } from "@/content/ids";
+import type { LessonStatus } from "@/scoring/lesson";
 
+const appName = "La strada di Adam";
+
+/** A lesson (feminine) in each status. */
 const lessonStatusName: Record<LessonStatus, string> = {
   not_started: "Non iniziata",
   in_progress: "In corso",
   completed: "Completata",
 };
 
+/** A level (masculine) in each status. */
+const levelStatusName: Record<LessonStatus, string> = {
+  not_started: "Non iniziato",
+  in_progress: "In corso",
+  completed: "Completato",
+};
+
 export const ui = {
-  appName: "La strada di Adam",
+  appName,
   appDescription: "Un corso di italiano personale, ambientato a Genova.",
   /** The word next to the Lanterna logo. */
   wordmark: "italiano",
 
   topBar: {
-    homeLink: "La strada di Adam: home",
+    homeLink: `${appName}: home`,
     openMenu: "Apri il menu",
     closeMenu: "Chiudi il menu",
     menuTitle: "Menu",
@@ -29,17 +40,12 @@ export const ui = {
 
   footer: {
     contentVersion: (version: string) => `Contenuti ${version}`,
-    sync: {
-      saved: "Salvato",
-      pending: "In attesa",
-      offline: "Offline: non salvato",
-    },
   },
 
   comingSoon: "In arrivo",
   draft: "Bozza",
   /** The round level badge: "A2", "B1", "B2". */
-  levelBadge: (levelId: string) => levelId.toUpperCase(),
+  levelBadge: (levelId: LevelId) => levelId.toUpperCase(),
 
   home: {
     heading: "Scegli il livello",
@@ -48,9 +54,9 @@ export const ui = {
   },
 
   level: {
-    pageTitle: (levelTitle: string) => `${levelTitle} · La strada di Adam`,
-    /** The level status circle's tooltip, e.g. "Livello: Non iniziata". */
-    levelStatus: (status: LessonStatus) => `Livello: ${lessonStatusName[status]}`,
+    pageTitle: (levelTitle: string) => `${levelTitle} · ${appName}`,
+    /** The level status circle's tooltip, e.g. "Livello: Non iniziato". */
+    levelStatus: (status: LessonStatus) => `Livello: ${levelStatusName[status]}`,
     finalTest: "Test finale",
   },
 

@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
+import type { LevelCard } from "@/content/overview";
 import { ui } from "@/ui-it";
 
-export type MenuLevel = { id: string; title: string; href: string; available: boolean };
+export type MenuLevel = Pick<LevelCard, "id" | "title" | "href" | "available">;
 
 /** The hamburger menu in the top bar (SPEC §3.1): Home and the levels. */
 export function MainMenu({ levels }: { levels: MenuLevel[] }) {
