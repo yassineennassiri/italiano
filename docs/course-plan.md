@@ -145,6 +145,8 @@ B2: 19 units × 4 lessons. Outline only for now; we refine it once B1 is underwa
 
 ## Anatomy of a lesson
 
+> **Superseded for the app (2026-11-15):** the lesson order follows `SPEC.md` (DW's order: scene → exercise steps ending with Parla! → results → grammar → vocabulary → culture). The content below still describes what a lesson covers.
+
 About 20–25 minutes.
 
 1. **La scena** — Illustrated scene with dialogue audio, 1–2 minutes, plus one gist question before you listen
@@ -178,6 +180,8 @@ flowchart LR
 | English fallback words | journey, settings, vulnerable | A2.8 | Personal glossary built from your speech |
 
 ## Open questions
+
+> **Status (2026-11-15):** 4 and 5 are settled in `SPEC.md` (in-app self-rating, with AI correction later; standard Italian voices). 6 is a later app milestone. The rest are parked as content decisions.
 
 1. Protagonist: someone with your background, or a neutral newcomer? Do you like the name Adam?
 2. Keep the employer fictional, or model it closely on STAM and your real projects?

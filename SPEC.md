@@ -2,7 +2,7 @@
 
 A personal Italian course web app that copies the **structure and flow** of DW's *Nicos Weg* German course, filled with original Italian content.
 
-> **How to use this document.** Feed it to Claude Code together with the course plan ("Il mio percorso: draft course plan"). Run `grill-me` on it first, then `write-a-prd`, then `to-issues`. Section 14 is the first milestone. Screenshots of the original are in `./screenshots/` and are referenced by number, e.g. `[04]` = `screenshots/04-a1-lesson-introduction.png` (full index in Appendix A).
+> **How to use this document.** This spec has been through a grilling session; section 16 logs every decision. Read it together with the course plan (`docs/course-plan.md`), the glossary (`CONTEXT.md`) and the ADRs (`docs/adr/`). Section 14 is the first milestone, tracked as GitHub issues. Screenshots of the original are in `./screenshots/` and are referenced by number, e.g. `[04]` = `screenshots/04-a1-lesson-introduction.png` (full index in Appendix A).
 
 | | |
 |---|---|
@@ -20,8 +20,8 @@ A personal Italian course web app that copies the **structure and flow** of DW's
 
 ### Goals
 1. **Same learning experience as Nicos Weg.** Use the same hierarchy (level > unit > lesson), the same lesson flow (intro > numbered exercise steps > results > grammar > vocabulary > culture > finish > next lesson), the same exercise types and the same Check / Solve / feedback / scoring behaviour. When something here is unclear, do what Nicos Weg does.
-2. **Personal content.** The story follows Adam, an engineer who moves to Genoa to work at *Energetica Ligure*. Levels are Ripasso A2, then B1, then B2. Grammar is explained in English, and nouns always appear with their article.
-3. **Speaking first.** Every lesson ends with a *Parla!* speaking task. Self-rating (Good / Not so great) is the baseline.
+2. **Personal content.** The story follows Adam, an engineer who moves to Genoa to work at *Energetica Ligure*. Levels are Ripasso A2, then B1, then B2. The UI, step titles and instructions are in Italian; grammar and culture are explained in English (6.3). Nouns always appear with their article.
+3. **Speaking first.** Every lesson ends with a *Parla!* speaking task. Self-rating (*Bene* / *Non tanto bene*) is the baseline.
 4. **Learn from my mistakes.** Wrong answers and self-reported speaking errors go into an error log. The log feeds spaced review.
 5. **Synced progress.** I can start a lesson on one computer and continue on the other.
 6. **Content as data.** Adding a lesson means adding a JSON file plus media, with no code changes. Content is validated against a schema in dev and in CI.
@@ -38,15 +38,7 @@ A personal Italian course web app that copies the **structure and flow** of DW's
 
 ## 2. Glossary
 
-| Term | Meaning |
-|---|---|
-| Level | Ripasso A2, B1, B2. Equivalent to DW's A1 / A2 / B1 pages. |
-| Unit | A themed chapter, e.g. "A2.1 Arrivo a Genova". Ripasso A2 units have 3 lessons; B1 and B2 units have 4. |
-| Lesson | One sitting of about 20–25 min: intro, N exercise steps, results, grammar pages, vocabulary, culture (optional), script, finish. |
-| Step | One numbered exercise page inside a lesson ("3 / 9"). Contains one or more **items**. |
-| Item | One checkable exercise with its own Solve/Check buttons. The footer counts these as "exercises". |
-| Scene | Replaces DW's video: a poster image plus a sequence of illustrated panels synced to dialogue audio. |
-| Self-rating | "Good" / "Not so great" buttons on speaking items. |
+The domain glossary lives in `CONTEXT.md` (Level, Unit, Lesson, Step, Item, Exchange, Exercise, Scorable item, Scene, Self-rating, …). This spec uses those terms as defined there.
 
 ---
 
@@ -70,103 +62,109 @@ Review hub (my errors, due vocab)         /ripasso
 URLs use stable slugs from the content files. Deep links and the browser Back button work. The last visited step is restored when I reopen a lesson.
 
 ### 3.1 Global chrome
-- **Top bar**: logo on the left, app title in the centre, hamburger on the right (Home, levels, Review hub, Settings). Ref `[03]`.
+All chrome text is Italian (6.3); the labels below are the real UI strings.
+
+- **Top bar**: logo (an SVG of the Lanterna, Genoa's lighthouse, plus wordmark) on the left, app title in the centre, hamburger on the right (Home, levels; Review hub and Settings from M2). Ref `[03]`.
 - **Lesson bar**: a full-width coloured bar under the top bar on every lesson page. It shows the lesson title in the centre and a chevron on the right that opens the **lesson menu**. Ref `[04]`, `[23]`.
-- **Lesson menu** (drop-down panel on the right, `[23]`): Information · Exercises · Grammar · Vocabulary · Culture · Script · Other tools (Review hub; vocab trainer later) · Reset exercises · Course overview. Hide entries the lesson doesn't have (e.g. Culture).
-- **Breadcrumb**: `Level / Course / Lesson / Step title` above the content. Ref `[04]`, `[07]`.
-- **Footer**: minimal (app name, content version, sync status indicator). DW's footer is not copied.
+- The top bar and lesson bar are **sticky**: they stay pinned while the page scrolls (`[06]`, `[34]`).
+- **Lesson menu** (drop-down panel on the right, `[23]`): Informazioni · Esercizi · Grammatica · Vocabolario · Cultura · Copione · Altri strumenti (Review hub; vocab trainer later) · Azzera gli esercizi · Panoramica del corso. Hide entries the lesson doesn't have (e.g. Cultura).
+- **Breadcrumb**: `Level / Course / Lesson / Step title` above the content, **only on the intro and exercise step pages** (`[04]`, `[07]`). Results, grammar, vocabulary, culture, script and finish pages have only the lesson bar.
+- **Footer**: minimal (app name, content version, sync status: *Salvato* / *In attesa* / *Offline: non salvato*). DW's footer is not copied.
 
 ### 3.2 Home
-A simple page listing the three levels as large cards (level badge, title, short description, % completed), plus a "Continue where you left off" button that goes to the last lesson/step. It's loosely modelled on `[02]`. The placement test card is a later feature.
+A simple page listing the three levels as large cards (level badge, title, short description, % completed), plus a *Continua da dove eri* button that goes to the last lesson/step. It's loosely modelled on `[02]`. Until a level has content, its card is disabled and labelled *In arrivo* (in M1, B1 and B2). The placement test card is a later feature.
 
 ### 3.3 Level overview page (`[01]`, `[03]`)
 - **Hero banner**: a full-width original illustration with a circular level badge top-left ("A2", "B1", "B2") and the course logo badge on the right.
-- Below the banner on the right: a **Reset** button (resets all progress for the level after a confirmation dialog) and the level's overall status circle.
-- **Unit groups** in a 3-column grid (1 column on narrow screens). Each column header is the unit number + title ("1 Arrivo a Genova"). The first group can be an intro unit ("Benvenuto!").
+- Below the banner on the right: an **Azzera** button (resets all progress for the level after a confirmation dialog) and the level's overall status circle.
+- **Unit groups** in a 3-column grid (1 column on narrow screens). Each column header is the unit number + title ("1 Arrivo a Genova"). The first group can be an intro unit ("Benvenuto!"). Every unit from the course plan is listed; a unit with no lesson files yet shows a single disabled *In arrivo* card.
 - **Lesson cards** under each header:
   - Italian lesson title (bold, link colour), e.g. *Benvenuto a Genova!*
-  - Line 1: English topic, e.g. "Arriving and greeting people"
-  - Line 2 (optional): grammar label, e.g. "Articles: il, lo, l', la"
-  - Top-right **status circle**: empty = not started, half-filled = in progress, filled with a tick = completed. A tooltip shows the state plus the best % ("Completed · 87%").
+  - Line 1: topic in Italian, e.g. "Arrivare a Genova e salutare"
+  - Line 2 (optional): grammar label, e.g. "Articoli: il, lo, l', la"
+  - A *Bozza* badge when the lesson's `status` is `draft` (draft lessons are fully playable; that's how they get reviewed).
+  - Top-right **status circle**: empty = not started, half-filled = in progress, filled with a tick = completed. A tooltip shows the state plus the best % ("Completata · 87%").
   - Cards alternate between light background tints, as on DW.
-- Below the grid, as on DW: **More lessons** (link to the Review hub), **Final test** (disabled, "coming later") and **Feedback** (a textarea saved to the DB for my own notes about the content).
+- Below the grid, as on DW: **Altre lezioni** (link to the Review hub), **Test finale** (disabled, *In arrivo*) and **Feedback** (a textarea saved to the DB for my own notes about the content; M2).
 
 ---
 
 ## 4. Lesson flow (end to end)
 
 ```
-Intro ─Start→ Step 1 … Step N ─Next on last step→ Results ─Continue→ Grammar 1..G → Vocabulary → Culture? → Finish ─Next→ next lesson's Intro
+Intro ─Inizia→ Step 1 … Step N ─Avanti on last step→ Results ─Continua→ Grammar 1..G → Vocabulary → Culture? → Finish ─Avanti→ next lesson's Intro
 ```
+
+The grammar pages, vocabulary and culture form **one linear review sequence**. Each page has a header strip with ‹ › arrows that move through that whole sequence, hidden at either end: the first grammar page has only ›, culture (or vocabulary, when there is no culture) has only ‹ (`[19]`–`[22]`, `[42]`–`[44]`).
 
 ### 4.1 Intro / Information page (`[04]`, `[25]`)
 - **Scene player** in poster state: a large 16:9 illustration with a round play button bottom-left and the duration ("01:08").
-- **Heading**: the English topic ("Arriving in Genoa").
-- **Summary**: 2–4 sentences in English about what happens in the story.
-- **Learning objectives**: a bulleted "In this lesson you will learn…" list (communicative goal, grammar point, vocab field).
-- **Start** button (primary) → Step 1. Playing the scene here is optional, because Step 1 embeds it again.
+- **Heading**: the topic in Italian ("Arrivare a Genova e salutare").
+- **Summary**: 2–4 sentences in Italian about what happens in the story.
+- **Learning objectives**: a bulleted *In questa lezione impari a…* list in Italian (communicative goal, grammar point, vocab field).
+- **Inizia** button (primary) → Step 1. Playing the scene here is optional, because Step 1 embeds it again.
 
 ### 4.2 Exercise step pages (`[05]`–`[17]`, `[26]`–`[40]`)
 Layout from top to bottom:
 1. Optional **media** at the top: the scene player or a large image (`[05]`, `[14]`, `[15]`).
 2. Step counter **"N / M"**, small and centred (`[10]`).
-3. **Step title** (H2, English), e.g. "il, lo, l' or la?".
-4. **Instruction** (1–2 sentences, English).
-5. **Script ⌄** toggle, collapsed by default. Expanding it shows the transcript of the audio/scene used by this step, with speaker labels in caps and vocab words highlighted (`[06]`, `[32]`, `[37]`). It collapses again with **Script ⌃**.
+3. **Step title** (H2, Italian), e.g. "il, lo, l' o la?".
+4. **Instruction** (1–2 sentences, Italian). When the content provides `instruction_en`, a small **EN** toggle next to it reveals the English version.
+5. **Copione ⌄** toggle, collapsed by default. Expanding it shows the transcript of the audio/scene used by this step, with speaker labels in caps (`[06]`, `[32]`, `[37]`). It collapses again with **Copione ⌃**.
 6. Optional **reading text** (a brochure, a to-do list, an email) shown inline, often on a tinted panel (`[31]`, `[33]`).
-7. One or more **items**. Each has its own prompt bubble (a speech bubble with an accent border and a tail), its interaction area, optional notes (4.3), then **Solve** (secondary) and **Check** (accent) buttons, centred.
-8. **Footer band** (tinted, full width): "X out of Y exercises completed. Z points scored." and a **Next** button, with the "N / M" counter repeated under it (`[07]`, `[17]`).
+7. One or more **items**. Each has its own prompt bubble (a speech bubble with an accent border and a tail), its interaction area, optional notes (4.3), then **Soluzione** (secondary) and **Controlla** (accent) buttons, centred.
+8. **Footer band** (tinted, full width): the counter text from 6.2 and an **Avanti** button, with the "N / M" counter repeated under it (`[07]`, `[17]`).
 
 Rules:
-- **Next is always enabled.** Skipping is allowed, and unattempted items simply stay "not completed".
-- On the last step, Next goes to **Results**.
+- **Avanti is always enabled.** Skipping is allowed, and unattempted exercises simply stay "not completed".
+- On the last step, Avanti goes to **Results**.
 - Item state (typed answers, checked/solved status, points) persists immediately (sections 8 and 10), so reloading or switching computers restores it.
 
 ### 4.3 Notes inside steps
-Small rows with a round icon, placed under an item:
+Small rows with a round icon, placed under an item, or inside a speaking item between one exchange and its rating (`[10]`, `[12]`). Labels are Italian; the note text is English, because notes explain grammar (6.3).
 - **Info:** a grammar or usage remark (`[09]`, `[11]`).
-- **Tip:** a strategy hint.
-- **New words:** a word introduced here, with a short English gloss (`[15]`, `[37]`).
+- **Consiglio:** a strategy hint.
+- **Parole nuove:** a word introduced here, with a short English gloss (`[15]`, `[37]`).
 - **Attenzione!:** our addition for my recurring error patterns (e.g. "*l'* before a vowel, never *il*"). It links to the error tag's explanation.
 
-**Vocab links:** words highlighted in prompts, scripts and reading texts (DW underlines them with a dotted line). Hovering or tapping one shows a popover with the word and its article, the English meaning and an audio button. These words come from the lesson's vocabulary list.
+**Vocab links (M2):** words highlighted in prompts, scripts and reading texts (DW underlines them with a dotted line). Hovering or tapping one shows a popover with the word and its article, the English meaning and an audio button. These words come from the lesson's vocabulary list.
 
 ### 4.4 Results screen (`[18]`, `[41]`)
-- Heading "Results for this lesson".
-- An encouraging line chosen by score band (≥80% "Ottimo lavoro!", 50–79% "Buon lavoro, keep going!", <50% "Try the steps again, you can do it.").
-- A large slate panel with the **percentage** (big) and "Results for this lesson: S/M", where S = steps whose items are all completed and M = total steps.
-- The line "On the next pages you'll find an overview of grammar, vocabulary, culture and society."
+- Heading *Risultati della lezione*.
+- An encouraging line chosen by score band (≥80% *Ottimo lavoro!*, 50–79% *Buon lavoro, continua così!*, <50% *Riprova gli esercizi, ce la puoi fare.*).
+- A large slate panel with the **percentage** (big) and *Risultati della lezione: S/M* (6.1).
+- The line *Nelle prossime pagine trovi un riepilogo di: …*, listing only the pages this lesson has (grammatica, vocabolario, cultura e società), as in `[41]`.
 - Buttons. These replace DW's guest buttons ("Log in and correct mistakes" / "Continue (without saving)" / "Log in and save"), since we're always saving:
-  - **Correct my mistakes**: jumps to the first step with a wrong or unattempted item. Only those items are reset.
-  - **Continue** (accent): goes to Grammar 1.
+  - **Correggi i miei errori**: jumps to the first step with a wrong or unattempted scorable item, and resets only those items. Speaking exchanges are never reset here (their errors already went to the error log). A reset keeps `first_check_correct`, so a fixed item still scores 0.
+  - **Continua** (accent): goes to Grammar 1.
 
 ### 4.5 Grammar pages (`[19]`, `[20]`, `[42]`, `[43]`)
-- A header strip with "Grammar" and ‹ › arrows between grammar pages (usually 2 per lesson).
-- A **vertical illustrated article** in a narrow centred column: an H2 title ("Articoli determinativi: il, lo, l', la"), an illustration with an example sentence from the scene (target form in **bold**, sentence in italics), a compact **form row/table** (e.g. *Singular · masculine · before a vowel · **l'**ombrello*), the rule in English, and optional **rule images** (a sentence with a coloured target word and an arrow, `[19]`, `[42]`). Render rule images as SVG components, not bitmaps.
-- An optional **terms panel**, a side box defining metalanguage ("gender", "elision").
-- **Next** button at the bottom (accent). On the last grammar page it goes to Vocabulary.
+- A header strip with *Grammatica* and the ‹ › arrows of the review sequence (section 4). Usually 2 grammar pages per lesson.
+- A **vertical illustrated article** in a narrow centred column: an H2 title ("Articoli determinativi: il, lo, l', la"), an illustration with an example sentence from the scene (target form in **bold**, sentence in italics), a compact **form row/table** (e.g. *Singular · masculine · before a vowel · **l'**ombrello*), the rule in English, and optional **rule images**. Rule images are `rule` blocks (9.1) rendered as SVG components, not bitmaps: rows of styled text segments joined by arrows, covering DW's coloured words, down/diagonal arrows and swap arcs (`[19]`, `[42]`, `[43]`). M1 needs only rows plus a down arrow.
+- An optional **terms panel** defining metalanguage ("gender", "elision"): a full-width block at the bottom of the page, ruled top and bottom (`[20]`, `[43]`).
+- **Avanti** button at the bottom (accent). On the last grammar page it goes to Vocabulary.
 
 ### 4.6 Vocabulary page (`[21]`, `[44]`)
-- A header strip with "Vocabulary" and ‹ › arrows.
-- A **striped two-column list**: left = speaker icon + Italian term in link colour, right = English meaning.
+- A header strip with *Vocabolario* and the ‹ › arrows of the review sequence. There is no pagination; the arrows only move between review pages.
+- A **striped list**: left = speaker icon + Italian term in link colour, middle = optional thumbnail image for concrete nouns (`[44]`), right = English meaning.
 - **Nouns always with article and plural**: *la valigia, le valigie*; *l'ombrello, gli ombrelli*. A small m/f gender dot is our addition, for my article errors.
-- A small grey forms line under verbs: *perdersi*, then *mi perdo, si perde, mi sono perso/a* (present, plus passato prossimo with its auxiliary). Irregular adjectives show their forms too.
-- An optional thumbnail image for concrete nouns (`[44]`).
-- Sorted alphabetically by headword, ignoring the article.
-- Bottom button: **Next** (to Culture), or **Finish the lesson!** when the lesson has no culture page (`[44]`).
+- A small grey **forms line** under the term. It is free text: verb forms (*mi perdo, si perde, mi sono perso/a*), irregular adjective forms, or notes such as *solo singolare* or *dal genovese* (`[21]`, `[44]`).
+- Entries include phrases and whole sentences, not just single words (`[21]`).
+- Sorted alphabetically, ignoring the article. An entry's optional `sort_key` overrides this, e.g. *in ritardo* sorts under *ritardo*.
+- Bottom button: **Avanti** (to Culture), or **Finisci la lezione!** when the lesson has no culture page (`[44]`).
 
 ### 4.7 Culture page (`[22]`, `[23]`)
-A header strip "Culture and society", an H2 title, a large image, and 2–5 paragraphs of English prose with Italian key terms in bold. Bottom button: **Finish the lesson!**
+A header strip *Cultura e società* with the ‹ arrow, an H2 title, a large image, and 2–5 paragraphs of English prose with Italian key terms in bold. Bottom button: **Finisci la lezione!**
 
 ### 4.8 Script page (`[24]`, `[45]`)
-Reached from the lesson menu, outside the linear Next flow. It shows the scene player at the top, then "Script" (H2), then the full transcript with **SPEAKER:** above each line and vocab words highlighted. **Our additions:** clicking a line toggles its English translation underneath, and a ▶ icon on each line plays that line's audio.
+Reached from the lesson menu (*Copione*), outside the linear flow. It shows the scene player at the top, then *Copione* (H2), then the full transcript with **SPEAKER:** above each line. **Our additions:** clicking a line toggles its English translation underneath, and a ▶ icon on each line plays that line's audio.
 
 ### 4.9 Finish screen (`[46]`, `[47]`)
-Heading "Results for this lesson", the same slate % panel, "On to the next lesson!", and a wide accent **Next** button to the next lesson's intro. On the last lesson of a level it goes to the level overview with a "Level complete" banner. Reaching this screen marks the lesson **completed**.
+Heading *Risultati della lezione*, the same slate % panel, *Avanti con la prossima lezione!*, and a wide accent **Avanti** button to the next lesson's intro. On the last lesson of a level it goes to the level overview with a *Livello completato* banner. Reaching this screen marks the lesson **completed**.
 
 ### 4.10 Reset
-- **Reset exercises** (lesson menu): clears this lesson's item states and score after a confirmation dialog. The lesson goes back to not started. The error log and review cards are **kept**, because they are learning history.
-- **Reset** (level overview): the same for every lesson in the level.
+- **Azzera gli esercizi** (lesson menu): clears this lesson's item states and score after a confirmation dialog. The lesson goes back to not started. The error log and review cards are **kept**, because they are learning history.
+- **Azzera** (level overview): the same for every lesson in the level.
 
 ---
 
@@ -176,20 +174,21 @@ Heading "Results for this lesson", the same slate % panel, "On to the next lesso
 
 | State | UI and scoring |
 |---|---|
-| **Untouched** | Inputs active; Solve and Check enabled. |
+| **Untouched** | Inputs active; Soluzione and Controlla enabled. |
 | **Checked, all correct** | Every input turns **green**. Inputs, Solve and Check are disabled (greyed out, see the first two items in `[17]`). Item is *completed*, **+1 point**. |
-| **Checked, some wrong** | Correct parts turn **green and lock**. Wrong parts turn **red** and stay editable. Solve and Check stay enabled (`[07]`, the third item in `[17]`, `[34]`). Item is *completed* (attempted), **0 points**. Editing a red input clears its red state. |
+| **Checked, some wrong** | Correct parts turn **green and lock**. Wrong parts turn **red** and stay editable. Soluzione and Controlla stay enabled (`[07]`, the third item in `[17]`, `[34]`). Item is *completed* (attempted), **0 points**. Editing a red input clears its red state. |
 | **Re-check after wrong** | Evaluated again. If it's now all correct, everything turns green and locks, but the item **still scores 0**, because points come only from the first Check. The retry is still stored as an attempt. |
 | **Solved** | Correct answers are filled in, everything is disabled. Item is *completed*, **0 points**. |
-| **Self-rated** | Clicking **Good** or **Not so great** marks the item *completed* and locks the choice (the chosen button is highlighted, the other is dimmed). Scoring: see 6.1. |
+| **Self-rated** | Clicking **Bene** or **Non tanto bene** marks the exchange *completed* and locks the choice (the chosen button is highlighted, the other is dimmed). Self-ratings never score (6.1). |
 
 Other common rules:
 - **One point per item**, no matter how many gaps it has. DW counts points per exercise: `[17]` shows "3 out of 3 exercises completed. 2 points scored."
-- **Typed answers**: trim and collapse whitespace; straight `'` and curly `’` apostrophes are equal. Accents matter (*è* ≠ *e*). If the **only** difference is an accent, mark the answer red with the hint "Check the accent". Each gap can list `accept` alternatives. Matching is case-sensitive by default, configurable per gap.
+- **Speaking items are counted per exchange.** Each exchange of a `speak_rate` item, and the single rating of a `parla` item, is its own exercise in the footer counter, as on DW (`[10]`: two exchanges = "0 out of 2 exercises").
+- **Typed answers**: trim and collapse whitespace; straight `'` and curly `’` apostrophes are equal. Accents matter (*è* ≠ *e*). If the **only** difference is an accent, mark the answer red with the hint *Controlla l'accento*. It still scores 0, like any wrong answer; the leniency is only the hint and the missing review card (10.5). Each gap can list `accept` alternatives. Matching is case-sensitive by default, configurable per gap.
 - Every wrong first Check writes **error_log** rows (10.4) with the item's `error_tags`.
 - The footer counter updates live.
 - Keyboard: Enter in a text gap = Check that item; Tab moves between inputs; option buttons are focusable.
-- **Italian character helper**: a keyboard icon next to typed gaps opens a palette (à è é ì ò ù À È) that inserts at the cursor. This replaces DW's special-character icon in `[09]` and `[31]`.
+- **Italian character helper**: a keyboard icon next to typed gaps (one per gap in the full-width layout) opens a palette (à è é ì ò ù À È) that inserts at the cursor. This replaces DW's special-character icon in `[09]` and `[31]`.
 - Feedback must not rely on colour alone: add ✓ / ✗ icons.
 
 ### 5.2 Types
@@ -201,12 +200,14 @@ The `type` value is the JSON discriminator.
 - Each select turns green or red.
 
 #### 2. `text_gap`: typed gap fill (`[09]`, `[30]`)
-- A dialogue/text panel with inline text inputs sized to the answer, a character-helper icon, and an optional image + prompt bubble on the left.
+- Default layout: a dialogue/text panel with inline text inputs sized to the answer, a character-helper icon, and an optional image + prompt bubble on the left.
+- **Full-width** layout (`layout: "full"`, `[30]`): a full-width prompt bubble above a document panel with the gaps; any image sits at step level.
 - This is the workhorse for articles, pronouns, verb endings and conjugation drills.
 
 #### 3. `word_order`: tile sentence builder (`[16]`, `[17]`, `[29]`)
 - Left: an optional prompt bubble (the other speaker's line, or a sentence start like "Nicos Eltern sind wütend, …"). Right: an empty dotted **answer box** with shuffled **tiles** (light pill buttons) below. Tiles can be words, chunks or punctuation.
-- Clicking a tile moves it to the end of the answer, where it turns dark. Clicking a placed tile sends it back. Drag-reorder inside the answer is optional.
+- Clicking a tile moves it to the end of the answer, where it turns dark. Clicking a placed tile sends it back. Drag-reorder inside the answer is an M2 nice-to-have.
+- **Lines** variant (`layout: "lines"`, M2): the tiles are whole script lines stacked vertically, for the course plan's "put the lines in order".
 - Check compares the sequence with the solution (alternatives via `accept`). The answer box border turns **green or red** (`[17]`).
 - The shuffle is deterministic (seeded by item id), so the layout is stable across reloads. Never show tiles already in the solved order.
 
@@ -216,8 +217,8 @@ The `type` value is the JSON discriminator.
 - Solve is optional per item (`solvable: true`).
 
 #### 5. `multi_select`: N correct options (`[15]`, `[26]`, `[27]`, `[35]`)
-- Same layout as single_choice, but the instruction states how many are right ("There are two correct answers for each question"). Options toggle on and off; evaluation happens on **Check**. Correct picks turn green and wrong picks red. Solve marks all correct options green.
-- **Word sets** variant (`[35]`): a grid of word chips; select all that fit the category.
+- Same layout as single_choice, but the instruction or prompt states how many are right (*Ci sono due risposte giuste*). Options toggle on and off; evaluation happens on **Controlla**. Correct picks turn green and wrong picks red. Soluzione marks all correct options green.
+- DW's "word sets" (`[35]`) are just this type with short options; there is no separate chip-grid layout.
 
 #### 6. `image_choice`: pick the description for an image (`[28]`)
 - A prompt bubble ("Che cosa succede?") above an image on the left, and 2 option buttons on the right. It behaves like `single_choice`; it's a separate type only for its layout.
@@ -228,7 +229,8 @@ The `type` value is the JSON discriminator.
 - It's followed by N `single_choice` items, one per question.
 
 #### 8. `audio_choice`: listen, then choose (`[14]`, `[36]`, `[37]`, `[39]`)
-- The prompt bubble shows a transcript line with "…" where the missing line goes, plus a 🔊 button that plays the clip. Options are on the right, and it behaves like `single_choice`.
+- The prompt bubble shows a transcript line with "…" where the missing line goes, plus a 🔊 button when the item provides audio. Options are on the right, and it behaves like `single_choice`.
+- Alternatively the step carries a **clip player** as its top media (`media.kind: "clip"`, `[39]`) with its own duration, and the item prompts are plain text.
 - **Reason** variant (`[36]`, `[37]`): the prompt is a sentence start ("Adam è contento, …") and the options are clause completions ("perché …").
 
 #### 9. `word_bank`: fill gaps from given words (`[38]`)
@@ -241,20 +243,23 @@ The `type` value is the JSON discriminator.
 - Optional Info note.
 
 #### 11. `speak_rate`: audio self-assessment (`[10]`, `[12]`, `[13]`, `[40]`)
-- Rows of **exchanges**. Left: an accent-bordered bubble with the other character's line and 🔊. Right: a tinted bubble with my expected reply, which can contain placeholders ("Mi chiamo … E Lei?") for my own details.
-- After each exchange, a "How did you do?" bubble sits on the left, with two stacked buttons **Good** / **Not so great** on the right (`[10]`).
+- Rows of **exchanges**. Left: an accent-bordered bubble with the other character's line and 🔊. Right: a tinted bubble with my expected reply, which can contain placeholders ("Mi chiamo … E Lei?") for my own details. An optional Italian `hint` sits under it.
+- After each exchange, a *Com'è andata?* bubble sits on the left, with two stacked buttons **Bene** / **Non tanto bene** on the right (`[10]`). **Each exchange is its own exercise** with its own id and state.
+- A note can sit between an exchange and its rating (`exchanges[].notes`, `[10]`, `[12]`).
 - Variants: **dialogue** (`[10]`), **read_along** (`[12]`: both sides given, I read mine aloud), **personal** (`[13]`, `[40]`: a question on the left and a hint/example on the right; I answer freely).
-- **Optional recording (v1 nice-to-have):** a 🎙 button records my answer with MediaRecorder for playback next to the model audio. Recordings are stored only in the browser (IndexedDB), never uploaded.
-- **Not so great** writes an error_log row (source `speak_rate`, the item's tags) and creates a review card.
+- **Optional recording (later):** a 🎙 button records my answer with MediaRecorder for playback next to the model audio. Recordings are stored only in the browser (IndexedDB), never uploaded.
+- **Non tanto bene** writes an error_log row (source `speak_rate`, the item's tags) and, from M2, creates a review card.
 
 #### 12. `parla`: closing speaking task (our addition, always the last step)
-- A bigger open task tied to the scene, written in English with an Italian example answer. Example: "A colleague calls: tell them how your arrival went."
-- It shows a checklist of target structures ("use *l'* before a vowel twice"), an optional recording button, and the **Good / Not so great** self-rating.
-- An optional free-text box, "What did you hesitate on?". Its content goes to the error log (`source = parla_note`).
+- A bigger open task tied to the scene, written in Italian with an Italian example answer. Example: *Un collega ti chiama: raccontagli com'è andato l'arrivo.*
+- It shows a checklist of target structures in Italian (*Usa l' davanti a vocale almeno due volte*), an optional recording button (later), and the **Bene / Non tanto bene** self-rating. The rating is one exercise.
+- An optional free-text box, *Su cosa hai esitato?*. Its content goes to the error log (`source = parla_note`).
 - **Future:** speech-to-text plus AI correction (section 15).
 
 #### 13. Scene check: the Step 1 pattern (`[05]`, `[26]`)
-This is a step pattern, not a widget: the scene player as top media, followed by `dropdown`, `multi_select` or `single_choice` items about the story. Step 1 of every lesson follows it.
+This is a step pattern, not a widget: the scene player as top media, followed by `dropdown`, `multi_select` or `single_choice` items about the story. Step 1 of every lesson follows it. The scene never locks the questions.
+- Its **first item is the gist question** from the course plan, worded *Prima di guardare: …*.
+- The course plan's *Hai capito?* comprehension types map onto existing types: true/false is a `single_choice` with *Vero / Falso*; "who said what" is a `dropdown` whose options are speaker names; "put the lines in order" is `word_order` with `layout: "lines"` (M2).
 
 #### Typical lesson recipe (mirrors DW's sequences)
 1 scene check → 2 typed/dropdown grammar discovery from the dialogue (with Info) → 3 dialogue `speak_rate` → 4 grammar `dropdown`/`text_gap` → 5 `audio_choice` or `audio_gap` → 6 `reading` or `image_choice` → 7 `multi_select` / `word_bank` → 8 `word_order` → 9 personal `speak_rate` → last: `parla`. That's 8–11 steps in total.
@@ -264,19 +269,34 @@ This is a step pattern, not a widget: the scene player as top media, followed by
 ## 6. Scoring and progress model
 
 ### 6.1 Definitions
-- **Item completed**: checked at least once (right or wrong), solved, or self-rated.
-- **Item points**: 1 if the first Check was fully correct, otherwise 0. Solved = 0.
-- **Self-rated items** (`speak_rate`, `parla`): they count as completed in "X out of Y". **Recommendation:** leave them out of the points total and the % denominator, because they are not objectively scored. DW's exact rule wasn't observed; raise it in `grill-me`.
-- **Step completed**: every item in the step is completed.
-- **Lesson %** = round(100 × points ÷ number of scorable items). `[18]` shows 87% with 9/9 steps completed, and `[41]` shows 79% with 11/11.
+DW's exact % rule can't be reproduced from the screenshots (no integer number of points over `[41]`'s 37 items gives 79%), so these rules are ours (ADR-0002).
+- **Exercise**: the unit the footer counts. A checkable item is one exercise; each `speak_rate` exchange is one exercise; a `parla` item is one exercise.
+- **Exercise completed**: checked at least once (right or wrong), solved, or self-rated.
+- **Item points**: 1 if the first Check was fully correct, otherwise 0. Solved = 0. A correct retry after a wrong Check = 0, but is stored as an attempt.
+- **Scorable item**: any item that is not self-rated. Self-rated exercises (`speak_rate` exchanges, `parla`) count in "X of Y" but never in points or the % denominator, so *Bene* is not a free point.
+- **Step completed**: every exercise in the step is completed.
+- **Lesson %** = round-half-up(100 × points ÷ number of scorable items). Unattempted items count as 0.
+- **Results S/M**: S = completed steps, M = total steps.
 - **Lesson status**: `not_started` (nothing touched), `in_progress`, `completed` (Finish screen reached). Store both `last_percent` and `best_percent`.
-- **Level %** = completed lessons ÷ lessons in the level.
+- **Level %** = completed lessons ÷ the level's total **planned** lessons (sum of `planned_lessons` over its units; 30 for Ripasso A2), so it reflects progress through the whole course, not just the lessons written so far.
 
 ### 6.2 Exact footer text
-`{completed} out of {total} exercises completed. {points} points scored.`
+`{completed} di {total} esercizi completati. {points} punti.` (singular *1 punto*, *1 esercizio completato*).
 
-### 6.3 Language of the UI
-All chrome, step titles, instructions, grammar and culture text are in **English**. Prompts, dialogues, options, reading texts and vocab are in **Italian**, as on DW. A setting, "Instructions in Italian", uses `instruction_it` when the content provides it (planned from B1).
+### 6.3 Language rule (ADR-0003)
+**Teaching text and translations are in English; everything else is in Italian.**
+
+| Italian | English |
+|---|---|
+| all chrome: buttons, menus, page headers, footer, results lines, dialogs | grammar page prose and `terms` definitions |
+| step `title` and `instruction` | note text (Info, Consiglio, Attenzione!), because notes explain grammar |
+| intro page: topic, summary, objectives | error-tag explanations |
+| lesson card topic line, grammar label | vocab meanings, script line translations, *Parole nuove* glosses |
+| `speak_rate` `hint`; `parla` `task` and `checklist` | the culture page |
+| note labels: *Info · Consiglio · Parole nuove · Attenzione!* | optional `instruction_en` (behind the EN toggle) |
+| prompts, dialogues, options, reading texts, vocab terms | |
+
+All UI strings live in one module (`ui-it.ts`), never inline in components. There is no "instruction language" setting.
 
 ---
 
@@ -304,22 +324,22 @@ All chrome, step titles, instructions, grammar and culture text are in **English
 **Exercise step** (`[10]`, `[16]`)
 ```
 ┌ lesson bar ─────────  Benvenuto a Genova!  ─────────── ⌄ ┐
-  A2 / Course / Benvenuto a Genova! / il, lo, l' or la?
+  A2 / Corso / Benvenuto a Genova! / il, lo, l' o la?
                            2 / 6
-  il, lo, l' or la?
-  Choose the right definite article.
-  Script ⌄
+  il, lo, l' o la?
+  Scegli l'articolo determinativo giusto.              [EN]
+  Copione ⌄
   ┌prompt bubble──────┐      ┌text panel────────────────┐
   │ Che cosa ha Adam? │      │ [… ▾] valigia, [… ▾] …   │
   └───────────────────┘      └──────────────────────────┘
    ⓘ Attenzione! Before a vowel, il and la become l'.
-                    [Solve] [Check]
-░░░░░░  0 out of 1 exercises completed. 0 points scored.  ░░░░
-░░░░░░                    [Next]                          ░░░░
+                  [Soluzione] [Controlla]
+░░░░░░      0 di 1 esercizi completati. 0 punti.          ░░░░
+░░░░░░                    [Avanti]                        ░░░░
                            2 / 6
 ```
 
-**Results / Finish** (`[18]`, `[46]`): heading, encouragement line, a slate panel with "87%" and "Results for this lesson: 9/9", then the buttons.
+**Results / Finish** (`[18]`, `[46]`): heading, encouragement line, a slate panel with "87%" and *Risultati della lezione: 9/9*, then the buttons.
 
 ### 7.1 Visual design
 - Keep DW's **layout grammar**: a narrow centred column (~720 px) for exercises, wide media (~960 px), a tinted full-width footer band, speech-bubble prompts with a tail, light-tinted pill option buttons, an accent colour for Check/Next/Finish, and a dark link colour for titles.
@@ -328,24 +348,29 @@ All chrome, step titles, instructions, grammar and culture text are in **English
 
 ---
 
-## 8. Recommended tech stack (recommendation, not mandate)
+## 8. Tech stack (decided, ADR-0001)
 
-**Recommended: Next.js (App Router) + TypeScript**, run locally with `npm run dev`.
+**Next.js (App Router) + TypeScript**, run locally with `npm run dev`.
 - One process gives both the UI and a small server-side API (Route Handlers or Server Actions). That matters because the **Neon connection string must stay on the server**, never in the browser.
 - File-based routes map 1:1 onto `/:level/:lesson/esercizi/:n`.
 - Lesson JSON is read from disk on the server, with no CMS needed.
 
 Supporting pieces:
-- **Drizzle ORM** + `@neondatabase/serverless` for Neon, with SQL migrations in the repo.
-- **Zod** for the content schema, plus `npm run content:check` (also run in GitHub Actions) to validate every lesson file, check ID uniqueness, and check that every referenced media file exists.
+- **Drizzle ORM** with Neon's **HTTP driver** (`@neondatabase/serverless`, `drizzle-orm/neon-http`). It talks HTTPS on port 443, which a locked-down work network is far more likely to allow than Postgres's port 5432. SQL migrations live in the repo.
+- **Zod** for the content schema, plus `npm run content:check` to validate every lesson file, check ID uniqueness, and check that every referenced media file exists.
 - **Tailwind CSS** + a few headless primitives (dialog, popover, drawer).
-- **Vitest** for answer comparison and scoring; **Playwright** for one end-to-end lesson.
+- **Vitest** for answer comparison and scoring (pure functions, no DB); **Playwright** for one end-to-end lesson.
 
-Equally valid alternative: **Vite + React** SPA plus a tiny **Hono** API server. It's lighter and has less framework magic, but means two processes (or a dev proxy) and hand-rolled routing.
+Rejected: Vite + React SPA plus a Hono API server (two processes, hand-rolled routing).
 
-Per-computer setup: `git clone` → `npm i` → copy `.env.example` to `.env.local` and set `DATABASE_URL` (Neon) → `npm run db:migrate` (once) → `npm run dev`. Never commit `.env*`.
+**Databases.** One Neon project with two branches: `main` holds my real progress (`DATABASE_URL`), `dev` is for experiments and Playwright runs (`DATABASE_URL_TEST`). There is no login: the seed script creates one `profile` row with a fixed UUID, and every request uses it.
 
-**Sync resilience:** progress writes are optimistic and go through a small client queue. If Neon is unreachable (e.g. a locked-down work network), writes wait in IndexedDB and retry, and a footer indicator shows "Synced / Pending / Offline". Conflict rule per item: the earliest `first_check_correct` wins, and the latest state wins for everything else.
+Per-computer setup: `git clone` → `npm i` → copy `.env.example` to `.env.local` and set `DATABASE_URL` and `DATABASE_URL_TEST` → `npm run db:migrate` (once per branch) → `npm run db:seed` → `npm run dev`. Never commit `.env*`.
+
+**Sync resilience.** Progress writes are optimistic: the UI updates first, the write follows.
+- **M1:** a failed write is kept in memory and retried every 30 s until it succeeds or the tab closes. The footer shows *Salvato* / *In attesa* / *Offline: non salvato*.
+- **M2:** the same queue persists to IndexedDB, so pending writes survive a reload.
+- Conflict rule per item: the earliest `first_check_correct` wins, and the latest state wins for everything else.
 
 ---
 
@@ -353,31 +378,43 @@ Per-computer setup: `git clone` → `npm i` → copy `.env.example` to `.env.loc
 
 ```
 content/
-  course.json                      # levels → units → lesson ids, in order
+  course.json                      # levels → units (in order), each with planned_lessons and its lesson ids
   characters.json                  # names, TTS voice ids, illustration style notes
-  error-tags.json                  # tag → English explanation + link to grammar page
+  error-tags.json                  # tag → English explanation + link to the unit/grammar page that teaches it
   levels/a2/units/01-arrivo-a-genova/
-      unit.json                    # unit number, title, description
+      unit.json                    # unit number, title, description, planned_lessons
       lessons/01-benvenuto-a-genova.json
   media/
     images/a2/u01/l01/poster.webp, panel-01.webp, …
     audio/a2/u01/l01/<hash>.mp3    # generated, see §11
 ```
 
-IDs are stable and hierarchical: lesson `a2.u01.l01`, step `a2.u01.l01.s03`, item `a2.u01.l01.s03.i02`, gap `g1`. **Never change an ID once progress exists.** When content changes, bump the lesson's `version`; progress rows store the version they were made against.
+`course.json` lists **every unit from the course plan** (`docs/course-plan.md`), including units with no lesson files yet, so the level overview can show them as *In arrivo* and the level % can use the planned total.
+
+IDs are stable and hierarchical: lesson `a2.u01.l01`, step `a2.u01.l01.s03`, item `a2.u01.l01.s03.i02`, speaking exchange `a2.u01.l01.s05.i01.e2`, gap `g1`. **Never change an ID once progress exists.** Bump the lesson's `version` when content changes; it is kept as a record. Staleness is detected per item by content hash (10.3), so forgetting to bump `version` breaks nothing.
 
 ### 9.1 Lesson file schema (TypeScript notation; implement with Zod)
 
+Field language follows the rule in 6.3: fields without a suffix hold Italian; fields ending in `_en` hold English.
+
 ```ts
+type Course = {
+  levels: {
+    id: "a2" | "b1" | "b2"; title: string; description: string;
+    units: { id: string; number: number; title: string; planned_lessons: number; lessons: string[] /* lesson ids, may be empty */ }[];
+  }[];
+};
+
 type Lesson = {
   id: string;                 // "a2.u01.l01"
   version: number;
+  status: "draft" | "ready";  // drafts show a Bozza badge; both are playable and validated
   slug: string;               // "benvenuto-a-genova"
-  title: string;              // Italian title (card + lesson bar)
-  topic_en: string;           // card line 1 / intro heading
+  title: string;              // card + lesson bar
+  topic: string;              // card line 1 / intro heading
   grammar_label?: string;     // card line 2
-  summary_en: string;
-  objectives_en: string[];
+  summary: string;            // intro page
+  objectives: string[];       // intro page, "In questa lezione impari a…"
   scene: Scene;
   steps: Step[];
   grammar: GrammarPage[];
@@ -387,7 +424,7 @@ type Lesson = {
 
 type Scene = {
   poster: string;             // path under content/media
-  duration_s: number;
+  duration_s: number;         // real duration once audio exists; otherwise estimated (§11.3)
   panels: { image: string; from_line: string }[];   // panel shown from this line id onward
   lines: ScriptLine[];
 };
@@ -395,11 +432,14 @@ type ScriptLine = { id: string; speaker: string; it: string; en: string; audio?:
 
 type Step = {
   id: string;
-  title_en: string;
-  instruction_en: string;
-  instruction_it?: string;
-  media?: { kind: "scene" } | { kind: "image"; src: string; alt: string };
-  script?: "scene" | ScriptLine[];          // what the collapsible Script shows
+  title: string;
+  instruction: string;
+  instruction_en?: string;    // shown behind the EN toggle; only for tricky instructions
+  media?:
+    | { kind: "scene" }
+    | { kind: "image"; src: string; alt: string }
+    | { kind: "clip"; from_line: string; to_line: string };   // audio-only clip player, M2
+  script?: "scene" | ScriptLine[];          // what the collapsible Copione shows
   reading?: string;                          // markdown document (reading steps)
   items: Item[];
 };
@@ -413,17 +453,24 @@ type ItemBase = {
 
 type Gap = { id: string; answer: string; accept?: string[]; case_sensitive?: boolean };
 
+type Exchange = {
+  id: string;                 // "e1"; full exercise id = item id + "." + exchange id
+  other: string; other_audio?: string;
+  me: string; me_audio?: string;
+  hint?: string;
+  notes?: Note[];             // rendered between this exchange and its rating
+};
+
 type Item = ItemBase & (
   | { type: "dropdown";  text: string; gaps: (Gap & { options: string[] })[] }   // text uses {{g1}} markers
-  | { type: "text_gap";  text: string; gaps: Gap[] }
+  | { type: "text_gap";  text: string; gaps: Gap[]; layout?: "default" | "full" }
   | { type: "word_bank"; text: string; bank: string[]; gaps: Gap[] }
   | { type: "audio_gap"; clip: { from_line: string; to_line: string }; text: string; gaps: Gap[] }
-  | { type: "word_order"; tiles: string[] /* correct order; the app shuffles */; accept?: string[][] }
+  | { type: "word_order"; tiles: string[] /* correct order; the app shuffles */; accept?: string[][]; layout?: "words" | "lines" }
   | { type: "single_choice" | "image_choice" | "audio_choice"; options: string[]; answer: number }
   | { type: "multi_select"; options: string[]; answers: number[] }
-  | { type: "speak_rate"; variant: "dialogue" | "read_along" | "personal";
-      exchanges: { other: string; other_audio?: string; me: string; me_audio?: string; hint_en?: string }[] }
-  | { type: "parla"; task_en: string; example_it: string; checklist_en: string[] }
+  | { type: "speak_rate"; variant: "dialogue" | "read_along" | "personal"; exchanges: Exchange[] }
+  | { type: "parla"; task: string; example: string; checklist: string[] }
 );
 
 type GrammarPage = { id: string; title: string; blocks: GrammarBlock[] };
@@ -431,22 +478,31 @@ type GrammarBlock =
   | { kind: "text"; md: string }
   | { kind: "example"; image?: string; it: string /* **bold** = target form */; en?: string }
   | { kind: "table"; columns: string[]; rows: string[][] }
-  | { kind: "arrow_rule"; before: string; after: string; highlight: string }   // rendered as SVG
-  | { kind: "terms"; items: { term: string; def_en: string }[] };
+  | { kind: "rule"; rows: RuleSegment[][]; arrows?: RuleArrow[] }   // rendered as SVG
+  | { kind: "terms"; items: { term: string; def_en: string }[] };   // full-width block at the page bottom
+
+type RuleSegment = { text: string; style?: "plain" | "bold" | "italic" | "highlight" };
+type RuleArrow = {
+  from: [row: number, segment: number];
+  to: [row: number, segment: number];
+  kind: "down" | "diagonal" | "swap";       // M1 implements "down" only
+};
 
 type VocabEntry = {
   id: string; it: string /* "la valigia" */; plural?: string; gender?: "m" | "f";
   pos: "noun" | "verb" | "adj" | "adv" | "phrase" | "other";
-  forms?: string; en: string; image?: string; audio?: string;
+  forms?: string;             // free text: verb forms, "solo singolare", "dal genovese", …
+  sort_key?: string;          // overrides the default sort (headword without its article)
+  en: string; image?: string; audio?: string;
 };
 
-type CulturePage = { title: string; image: string; md: string };
+type CulturePage = { title: string; image: string; md: string };   // English prose
 ```
 
 - `{{g1}}` marks a gap inside `text`; `\n` is a line break; `**SPEAKER:**` prefixes are allowed in dialogue texts.
-- Vocab links: any `[[word|v-id]]` in prompts, readings or script lines renders as a highlighted vocab link.
+- Vocab links (M2): any `[[word|v-id]]` in prompts, readings or script lines renders as a highlighted vocab link.
 - `audio` / `*_audio` fields are filled in by the audio script (§11), never by hand. Omit them while drafting.
-- Validation rules: every `answer` must be one of `options` for dropdowns, every gap marker must have a gap entry, `answers` indexes must be in range, and the last step must contain a `parla` item.
+- Validation rules: every `answer` must be one of `options` for dropdowns, every gap marker must have a gap entry, `answers` indexes must be in range, exchange ids are unique within their item, `rule` arrow indexes point at existing segments, every lesson id in `course.json` has a file and vice versa, and the last step must contain a `parla` item.
 
 ### 9.2 Example lesson: Ripasso A2, Unit 1 "Arrivo a Genova", Lesson 1
 
@@ -456,16 +512,17 @@ Story beat from the course plan: Adam arrives at Genova Piazza Principe and meet
 {
   "id": "a2.u01.l01",
   "version": 1,
+  "status": "ready",
   "slug": "benvenuto-a-genova",
   "title": "Benvenuto a Genova!",
-  "topic_en": "Arriving and greeting people",
-  "grammar_label": "Articles: il, lo, l', la · i, gli, le",
-  "summary_en": "Adam gets off the train at Genova Piazza Principe. His landlady, Signora Pina, is waiting on the platform. She is curious, talks fast and has opinions about his luggage.",
-  "objectives_en": [
-    "Greet someone formally and introduce yourself",
-    "Choose the right definite article: il, lo, l', la",
-    "Form the plural articles: i, gli, le",
-    "Name your travel things: la valigia, lo zaino, l'ombrello"
+  "topic": "Arrivare a Genova e salutare",
+  "grammar_label": "Articoli: il, lo, l', la · i, gli, le",
+  "summary": "Adam scende dal treno a Genova Piazza Principe. La sua padrona di casa, la signora Pina, lo aspetta sul binario. È curiosa, parla veloce e ha le sue opinioni sui bagagli.",
+  "objectives": [
+    "salutare in modo formale e presentarti",
+    "scegliere l'articolo determinativo giusto: il, lo, l', la",
+    "formare gli articoli plurali: i, gli, le",
+    "nominare le cose del viaggio: la valigia, lo zaino, l'ombrello"
   ],
   "scene": {
     "poster": "images/a2/u01/l01/poster.webp",
@@ -492,19 +549,25 @@ Story beat from the course plan: Adam arrives at Genova Piazza Principe and meet
   "steps": [
     {
       "id": "a2.u01.l01.s01",
-      "title_en": "Arriving in Genoa",
-      "instruction_en": "Watch the scene and answer the questions.",
+      "title": "Arrivo a Genova",
+      "instruction": "Guarda la scena e rispondi alle domande.",
       "media": { "kind": "scene" },
       "script": "scene",
       "items": [
         {
           "id": "a2.u01.l01.s01.i01", "type": "single_choice",
+          "prompt": "Prima di guardare: secondo te, chi aspetta Adam alla stazione?",
+          "options": ["La padrona di casa", "Un collega di lavoro", "Nessuno"],
+          "answer": 0
+        },
+        {
+          "id": "a2.u01.l01.s01.i02", "type": "single_choice",
           "prompt": "Com'è andato il viaggio di Adam?",
           "options": ["Bene, ma il treno era in ritardo.", "Male: ha perso il treno.", "Benissimo, il treno era in anticipo."],
           "answer": 0
         },
         {
-          "id": "a2.u01.l01.s01.i02", "type": "multi_select",
+          "id": "a2.u01.l01.s01.i03", "type": "multi_select",
           "prompt": "Che cosa ha Adam con sé? Ci sono tre risposte giuste.",
           "options": ["la valigia", "la bicicletta", "lo zaino", "l'ombrello"],
           "answers": [0, 2, 3],
@@ -514,8 +577,8 @@ Story beat from the course plan: Adam arrives at Genova Piazza Principe and meet
     },
     {
       "id": "a2.u01.l01.s02",
-      "title_en": "il, lo, l' or la?",
-      "instruction_en": "Choose the right definite article.",
+      "title": "il, lo, l' o la?",
+      "instruction": "Scegli l'articolo determinativo giusto.",
       "script": "scene",
       "items": [
         {
@@ -535,8 +598,8 @@ Story beat from the course plan: Adam arrives at Genova Piazza Principe and meet
     },
     {
       "id": "a2.u01.l01.s03",
-      "title_en": "One suitcase, two suitcases",
-      "instruction_en": "Write the plural article: i, gli or le.",
+      "title": "Una valigia, due valigie",
+      "instruction": "Scrivi l'articolo plurale: i, gli o le.",
       "items": [
         {
           "id": "a2.u01.l01.s03.i01", "type": "text_gap",
@@ -557,8 +620,8 @@ Story beat from the course plan: Adam arrives at Genova Piazza Principe and meet
     },
     {
       "id": "a2.u01.l01.s04",
-      "title_en": "How was the journey?",
-      "instruction_en": "Put the words in the right order to answer Signora Pina.",
+      "title": "Com'è andato il viaggio?",
+      "instruction": "Metti le parole nell'ordine giusto per rispondere alla signora Pina.",
       "items": [
         {
           "id": "a2.u01.l01.s04.i01", "type": "word_order",
@@ -575,31 +638,32 @@ Story beat from the course plan: Adam arrives at Genova Piazza Principe and meet
     },
     {
       "id": "a2.u01.l01.s05",
-      "title_en": "Your turn: meeting your landlady",
+      "title": "Tocca a te: incontri la padrona di casa",
+      "instruction": "Ascolta la signora Pina, rispondi ad alta voce e completa con i tuoi dati. Poi valuta come è andata.",
       "instruction_en": "Listen to Signora Pina, answer aloud and complete with your own details. Then rate yourself.",
       "items": [
         {
           "id": "a2.u01.l01.s05.i01", "type": "speak_rate", "variant": "dialogue",
           "exchanges": [
-            { "other": "Buongiorno! Lei è …, vero?", "me": "Sì, sono io. Buongiorno, signora!" },
-            { "other": "Com'è andato il viaggio?", "me": "Bene, grazie. Il treno / L'aereo era …" },
-            { "other": "Ha tutto?", "me": "Sì: la valigia, lo zaino e …", "hint_en": "Name 2–3 things, always with the article." }
+            { "id": "e1", "other": "Buongiorno! Lei è …, vero?", "me": "Sì, sono io. Buongiorno, signora!",
+              "notes": [{ "kind": "tip", "text_en": "Signora Pina uses Lei (formal). Stay formal too: E Lei?" }] },
+            { "id": "e2", "other": "Com'è andato il viaggio?", "me": "Bene, grazie. Il treno / L'aereo era …" },
+            { "id": "e3", "other": "Ha tutto?", "me": "Sì: la valigia, lo zaino e …", "hint": "Nomina 2–3 cose, sempre con l'articolo." }
           ],
-          "error_tags": ["article.elision", "register.lei"],
-          "notes": [{ "kind": "tip", "text_en": "Signora Pina uses Lei (formal). Stay formal too: E Lei?" }]
+          "error_tags": ["article.elision", "register.lei"]
         }
       ]
     },
     {
       "id": "a2.u01.l01.s06",
-      "title_en": "Parla! Your arrival",
-      "instruction_en": "Speak freely for about a minute. Record yourself if you like, then rate how it went.",
+      "title": "Parla! Il tuo arrivo",
+      "instruction": "Parla liberamente per circa un minuto, poi valuta come è andata.",
       "items": [
         {
           "id": "a2.u01.l01.s06.i01", "type": "parla",
-          "task_en": "A colleague from Energetica Ligure calls to ask how your arrival in Genoa went. Tell them about the journey, what you brought, and your first impression of the flat and the caruggi.",
-          "example_it": "Il viaggio è andato bene, ma il treno era in ritardo. Ho portato la valigia, lo zaino e l'ombrello. L'appartamento è nel centro storico, in un caruggio molto stretto…",
-          "checklist_en": ["Use l' before a vowel at least twice", "Use one plural with gli", "Use era once"],
+          "task": "Un collega di Energetica Ligure ti chiama e ti chiede com'è andato il tuo arrivo a Genova. Raccontagli il viaggio, che cosa hai portato e la tua prima impressione dell'appartamento e dei caruggi.",
+          "example": "Il viaggio è andato bene, ma il treno era in ritardo. Ho portato la valigia, lo zaino e l'ombrello. L'appartamento è nel centro storico, in un caruggio molto stretto…",
+          "checklist": ["Usa l' davanti a vocale almeno due volte", "Usa un plurale con gli", "Usa era almeno una volta"],
           "error_tags": ["article.elision", "article.plural_gli"]
         }
       ]
@@ -627,17 +691,22 @@ Story beat from the course plan: Adam arrives at Genova Piazza Principe and meet
       "blocks": [
         { "kind": "table", "columns": ["Singular", "Plural"],
           "rows": [["il vicolo", "i vicoli"], ["lo zaino", "gli zaini"], ["l'appartamento", "gli appartamenti"], ["la valigia", "le valigie"], ["l'agenzia", "le agenzie"]] },
-        { "kind": "arrow_rule", "before": "lo straniero", "after": "gli stranieri", "highlight": "gli" },
+        { "kind": "rule",
+          "rows": [
+            [{ "text": "lo", "style": "highlight" }, { "text": " straniero" }],
+            [{ "text": "gli", "style": "highlight" }, { "text": " stranieri" }]
+          ],
+          "arrows": [{ "from": [0, 0], "to": [1, 0], "kind": "down" }] },
         { "kind": "text", "md": "**lo** and masculine **l'** both become **gli**. Feminine **l'** becomes **le**, with no apostrophe." }
       ]
     }
   ],
   "vocab": [
     { "id": "v-appartamento", "it": "l'appartamento", "plural": "gli appartamenti", "gender": "m", "pos": "noun", "en": "flat, apartment" },
-    { "id": "v-caruggio", "it": "il caruggio", "plural": "i caruggi", "gender": "m", "pos": "noun", "forms": "Genoese word", "en": "narrow alley in Genoa's old town" },
+    { "id": "v-caruggio", "it": "il caruggio", "plural": "i caruggi", "gender": "m", "pos": "noun", "forms": "dal genovese", "en": "narrow alley in Genoa's old town" },
     { "id": "v-ombrello", "it": "l'ombrello", "plural": "gli ombrelli", "gender": "m", "pos": "noun", "en": "umbrella" },
     { "id": "v-perdersi", "it": "perdersi", "pos": "verb", "forms": "mi perdo, si perde, mi sono perso/a", "en": "to get lost" },
-    { "id": "v-ritardo", "it": "in ritardo", "pos": "phrase", "en": "late, delayed" },
+    { "id": "v-ritardo", "it": "in ritardo", "pos": "phrase", "sort_key": "ritardo", "en": "late, delayed" },
     { "id": "v-straniero", "it": "lo straniero", "plural": "gli stranieri", "gender": "m", "pos": "noun", "en": "foreigner (male)" },
     { "id": "v-valigia", "it": "la valigia", "plural": "le valigie", "gender": "f", "pos": "noun", "en": "suitcase" },
     { "id": "v-viaggio", "it": "il viaggio", "plural": "i viaggi", "gender": "m", "pos": "noun", "en": "journey, trip" },
@@ -661,7 +730,7 @@ There's a single user, but every table keeps a `user_id` so a second profile sta
 ### 10.1 `profile`
 | column | type | notes |
 |---|---|---|
-| id | uuid PK | one row |
+| id | uuid PK | one row, with a fixed UUID created by `npm run db:seed`; there is no login |
 | display_name | text | |
 | settings | jsonb | instruction language, audio speed, recording on/off, subtitles |
 | created_at | timestamptz | |
@@ -680,7 +749,9 @@ There's a single user, but every table keeps a `user_id` so a second profile sta
 | PK | (user_id, lesson_id) | |
 
 ### 10.3 `item_state` (current state) and `exercise_attempt` (history)
-**`item_state`**: `user_id`, `item_id`, `lesson_id`, `status` (`untouched` · `checked_correct` · `checked_wrong` · `solved` · `rated_good` · `rated_not_great`), `first_check_correct` bool, `points` smallint (0/1), `answer` jsonb (current inputs, to restore the UI), `updated_at`. PK (user_id, item_id). Reset deletes these rows for the lesson.
+**`item_state`**: `user_id`, `item_id`, `lesson_id`, `status` (`untouched` · `checked_correct` · `checked_wrong` · `solved` · `rated_good` · `rated_not_great`), `first_check_correct` bool, `points` smallint (0/1), `answer` jsonb (current inputs, to restore the UI), `content_hash` text, `updated_at`. PK (user_id, item_id). Reset deletes these rows for the lesson.
+- `item_id` is the id of one **exercise**: an item id, or for speaking items an exchange id (`a2.u01.l01.s05.i01.e2`).
+- `content_hash` is a hash of that exercise's content when the row was written. On load, a row whose hash no longer matches the current content is ignored, and the exercise shows as untouched. Every other exercise in the lesson keeps its state.
 
 **`exercise_attempt`** (append-only, never reset): `id`, `user_id`, `item_id`, `lesson_id`, `content_version`, `action` (`check` · `solve` · `rate` · `reset`), `answer` jsonb, `result` jsonb (per-gap correct/incorrect), `correct` bool, `created_at`.
 
@@ -716,10 +787,11 @@ The `manual` source lets me paste corrections from voice sessions with my Italia
 
 Rules:
 - Finishing a lesson creates `vocab` cards for its vocab list.
-- A wrong first Check or a **Not so great** rating creates (or resets) an `item` card for that item, due tomorrow.
+- A wrong first Check or a **Non tanto bene** rating creates (or resets) an `item` card for that item, due tomorrow.
 - Accent-only misses are logged but don't create cards.
 - **Review hub** (`/ripasso`): "Due today" (vocab + items + errors, mixed, in the same item UI), "My top error tags" (counts over the last 30 days; clicking a tag starts a drill of items with that tag from completed lessons), and "Add a correction" (manual entries).
-- **Ripasso step (optional, per lesson):** if `settings.inject_review` is on, the app inserts an extra "Ripasso personale" step before *Parla!* with 2–3 due item cards whose tags match the lesson. This implements the course plan's "plus 2–3 items drawn from your own error log".
+- **Ripasso personale step:** the app inserts an extra step before *Parla!* with 2–3 due item cards whose tags match the lesson. This implements the course plan's "plus 2–3 items drawn from your own error log". It is **on by default** once the Review hub exists (M2); `settings.inject_review` turns it off. Its scoring rules are decided in the M2 grilling.
+- The details of this section (SM-2 parameters, how error cards look, tag drills) are settled in a separate grilling before M2.
 
 ### 10.6 `feedback_note`
 `id`, `user_id`, `scope` (`level` · `lesson` · `item`), `ref_id`, `text`, `created_at`, `done` bool. These are my notes about content to fix.
@@ -730,7 +802,9 @@ Rules:
 
 ### 11.1 Audio: TTS generated when authoring, committed as files
 - `npm run content:audio` walks every lesson file. For each script line, prompt with audio, speak_rate exchange and vocab entry it computes `hash(text + voice + speed)`. If `media/audio/<level>/<unit>/<lesson>/<hash>.mp3` is missing, it calls the TTS provider and saves the file, then writes the path into a sidecar `audio-map.json` (so lesson JSON stays hand-editable). It's idempotent: only changed lines regenerate.
-- Providers (pick one): **Azure Speech** or **Google Cloud TTS** (good Italian neural voices, cheap, SSML for pauses), **ElevenLabs** (most natural, pricier) or **OpenAI TTS**. Each character gets a fixed voice in `characters.json`: Pina older female, Giulia female, Marco fast male, Elena precise female, Adam male, Sofia female with a Spanish touch if available.
+- **Before any MP3 exists** (M1), every 🔊 button and the scene player fall back to the browser's built-in `speechSynthesis` with an Italian voice (Windows Edge and Chrome ship one). No API keys are needed. A generated MP3, when present, always wins.
+- **Voices are standard Italian.** TTS can't reliably do a regional accent, so Genoese colour goes into the dialogue text instead (*belin*, *mugugno*, *caruggi*).
+- Providers (pick one, decided before M3): **Azure Speech** or **Google Cloud TTS** (good Italian neural voices, cheap, SSML for pauses), **ElevenLabs** (most natural, pricier) or **OpenAI TTS**. Each character gets a fixed voice in `characters.json`: Pina older female, Giulia female, Marco fast male, Elena precise female, Adam male, Sofia female with a Spanish touch if available.
 - Scene audio = line clips joined with ~400 ms gaps. The script records each line's start time so panels, subtitles and `audio_gap` clips can sync.
 - Vocab audio at 0.9× speed.
 - TTS API keys live only in `.env.local` and are used only by the script. The running app needs no AI keys.
@@ -740,11 +814,19 @@ Rules:
 - `content/style-guide.md`: a flat or semi-flat editorial illustration style, a warm Ligurian palette, and **character model sheets** (Adam, Giulia, Marco, Elena, Pina, Luca, Sofia) with fixed faces, hair and clothes, plus reference images for each.
 - Per lesson: 1 poster (16:9, 1600 px), 3–6 scene panels, 0–4 item images (800 px), 1–2 grammar example images, 1 culture image (my own Genoa photos also work).
 - Generate with an image model that accepts reference images for consistency. Export WebP, and store `alt` text in the JSON.
-- Grammar rule images are **components** (`arrow_rule`), not generated pictures.
+- Grammar rule images are **components** (`rule` blocks), not generated pictures.
 - During development, a placeholder generator (solid colour + caption) keeps the slice unblocked.
 
 ### 11.3 Scene player
 It replaces DW's video player. It shows the poster with ▶ and the duration, then crossfades between panels at each panel's `from_line` as the audio plays. Subtitles: off / IT / IT + EN. Controls: play/pause, previous/next line, speed 0.75× / 1×, scrubber.
+
+**Fallback mode** (no MP3s, `speechSynthesis` speaks each line in turn):
+- The scrubber becomes line-based ("riga 4 di 11"), with previous/next line buttons; there is no continuous seek.
+- The duration is estimated from text length and shown with a tilde (*~01:00*).
+- Panels switch when the line named in `from_line` starts speaking.
+- 0.75× sets the voice's speaking rate.
+
+Once real MP3s exist, the player switches to a true timeline automatically.
 
 ---
 
@@ -752,12 +834,13 @@ It replaces DW's video player. It shows the poster with ▶ and the duration, th
 - A lesson step renders in under 300 ms locally. Progress writes are optimistic with background sync.
 - It works in current Chrome, Edge and Firefox on Windows and macOS. A work laptop may block the microphone or Neon, so recording and sync must fail gracefully, and the app stays usable.
 - The app runs with no TTS/image API keys present.
-- CI on every PR: lint, typecheck, Vitest, `content:check`.
+- CI on every PR: lint, typecheck, Vitest, `content:check`. None of these need a database. Playwright runs **locally only**, against the Neon `dev` branch, so no DB secret lives in GitHub.
 - No analytics or telemetry.
 
 ---
 
-## 13. Suggested issue breakdown (input for `to-issues`)
+## 13. Original issue breakdown (reference)
+M1 is tracked as GitHub issues, which supersede this list. It is kept as a checklist for later milestones.
 1. Scaffold: Next.js + TS + Tailwind + ESLint + Vitest + GitHub Actions.
 2. Neon + Drizzle: schema from §10, migrations, `.env.example`, a seed profile.
 3. Content: Zod schema (§9.1), loader, `content:check`, the example lesson (§9.2) with placeholder media.
@@ -777,7 +860,7 @@ It replaces DW's video player. It shows the poster with ▶ and the duration, th
 17. `speak_rate` (+ optional recording).
 18. `parla`.
 19. Results screen + Correct my mistakes.
-20. Grammar pages (text, example, table, arrow_rule, terms).
+20. Grammar pages (text, example, table, rule, terms).
 21. Vocabulary page.
 22. Culture page, Script page, Finish screen, next-lesson navigation.
 23. Review hub v1 + review_card scheduling + manual corrections.
@@ -791,21 +874,23 @@ It replaces DW's video player. It shows the poster with ▶ and the duration, th
 **Goal:** play one complete lesson (`a2.u01.l01` from §9.2) from the level overview to the Finish screen on computer A, then open computer B and see the same progress.
 
 **In scope**
-- Level overview for Ripasso A2 showing unit 1 with this real lesson card. Other lessons appear as disabled "coming soon" stub cards.
-- Intro page with the scene player. Placeholder images are fine, and the audio can be TTS or silent with subtitles.
-- All six steps, with the item types they use: `single_choice`, `multi_select`, `dropdown`, `text_gap`, `word_order`, `speak_rate`, `parla`. Full Check / Solve / red-green / disabling / scoring behaviour and the live footer counter.
-- Collapsible Script on steps; Script page from the lesson menu.
-- Results screen (%, steps, Correct my mistakes, Continue), 2 grammar pages, the vocabulary page, the culture page, and the Finish screen.
-- Lesson menu incl. Reset exercises; level Reset.
-- Neon persistence for `lesson_progress`, `item_state`, `exercise_attempt` and `error_log`.
-- CI with `content:check`; Vitest for answer comparison and scoring; one Playwright happy path.
+- Home page with three level cards (B1 and B2 disabled, *In arrivo*) and *Continua da dove eri*.
+- Level overview for Ripasso A2: all 10 units from the course plan; unit 1 shows this real lesson card, units 2–10 show one *In arrivo* card each.
+- Intro page with the scene player. Placeholder images; audio through the `speechSynthesis` fallback (§11).
+- All six steps, with the item types they use: `single_choice`, `multi_select`, `dropdown`, `text_gap` (incl. character helper and accent hint), `word_order` (click to place), `speak_rate`, `parla`. Full Controlla / Soluzione / red-green / disabling / scoring behaviour and the live footer counter.
+- EN toggle for instructions; collapsible Copione on steps; Copione page from the lesson menu.
+- Results screen (%, steps, Correggi i miei errori, Continua), 2 grammar pages (incl. a `rule` block with a down arrow), the vocabulary page, the culture page, the ‹ › review sequence, and the Finish screen.
+- Lesson menu incl. Azzera gli esercizi; level Azzera.
+- Neon persistence for `lesson_progress`, `item_state`, `exercise_attempt` and `error_log`, with the in-memory retry and *Offline: non salvato* indicator.
+- All UI text in Italian from `ui-it.ts`.
+- CI with lint, typecheck, Vitest (answer comparison, scoring) and `content:check`; one local Playwright happy path.
 
-**Out of scope for M1:** `image_choice`, `reading`, `audio_choice`, `word_bank`, `audio_gap`, the Review hub, the offline queue, recordings, real illustrations, any further content.
+**Out of scope for M1:** `image_choice`, `reading`, `audio_choice`, `word_bank`, `audio_gap`, `clip` media, `word_order` lines layout and drag-reorder, vocab-link popovers, the Feedback textarea, a Settings page, the Review hub and Ripasso personale step, the IndexedDB offline queue, recordings, real illustrations and audio, any further content.
 
 **Done when:** I finish the lesson and see the correct %, then close the browser, run the app on my other computer, and the level overview shows the lesson as completed with the same %. Reopening a step there shows my locked green/red answers.
 
 **Next milestones (suggested)**
-- M2: the remaining exercise types; lessons 2–3 of unit A2.1; Review hub v1.
+- M2 (starts with its own grilling): the remaining exercise types and layouts; lessons 2–3 of unit A2.1; Review hub v1 + Ripasso personale; IndexedDB queue; vocab links, Feedback, Settings.
 - M3: the asset pipeline (TTS script, style guide, real illustrations); Ripasso A2 units 2–10.
 - M4: B1 units 1–4; vocab trainer; placement test.
 
@@ -821,14 +906,46 @@ It replaces DW's video player. It shows the poster with ▶ and the duration, th
 
 ---
 
-## 16. Open questions for `grill-me`
-1. Do self-rated items count toward the lesson %? Recommendation: no (DW's rule wasn't observed).
-2. Should a correct retry after a wrong Check earn anything? Recommendation: no points, but log it as an attempt.
-3. Must the Step 1 scene be played before its questions unlock? Recommendation: no, as on DW.
-4. Is the "Ripasso personale" step injected into lessons by default, or only on request?
-5. Authoring workflow: will lessons be drafted in JSON by an AI assistant and reviewed by me? If so, add a `draft: true` flag plus a hidden preview route.
-6. App name and logo.
-7. Standard Italian TTS only, or a light Genoese colour for Pina and Marco (also open in the course plan)?
+## 16. Decision log (grilling, 2026-11-15)
+The decisions below are already applied in the sections they reference.
+
+**Scoring and progress**
+1. Each `speak_rate` exchange is its own exercise in "X of Y", as on DW `[10]`. Self-rated exercises never count in points or the % (6.1, ADR-0002).
+2. A correct retry after a wrong Check earns no points; it is stored as an attempt (5.1).
+3. An accent-only miss scores 0, with the hint and no review card (5.1).
+4. Lesson % = points ÷ scorable items, rounded half up; DW's exact rule can't be reproduced (6.1).
+5. Level % uses the planned lesson count from the course plan (6.1).
+6. *Correggi i miei errori* resets only scorable items and keeps `first_check_correct` (4.4).
+7. A stale exercise is detected by content hash and resets on its own (10.3).
+
+**Lesson flow and content**
+8. The Step 1 scene never locks its questions; the first item is the course plan's gist question (5.2.13).
+9. The DW lesson order wins over the course plan's "Anatomy of a lesson"; Parla! stays the last exercise step.
+10. *Hai capito?* types reuse `single_choice`, `dropdown` and `word_order` (lines layout, M2) (5.2.13).
+11. Lessons are drafted as JSON by an AI and reviewed by me; `status: "draft"` shows a *Bozza* badge, with no hidden route (3.3, 9.1).
+12. The course plan (`docs/course-plan.md`) is the source for units, story beats and error tags. The 14 tags in 10.4 each link to the unit that teaches them; tags whose unit doesn't exist yet show no link.
+13. The course plan's own open questions (protagonist, employer, time budget, work-topic order) are parked as content decisions.
+
+**Language and UI**
+14. Language rule: teaching text and translations in English, everything else in Italian (6.3, ADR-0003). Optional `instruction_en` behind an EN toggle replaces the "Instructions in Italian" setting.
+15. Name *La strada di Adam*; logo = Lanterna SVG + wordmark (3.1).
+16. Layout follows the screenshots: sticky bars, breadcrumb on intro and steps only, one ‹ › review sequence, terms panel at the bottom, full-width `text_gap` layout, no word-sets grid (3.1, 4, 5.2).
+17. Grammar rule images are general `rule` blocks (4.5, 9.1). Steps can carry a `clip` media kind (M2). Notes can attach to an exchange. Vocab gets `sort_key`, and `forms` is free text (4.6, 9.1).
+
+**Audio**
+18. Standard Italian TTS only; Genoese colour goes in the text (11.1).
+19. Until MP3s exist, `speechSynthesis` is the fallback, and the scene player works line by line (11.1, 11.3).
+
+**Tech and infrastructure**
+20. Next.js + Drizzle + Neon HTTP driver (8, ADR-0001).
+21. Neon branches `main` (real progress) and `dev` (experiments, Playwright). Fixed profile UUID, no login (8, 10.1).
+22. M1 offline behaviour: in-memory retry every 30 s, footer *Offline: non salvato* (8).
+23. CI runs lint, typecheck, Vitest and `content:check`; Playwright is local only (12).
+
+**Scope**
+24. Moved to M2: vocab-link popovers, the Feedback textarea, the Settings page, `word_order` drag-reorder (14).
+25. Ripasso personale is on by default from M2 (10.5).
+26. M2+ details (Review hub, recordings, TTS provider, image style guide) get their own grilling after M1.
 
 ---
 
