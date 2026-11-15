@@ -5,6 +5,7 @@
  */
 import { loadCourse, loadLesson } from "./load";
 import type { LevelId } from "./ids";
+import { lessonPath } from "./lesson-nav";
 
 export type LessonCard = {
   id: string;
@@ -71,7 +72,7 @@ export function levelOverview(levelId: string, contentDir?: string): LevelOvervi
           topic: lesson.topic,
           grammarLabel: lesson.grammar_label,
           draft: lesson.status === "draft",
-          href: `/${level.id}/${lesson.slug}`,
+          href: lessonPath(lesson),
         };
       }),
     })),
