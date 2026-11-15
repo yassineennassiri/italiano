@@ -1,49 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useRef, useState } from "react";
 import type { LevelCard } from "@/content/overview";
 import { ui } from "@/ui-it";
+import { usePopover } from "./use-popover";
 
 export type MenuLevel = Pick<LevelCard, "id" | "title" | "href" | "available">;
 
 /** The hamburger menu in the top bar (SPEC §3.1): Home and the levels. */
 export function MainMenu({ levels }: { levels: MenuLevel[] }) {
-  const [open, setOpen] = useState(false);
-  const panelId = useId();
-  const rootRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      setOpen(false);
-      buttonRef.current?.focus();
-    };
-    const onPointerDown = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
-    };
-    document.addEventListener("keydown", onKeyDown);
-    document.addEventListener("pointerdown", onPointerDown);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      document.removeEventListener("pointerdown", onPointerDown);
-    };
-  }, [open]);
-
-  const close = () => setOpen(false);
+  const { open, close, rootRef, buttonProps, panelProps } = usePopover();
   const linkClass = "block rounded px-3 py-2 text-brand hover:bg-tint";
 
   return (
     <div ref={rootRef} className="relative">
       <button
-        ref={buttonRef}
-        type="button"
-        aria-expanded={open}
-        aria-controls={panelId}
+        {...buttonProps}
         aria-label={open ? ui.topBar.closeMenu : ui.topBar.openMenu}
-        onClick={() => setOpen((value) => !value)}
         className="flex size-10 items-center justify-center rounded text-brand hover:bg-tint"
       >
         <svg viewBox="0 0 24 24" className="size-6" aria-hidden="true" focusable="false">
@@ -55,8 +28,7 @@ export function MainMenu({ levels }: { levels: MenuLevel[] }) {
         </svg>
       </button>
       <nav
-        id={panelId}
-        hidden={!open}
+        {...panelProps}
         aria-label={ui.topBar.menuTitle}
         className="absolute right-0 top-12 z-30 w-64 rounded-md border border-line bg-white p-2 shadow-lg"
       >

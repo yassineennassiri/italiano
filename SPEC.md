@@ -281,7 +281,7 @@ DW's exact % rule can't be reproduced from the screenshots (no integer number of
 - **Level %** = completed lessons ÷ the level's total **planned** lessons (sum of `planned_lessons` over its units; 30 for Ripasso A2), so it reflects progress through the whole course, not just the lessons written so far.
 
 ### 6.2 Exact footer text
-`{completed} di {total} esercizi completati. {points} punti.` (singular *1 punto*, *1 esercizio completato*).
+`{completed} di {total} esercizi completati. {points} punti.` The noun agrees with the total and *punti* with the points: *0 di 1 esercizio completato*, *1 di 9 esercizi completati*, *1 punto*.
 
 ### 6.3 Language rule (ADR-0003)
 **Teaching text and translations are in English; everything else is in Italian.**
@@ -334,7 +334,7 @@ All UI strings live in one module (`ui-it.ts`), never inline in components. Ther
   └───────────────────┘      └──────────────────────────┘
    ⓘ Attenzione! Before a vowel, il and la become l'.
                   [Soluzione] [Controlla]
-░░░░░░      0 di 1 esercizi completati. 0 punti.          ░░░░
+░░░░░░      0 di 1 esercizio completato. 0 punti.          ░░░░
 ░░░░░░                    [Avanti]                        ░░░░
                            2 / 6
 ```

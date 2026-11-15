@@ -8,6 +8,7 @@
  */
 import { CONTENT_DIR, findLessonFiles, readContentFile } from "./files";
 import { lessonFilePattern, lessonIdOfGrammarPage, parseLessonId } from "./ids";
+import { lessonPageHref } from "./lesson-nav";
 import { type Course, courseSchema, type ErrorTagEntry, errorTagsSchema, type Lesson, lessonSchema } from "./schema";
 
 export function loadCourse(contentDir = CONTENT_DIR): Course {
@@ -62,8 +63,7 @@ export function loadErrorTags(contentDir = CONTENT_DIR): ErrorTag[] {
     if (!lessons.has(lessonId)) lessons.set(lessonId, loadLesson(lessonId, contentDir));
     return lessons.get(lessonId);
   };
-  const grammarHref = (lesson: Lesson, pageIndex: number) =>
-    `/${parseLessonId(lesson.id)!.level}/${lesson.slug}/grammatica/${pageIndex + 1}`;
+  const grammarHref = (lesson: Lesson, pageIndex: number) => lessonPageHref(lesson, "grammatica", pageIndex + 1);
 
   const hrefFor = ({ unit, grammar_page: page }: ErrorTagEntry): string | null => {
     const pageLessonId = page ? lessonIdOfGrammarPage(page) : undefined;

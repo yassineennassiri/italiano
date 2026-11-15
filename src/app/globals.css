@@ -38,8 +38,11 @@ body {
 }
 
 /* Visible keyboard focus on every interactive element (SPEC §7.1). */
-:focus-visible {
-  outline: 3px solid var(--brand);
-  outline-offset: 2px;
-  border-radius: 2px;
+/* In the base layer, so focus-visible:outline-* utilities can recolour it on dark bars. */
+@layer base {
+  :focus-visible {
+    outline: 3px solid var(--brand);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
 }
