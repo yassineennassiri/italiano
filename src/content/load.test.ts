@@ -1,15 +1,6 @@
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { loadCourse, loadErrorTags, loadLesson, loadLessonBySlug } from "./load";
-
-const LESSON_FILE = "levels/a2/units/01-arrivo-a-genova/lessons/01-benvenuto-a-genova.json";
-const copies: string[] = [];
-
-afterEach(() => {
-  for (const dir of copies.splice(0)) rmSync(dir, { recursive: true, force: true });
-});
+import { copyContent, editJson, LESSON_FILE } from "./test-content";
 
 describe("loadCourse", () => {
   it("lists all three levels and the ten Ripasso A2 units, 30 planned lessons in all", () => {
@@ -39,13 +30,10 @@ describe("loadLesson", () => {
   });
 
   it("refuses an invalid lesson file, saying what is wrong", () => {
-    const dir = mkdtempSync(path.join(tmpdir(), "italiano-load-"));
-    copies.push(dir);
-    cpSync(path.join(process.cwd(), "content"), dir, { recursive: true });
-    const file = path.join(dir, LESSON_FILE);
-    const lesson = JSON.parse(readFileSync(file, "utf8"));
-    lesson.steps[0].items[0].answer = 7;
-    writeFileSync(file, JSON.stringify(lesson));
+    const dir = copyContent();
+    editJson(dir, LESSON_FILE, (lesson) => {
+      lesson.steps[0].items[0].answer = 7;
+    });
 
     expect(() => loadLesson("a2.u01.l01", dir)).toThrow(
       `${LESSON_FILE}: steps[0].items[0].answer: answer index 7 is out of range (3 options)`,
@@ -63,6 +51,11 @@ describe("loadErrorTags", () => {
   it("links a tag to the first grammar page of its unit's first lesson", () => {
     const tag = loadErrorTags().find((tag) => tag.id === "article.elision");
     expect(tag?.href).toBe("/a2/benvenuto-a-genova/grammatica/1");
+  });
+
+  it("links a tag to the grammar page it names, when it names one", () => {
+    const tag = loadErrorTags().find((tag) => tag.id === "article.plural_gli");
+    expect(tag?.href).toBe("/a2/benvenuto-a-genova/grammatica/2");
   });
 
   it("gives no link to tags whose unit has no lessons yet, or that have no unit", () => {

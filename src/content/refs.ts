@@ -23,22 +23,23 @@ function itemTags(item: Item, at: PropertyKey[]): Ref[] {
   ];
 }
 
-function optional(value: string | undefined, path: PropertyKey[]): Ref[] {
+/** A one-element ref list when the field is set, else empty. */
+function refIfSet(value: string | undefined, path: PropertyKey[]): Ref[] {
   return value ? [{ value, path }] : [];
 }
 
 function lineAudio(lines: ScriptLine[], at: PropertyKey[]): Ref[] {
-  return lines.flatMap((line, l) => optional(line.audio, [...at, l, "audio"]));
+  return lines.flatMap((line, l) => refIfSet(line.audio, [...at, l, "audio"]));
 }
 
 function itemMedia(item: Item, at: PropertyKey[]): Ref[] {
   return [
-    ...optional(item.prompt_audio, [...at, "prompt_audio"]),
-    ...optional(item.image, [...at, "image"]),
+    ...refIfSet(item.prompt_audio, [...at, "prompt_audio"]),
+    ...refIfSet(item.image, [...at, "image"]),
     ...(item.type === "speak_rate"
       ? item.exchanges.flatMap((exchange, e) => [
-          ...optional(exchange.other_audio, [...at, "exchanges", e, "other_audio"]),
-          ...optional(exchange.me_audio, [...at, "exchanges", e, "me_audio"]),
+          ...refIfSet(exchange.other_audio, [...at, "exchanges", e, "other_audio"]),
+          ...refIfSet(exchange.me_audio, [...at, "exchanges", e, "me_audio"]),
         ])
       : []),
   ];
@@ -63,12 +64,12 @@ export function mediaRefs(lesson: Lesson): Ref[] {
     ...lesson.steps.flatMap(stepMedia),
     ...lesson.grammar.flatMap((page, g) =>
       page.blocks.flatMap((block, b) =>
-        block.kind === "example" ? optional(block.image, ["grammar", g, "blocks", b, "image"]) : [],
+        block.kind === "example" ? refIfSet(block.image, ["grammar", g, "blocks", b, "image"]) : [],
       ),
     ),
     ...lesson.vocab.flatMap((entry, v) => [
-      ...optional(entry.image, ["vocab", v, "image"]),
-      ...optional(entry.audio, ["vocab", v, "audio"]),
+      ...refIfSet(entry.image, ["vocab", v, "image"]),
+      ...refIfSet(entry.audio, ["vocab", v, "audio"]),
     ]),
     ...(lesson.culture ? [{ value: lesson.culture.image, path: ["culture", "image"] }] : []),
   ];

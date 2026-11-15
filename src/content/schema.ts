@@ -5,6 +5,7 @@
  * Field language follows ADR-0003: no suffix = Italian, `_en` = English.
  */
 import { z } from "zod";
+import { LESSON_ID_PATTERN, unitId } from "./ids";
 
 const id = z.string().min(1);
 /** A path under `content/media`, e.g. `images/a2/u01/l01/poster.webp`. */
@@ -12,25 +13,44 @@ const mediaPath = z
   .string()
   .regex(/^[\w.-]+(\/[\w.-]+)*$/, "must be a relative path under content/media, with / separators")
   .refine((value) => !value.split("/").includes(".."), "must not contain ..");
-const text = z.string().min(1);
+/** Any non-empty string. */
+const nonEmpty = z.string().min(1);
+
+type IssueSink = { addIssue: (issue: { code: "custom"; message: string; path: PropertyKey[] }) => void };
+
+function report(ctx: IssueSink, path: PropertyKey[], message: string) {
+  ctx.addIssue({ code: "custom", message, path });
+}
 
 // ── Course ───────────────────────────────────────────────────────────────
 
 export const unitSchema = z.strictObject({
   id,
   number: z.number().int().positive(),
-  title: text,
+  title: nonEmpty,
   planned_lessons: z.number().int().positive(),
   /** Lesson ids, in order. Empty for units with no lesson files yet. */
   lessons: z.array(id),
 });
 
-export const levelSchema = z.strictObject({
-  id: z.enum(["a2", "b1", "b2"]),
-  title: text,
-  description: text,
-  units: z.array(unitSchema),
-});
+export const levelSchema = z
+  .strictObject({
+    id: z.enum(["a2", "b1", "b2"]),
+    title: nonEmpty,
+    description: nonEmpty,
+    units: z.array(unitSchema),
+  })
+  .superRefine((level, ctx) => {
+    const numbers = new Set<number>();
+    level.units.forEach((unit, u) => {
+      const expected = unitId(level.id, unit.number);
+      if (unit.id !== expected) {
+        report(ctx, ["units", u, "id"], `"${unit.id}" must be "${expected}" (level ${level.id}, unit ${unit.number})`);
+      }
+      if (numbers.has(unit.number)) report(ctx, ["units", u, "number"], `duplicate unit number ${unit.number}`);
+      numbers.add(unit.number);
+    });
+  });
 
 export const courseSchema = z.strictObject({
   levels: z.array(levelSchema),
@@ -39,12 +59,14 @@ export const courseSchema = z.strictObject({
 // ── Error tags ───────────────────────────────────────────────────────────
 
 export const errorTagSchema = z.strictObject({
-  explanation_en: text,
+  explanation_en: nonEmpty,
   /** The unit that teaches this tag. Omitted when no unit does. */
   unit: id.optional(),
+  /** The grammar page that teaches it (e.g. `a2.u01.l01.gr2`), when it isn't the unit's first. */
+  grammar_page: id.optional(),
 });
 
-/** Tag id (e.g. `article.elision`) → explanation and teaching unit. */
+/** Tag id (e.g. `article.elision`) → explanation and where it is taught. */
 export const errorTagsSchema = z.record(z.string().min(1), errorTagSchema);
 
 // ── Lesson ───────────────────────────────────────────────────────────────
@@ -52,8 +74,8 @@ export const errorTagsSchema = z.record(z.string().min(1), errorTagSchema);
 export const scriptLineSchema = z.strictObject({
   id,
   speaker: id,
-  it: text,
-  en: text,
+  it: nonEmpty,
+  en: nonEmpty,
   audio: mediaPath.optional(),
 });
 
@@ -67,13 +89,13 @@ export const sceneSchema = z.strictObject({
 
 export const noteSchema = z.strictObject({
   kind: z.enum(["info", "tip", "new_words", "attenzione"]),
-  text_en: text,
+  text_en: nonEmpty,
   error_tag: id.optional(),
 });
 
 const itemBase = {
   id,
-  prompt: text.optional(),
+  prompt: nonEmpty.optional(),
   prompt_audio: mediaPath.optional(),
   image: mediaPath.optional(),
   notes: z.array(noteSchema).optional(),
@@ -93,11 +115,11 @@ const dropdownGapSchema = gapSchema.extend({ options: z.array(z.string().min(1))
 export const exchangeSchema = z.strictObject({
   /** "e1"; the full exercise id is the item id + "." + this id. */
   id,
-  other: text,
+  other: nonEmpty,
   other_audio: mediaPath.optional(),
-  me: text,
+  me: nonEmpty,
   me_audio: mediaPath.optional(),
-  hint: text.optional(),
+  hint: nonEmpty.optional(),
   /** Rendered between this exchange and its rating. */
   notes: z.array(noteSchema).optional(),
 });
@@ -105,12 +127,6 @@ export const exchangeSchema = z.strictObject({
 const clipSchema = z.strictObject({ from_line: id, to_line: id });
 
 const GAP_MARKER = /\{\{([^}]+)\}\}/g;
-
-type IssueSink = { addIssue: (issue: { code: "custom"; message: string; path: PropertyKey[] }) => void };
-
-function report(ctx: IssueSink, path: PropertyKey[], message: string) {
-  ctx.addIssue({ code: "custom", message, path });
-}
 
 /** Every `{{gN}}` marker needs a gap entry, and every gap entry a marker. */
 function checkGapMarkers(item: { text: string; gaps: { id: string }[] }, ctx: IssueSink) {
@@ -129,20 +145,20 @@ const itemVariants = z.discriminatedUnion("type", [
     ...itemBase,
     type: z.literal("dropdown"),
     /** Uses `{{g1}}` gap markers. */
-    text,
+    text: nonEmpty,
     gaps: z.array(dropdownGapSchema).min(1),
   }),
   z.strictObject({
     ...itemBase,
     type: z.literal("text_gap"),
-    text,
+    text: nonEmpty,
     gaps: z.array(gapSchema).min(1),
     layout: z.enum(["default", "full"]).optional(),
   }),
   z.strictObject({
     ...itemBase,
     type: z.literal("word_bank"),
-    text,
+    text: nonEmpty,
     bank: z.array(z.string().min(1)).min(1),
     gaps: z.array(gapSchema).min(1),
   }),
@@ -150,7 +166,7 @@ const itemVariants = z.discriminatedUnion("type", [
     ...itemBase,
     type: z.literal("audio_gap"),
     clip: clipSchema,
-    text,
+    text: nonEmpty,
     gaps: z.array(gapSchema).min(1),
   }),
   z.strictObject({
@@ -182,9 +198,9 @@ const itemVariants = z.discriminatedUnion("type", [
   z.strictObject({
     ...itemBase,
     type: z.literal("parla"),
-    task: text,
-    example: text,
-    checklist: z.array(text).min(1),
+    task: nonEmpty,
+    example: nonEmpty,
+    checklist: z.array(nonEmpty).min(1),
   }),
 ]);
 
@@ -237,21 +253,21 @@ export const itemSchema = itemVariants.superRefine((item, ctx) => {
 
 export const stepMediaSchema = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("scene") }),
-  z.strictObject({ kind: z.literal("image"), src: mediaPath, alt: text }),
+  z.strictObject({ kind: z.literal("image"), src: mediaPath, alt: nonEmpty }),
   z.strictObject({ kind: z.literal("clip"), from_line: id, to_line: id }),
 ]);
 
 export const stepSchema = z.strictObject({
   id,
-  title: text,
-  instruction: text,
+  title: nonEmpty,
+  instruction: nonEmpty,
   /** Shown behind the EN toggle; only for tricky instructions. */
-  instruction_en: text.optional(),
+  instruction_en: nonEmpty.optional(),
   media: stepMediaSchema.optional(),
   /** What the collapsible Copione shows. */
   script: z.union([z.literal("scene"), z.array(scriptLineSchema)]).optional(),
   /** Markdown document (reading steps). */
-  reading: text.optional(),
+  reading: nonEmpty.optional(),
   items: z.array(itemSchema).min(1),
 });
 
@@ -269,13 +285,13 @@ export const ruleArrowSchema = z.strictObject({
 });
 
 const grammarBlockVariants = z.discriminatedUnion("kind", [
-  z.strictObject({ kind: z.literal("text"), md: text }),
+  z.strictObject({ kind: z.literal("text"), md: nonEmpty }),
   z.strictObject({
     kind: z.literal("example"),
     image: mediaPath.optional(),
     /** `**bold**` marks the target form. */
-    it: text,
-    en: text.optional(),
+    it: nonEmpty,
+    en: nonEmpty.optional(),
   }),
   z.strictObject({
     kind: z.literal("table"),
@@ -289,7 +305,7 @@ const grammarBlockVariants = z.discriminatedUnion("kind", [
   }),
   z.strictObject({
     kind: z.literal("terms"),
-    items: z.array(z.strictObject({ term: text, def_en: text })).min(1),
+    items: z.array(z.strictObject({ term: nonEmpty, def_en: nonEmpty })).min(1),
   }),
 ]);
 
@@ -307,44 +323,44 @@ export const grammarBlockSchema = grammarBlockVariants.superRefine((block, ctx) 
 
 export const grammarPageSchema = z.strictObject({
   id,
-  title: text,
+  title: nonEmpty,
   blocks: z.array(grammarBlockSchema).min(1),
 });
 
 export const vocabEntrySchema = z.strictObject({
   id,
   /** "la valigia" */
-  it: text,
-  plural: text.optional(),
+  it: nonEmpty,
+  plural: nonEmpty.optional(),
   gender: z.enum(["m", "f"]).optional(),
   pos: z.enum(["noun", "verb", "adj", "adv", "phrase", "other"]),
   /** Free text: verb forms, "solo singolare", "dal genovese", … */
-  forms: text.optional(),
+  forms: nonEmpty.optional(),
   /** Overrides the default sort (the headword without its article). */
-  sort_key: text.optional(),
-  en: text,
+  sort_key: nonEmpty.optional(),
+  en: nonEmpty,
   image: mediaPath.optional(),
   audio: mediaPath.optional(),
 });
 
 export const culturePageSchema = z.strictObject({
-  title: text,
+  title: nonEmpty,
   image: mediaPath,
   /** English prose. */
-  md: text,
+  md: nonEmpty,
 });
 
 const lessonFields = z.strictObject({
-  id: z.string().regex(/^(a2|b1|b2)\.u\d{2}\.l\d{2}$/, 'must look like "a2.u01.l01"'),
+  id: z.string().regex(LESSON_ID_PATTERN, 'must look like "a2.u01.l01"'),
   version: z.number().int().positive(),
   /** Drafts show a Bozza badge; both are playable and validated. */
   status: z.enum(["draft", "ready"]),
   slug: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "must be lowercase words joined by hyphens"),
-  title: text,
-  topic: text,
-  grammar_label: text.optional(),
-  summary: text,
-  objectives: z.array(text).min(1),
+  title: nonEmpty,
+  topic: nonEmpty,
+  grammar_label: nonEmpty.optional(),
+  summary: nonEmpty,
+  objectives: z.array(nonEmpty).min(1),
   scene: sceneSchema,
   steps: z.array(stepSchema).min(1),
   grammar: z.array(grammarPageSchema),
@@ -411,6 +427,7 @@ export type Course = z.infer<typeof courseSchema>;
 export type Level = z.infer<typeof levelSchema>;
 export type Unit = z.infer<typeof unitSchema>;
 export type ErrorTags = z.infer<typeof errorTagsSchema>;
+export type ErrorTagEntry = z.infer<typeof errorTagSchema>;
 export type Lesson = z.infer<typeof lessonSchema>;
 export type Scene = z.infer<typeof sceneSchema>;
 export type ScriptLine = z.infer<typeof scriptLineSchema>;

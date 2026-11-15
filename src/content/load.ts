@@ -8,7 +8,8 @@
  */
 import path from "node:path";
 import { findLessonFiles, readContentFile } from "./files";
-import { type Course, courseSchema, errorTagsSchema, type Lesson, lessonSchema } from "./schema";
+import { lessonFilePattern, lessonIdOfGrammarPage, parseLessonId } from "./ids";
+import { type Course, courseSchema, type ErrorTagEntry, errorTagsSchema, type Lesson, lessonSchema } from "./schema";
 
 const CONTENT_DIR = path.join(process.cwd(), "content");
 
@@ -31,12 +32,10 @@ function loadLessonWhere(
 
 /** A lesson by id (`a2.u01.l01`), or undefined when no file has it. */
 export function loadLesson(lessonId: string, contentDir = CONTENT_DIR): Lesson | undefined {
-  const match = /^(a2|b1|b2)\.u(\d{2})\.l(\d{2})$/.exec(lessonId);
-  if (!match) return undefined;
-  const [, level, unit, number] = match;
+  const id = parseLessonId(lessonId);
+  if (!id) return undefined;
   // content:check guarantees the file name starts with the lesson's numbers.
-  const filePattern = new RegExp(`^levels/${level}/units/${unit}-[^/]+/lessons/${number}-`);
-  return loadLessonWhere(contentDir, filePattern, (lesson) => lesson.id === lessonId);
+  return loadLessonWhere(contentDir, lessonFilePattern(id), (lesson) => lesson.id === lessonId);
 }
 
 /** A lesson by the level and slug in its URL (`/a2/benvenuto-a-genova`). */
@@ -46,29 +45,39 @@ export function loadLessonBySlug(level: string, slug: string, contentDir = CONTE
   return loadLessonWhere(contentDir, filePattern, (lesson) => lesson.slug === slug);
 }
 
-export type ErrorTag = {
+export type ErrorTag = ErrorTagEntry & {
   id: string;
-  explanation_en: string;
-  /** The unit that teaches the tag, if any. */
-  unit?: string;
-  /** The first grammar page of that unit's first lesson; null until the unit has a lesson. */
+  /** The grammar page that teaches the tag; null until its unit has a lesson. */
   href: string | null;
 };
 
-/** All error tags, each linked to the grammar page that teaches it when one exists. */
+/**
+ * All error tags, each linked to the grammar page that teaches it: the page the
+ * tag names, or else the first grammar page of its unit's first lesson.
+ */
 export function loadErrorTags(contentDir = CONTENT_DIR): ErrorTag[] {
   const tags = readContentFile(contentDir, "error-tags.json", errorTagsSchema);
   const units = new Map(
-    loadCourse(contentDir).levels.flatMap((level) => level.units.map((unit) => [unit.id, { level, unit }])),
+    loadCourse(contentDir).levels.flatMap((level) => level.units.map((unit) => [unit.id, unit])),
   );
+  const lessons = new Map<string, Lesson | undefined>();
+  const lessonById = (lessonId: string) => {
+    if (!lessons.has(lessonId)) lessons.set(lessonId, loadLesson(lessonId, contentDir));
+    return lessons.get(lessonId);
+  };
+  const grammarHref = (lesson: Lesson, pageIndex: number) =>
+    `/${parseLessonId(lesson.id)!.level}/${lesson.slug}/grammatica/${pageIndex + 1}`;
 
-  const grammarHref = (unitId: string | undefined): string | null => {
-    const found = unitId ? units.get(unitId) : undefined;
-    const firstLessonId = found?.unit.lessons[0];
-    const lesson = firstLessonId ? loadLesson(firstLessonId, contentDir) : undefined;
-    if (!found || !lesson || lesson.grammar.length === 0) return null;
-    return `/${found.level.id}/${lesson.slug}/grammatica/1`;
+  const hrefFor = ({ unit, grammar_page: page }: ErrorTagEntry): string | null => {
+    const pageLessonId = page ? lessonIdOfGrammarPage(page) : undefined;
+    const pageLesson = pageLessonId ? lessonById(pageLessonId) : undefined;
+    const pageIndex = pageLesson?.grammar.findIndex((grammarPage) => grammarPage.id === page) ?? -1;
+    if (pageLesson && pageIndex >= 0) return grammarHref(pageLesson, pageIndex);
+
+    const firstLessonId = unit ? units.get(unit)?.lessons[0] : undefined;
+    const firstLesson = firstLessonId ? lessonById(firstLessonId) : undefined;
+    return firstLesson && firstLesson.grammar.length > 0 ? grammarHref(firstLesson, 0) : null;
   };
 
-  return Object.entries(tags).map(([id, tag]) => ({ id, ...tag, href: grammarHref(tag.unit) }));
+  return Object.entries(tags).map(([id, tag]) => ({ id, ...tag, href: hrefFor(tag) }));
 }

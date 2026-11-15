@@ -1,35 +1,6 @@
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { checkContent } from "./check";
-
-const CONTENT_DIR = path.join(process.cwd(), "content");
-const LESSON_FILE = "levels/a2/units/01-arrivo-a-genova/lessons/01-benvenuto-a-genova.json";
-
-const copies: string[] = [];
-
-/** A throwaway copy of the real content directory. */
-function copyContent(): string {
-  const dir = mkdtempSync(path.join(tmpdir(), "italiano-content-"));
-  cpSync(CONTENT_DIR, dir, { recursive: true });
-  copies.push(dir);
-  return dir;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- tests mutate raw JSON
-type Json = any;
-
-function editJson(dir: string, file: string, edit: (data: Json) => void) {
-  const full = path.join(dir, file);
-  const data = JSON.parse(readFileSync(full, "utf8"));
-  edit(data);
-  writeFileSync(full, JSON.stringify(data, null, 2));
-}
-
-afterEach(() => {
-  for (const dir of copies.splice(0)) rmSync(dir, { recursive: true, force: true });
-});
+import { CONTENT_DIR, copyContent, editJson, LESSON_FILE } from "./test-content";
 
 describe("checkContent", () => {
   it("finds no problems in the real content", () => {
@@ -191,6 +162,31 @@ describe("checkContent", () => {
     });
     expect(checkContent(dir)).toEqual([
       `error-tags.json: article.lo.unit: no unit "a2.u11" in course.json`,
+    ]);
+  });
+
+  it("reports an error tag pointing at a grammar page its unit's lessons do not have", () => {
+    const dir = copyContent();
+    editJson(dir, "error-tags.json", (tags) => {
+      tags["article.plural_gli"].grammar_page = "a2.u01.l01.gr9";
+      tags["article.lo"].grammar_page = "a2.u02.l01.gr1";
+    });
+    expect(checkContent(dir)).toEqual([
+      `error-tags.json: article.lo.grammar_page: "a2.u02.l01.gr1" is not in unit "a2.u01"`,
+      `error-tags.json: article.plural_gli.grammar_page: no grammar page "a2.u01.l01.gr9" in lesson "a2.u01.l01"`,
+    ]);
+  });
+
+  it("reports unit ids that don't match their level and number, or repeat", () => {
+    const dir = copyContent();
+    editJson(dir, "course.json", (course) => {
+      course.levels[0].units[1].id = "b1.u02";
+      course.levels[0].units[3].number = 3;
+    });
+    expect(checkContent(dir)).toEqual([
+      `course.json: levels[0].units[1].id: "b1.u02" must be "a2.u02" (level a2, unit 2)`,
+      `course.json: levels[0].units[3].id: "a2.u04" must be "a2.u03" (level a2, unit 3)`,
+      `course.json: levels[0].units[3].number: duplicate unit number 3`,
     ]);
   });
 

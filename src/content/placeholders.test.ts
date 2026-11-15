@@ -1,25 +1,17 @@
-import { cpSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { checkContent } from "./check";
 import { generatePlaceholders } from "./placeholders";
-
-const copies: string[] = [];
+import { copyContent, LESSON_FILE } from "./test-content";
 
 /** A copy of the real content with no media at all. */
 function contentWithoutMedia(): string {
-  const dir = mkdtempSync(path.join(tmpdir(), "italiano-placeholders-"));
-  cpSync(path.join(process.cwd(), "content"), dir, { recursive: true });
+  const dir = copyContent();
   rmSync(path.join(dir, "media"), { recursive: true, force: true });
-  copies.push(dir);
   return dir;
 }
-
-afterEach(() => {
-  for (const dir of copies.splice(0)) rmSync(dir, { recursive: true, force: true });
-});
 
 describe("generatePlaceholders", () => {
   it("creates an image for every referenced image path, so the content checks clean", async () => {
@@ -56,5 +48,11 @@ describe("generatePlaceholders", () => {
 
     expect(created).toEqual([]);
     expect(statSync(poster).size).toBe("a real illustration".length);
+  });
+
+  it("skips a lesson file that isn't valid JSON instead of crashing", async () => {
+    const dir = contentWithoutMedia();
+    writeFileSync(path.join(dir, LESSON_FILE), "{ not json");
+    await expect(generatePlaceholders(dir)).resolves.toEqual([]);
   });
 });

@@ -9,7 +9,8 @@
   },
   "article.plural_gli": {
     "explanation_en": "lo and masculine l' both become gli in the plural: gli zaini, gli appartamenti. Feminine l' becomes le.",
-    "unit": "a2.u01"
+    "unit": "a2.u01",
+    "grammar_page": "a2.u01.l01.gr2"
   },
   "partitive.masc_plural": {
     "explanation_en": "The partitive follows the plural article: dei, degli, delle. Masculine nouns that take gli take degli: degli esercizi, not delle esercizi.",

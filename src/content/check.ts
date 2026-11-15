@@ -6,19 +6,9 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import type { z } from "zod";
 import { findLessonFiles, formatPath, parse, readJson } from "./files";
+import { lessonFileHint, lessonFilePattern, lessonIdOfGrammarPage, parseLessonId } from "./ids";
 import { errorTagRefs, mediaRefs } from "./refs";
 import { type Course, courseSchema, type ErrorTags, errorTagsSchema, type Lesson, lessonSchema } from "./schema";
-
-/** Where a lesson file must live, as a pattern and as a readable hint. */
-function expectedLessonPath(lesson: Lesson) {
-  const [level, unit, number] = lesson.id.split(".");
-  const unitNumber = unit.slice(1);
-  const lessonNumber = number.slice(1);
-  return {
-    pattern: new RegExp(`^levels/${level}/units/${unitNumber}-[^/]+/lessons/${lessonNumber}-${lesson.slug}\\.json$`),
-    hint: `levels/${level}/units/${unitNumber}-*/lessons/${lessonNumber}-${lesson.slug}.json`,
-  };
-}
 
 /** course.json lists every lesson file, each under its own unit, and vice versa. */
 function checkCourseMatchesFiles(
@@ -40,7 +30,8 @@ function checkCourseMatchesFiles(
   );
 
   for (const [lessonId, { file }] of lessons) {
-    const unitId = lessonId.split(".").slice(0, 2).join(".");
+    // The schema guarantees lesson ids parse.
+    const { unitId } = parseLessonId(lessonId)!;
     if (listedUnder.get(lessonId) !== unitId) {
       problems.push(`${file}: lesson "${lessonId}" is not listed in course.json under unit "${unitId}"`);
     }
@@ -71,6 +62,20 @@ function checkErrorTags(
     const unitIds = new Set(course.levels.flatMap((level) => level.units.map((unit) => unit.id)));
     for (const [tag, { unit }] of Object.entries(tags)) {
       if (unit && !unitIds.has(unit)) problems.push(`error-tags.json: ${tag}.unit: no unit "${unit}" in course.json`);
+    }
+  }
+  for (const [tag, { unit, grammar_page: page }] of Object.entries(tags)) {
+    if (!page) continue;
+    const where = `error-tags.json: ${tag}.grammar_page`;
+    const lessonId = lessonIdOfGrammarPage(page);
+    if (!unit || !lessonId || parseLessonId(lessonId)?.unitId !== unit) {
+      problems.push(`${where}: "${page}" is not in unit "${unit ?? "(none)"}"`);
+      continue;
+    }
+    // A page in a lesson that isn't written yet is fine; a missing page in a written one isn't.
+    const lesson = lessons.get(lessonId)?.lesson;
+    if (lesson && !lesson.grammar.some((grammarPage) => grammarPage.id === page)) {
+      problems.push(`${where}: no grammar page "${page}" in lesson "${lessonId}"`);
     }
   }
   for (const { file, lesson } of lessons.values()) {
@@ -104,15 +109,15 @@ export function checkContent(contentDir: string): string[] {
     }
     lessons.set(lesson.id, { file, lesson });
 
-    const levelSlug = `${lesson.id.split(".")[0]}/${lesson.slug}`;
+    const lessonId = parseLessonId(lesson.id)!;
+    const levelSlug = `${lessonId.level}/${lesson.slug}`;
     const slugOwner = slugs.get(levelSlug);
     if (slugOwner) problems.push(`${file}: slug "${lesson.slug}" is already used by lesson "${slugOwner}"`);
     slugs.set(levelSlug, lesson.id);
 
-    const expected = expectedLessonPath(lesson);
-    if (!expected.pattern.test(file)) {
+    if (!lessonFilePattern(lessonId, lesson.slug).test(file)) {
       problems.push(
-        `${file}: lesson "${lesson.id}" with slug "${lesson.slug}" must live at ${expected.hint}`,
+        `${file}: lesson "${lesson.id}" with slug "${lesson.slug}" must live at ${lessonFileHint(lessonId, lesson.slug)}`,
       );
     }
   }

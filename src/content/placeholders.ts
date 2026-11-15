@@ -3,10 +3,10 @@
  * every referenced image that doesn't exist yet, so the app and
  * `content:check` work before real illustrations are made.
  */
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
-import { findLessonFiles } from "./files";
+import { findLessonFiles, parse, readJson } from "./files";
 import { mediaRefs } from "./refs";
 import { lessonSchema } from "./schema";
 
@@ -47,9 +47,10 @@ function placeholderSvg(mediaPath: string): string {
 function referencedImages(contentDir: string): string[] {
   const images = new Set<string>();
   for (const file of findLessonFiles(contentDir)) {
-    const parsed = lessonSchema.safeParse(JSON.parse(readFileSync(path.join(contentDir, file), "utf8")));
-    if (!parsed.success) continue; // content:check reports it
-    for (const ref of mediaRefs(parsed.data)) {
+    const ignored: string[] = []; // content:check reports problems; here we just skip the file
+    const lesson = parse(file, readJson(contentDir, file, ignored), lessonSchema, ignored);
+    if (!lesson) continue;
+    for (const ref of mediaRefs(lesson)) {
       if (IMAGE_EXTENSIONS.has(path.posix.extname(ref.value).toLowerCase())) images.add(ref.value);
     }
   }
