@@ -30,6 +30,14 @@ export function unitId(level: string, number: number): string {
   return `${level}.u${String(number).padStart(2, "0")}`;
 }
 
+/**
+ * The exercise id of one speaking exchange (SPEC §10.3): item id + "." +
+ * exchange id, e.g. `a2.u01.l01.s05.i01.e2`.
+ */
+export function exchangeExerciseId(itemId: string, exchangeId: string): string {
+  return `${itemId}.${exchangeId}`;
+}
+
 /** The lesson a grammar page id belongs to: `a2.u01.l01.gr2` → `a2.u01.l01`. */
 export function lessonIdOfGrammarPage(pageId: string): string | undefined {
   return /^(.+)\.gr\d+$/.exec(pageId)?.[1];
