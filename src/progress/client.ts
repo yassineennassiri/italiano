@@ -1,34 +1,51 @@
 /**
- * The browser side of progress (SPEC §8): exercise entries the learner has
- * changed in this tab, and the write queue that sends every change to the
- * Server Actions. Optimistic: an entry changes at once and its write follows.
- * Lives for the tab, so moving between steps keeps local changes even before
- * the server has them. Only event handlers and effects change it, never render.
+ * The browser side of progress (SPEC §8): the entries this tab changed, and the
+ * write queue that sends every change to the Server Actions. Optimistic: an
+ * entry changes at once and its write follows; each answer from the server
+ * settles it (`merge.ts`). Lives for the tab, so moving between steps keeps
+ * changes the server hasn't confirmed yet. Only event handlers and effects
+ * change it, never render.
  */
 import type { Item } from "@/content/schema";
 import { applyAction, type ExerciseAction } from "@/items/engine";
 import type { ExerciseEntry } from "@/items/entry";
-import { recordExercise, recordVisit } from "./actions";
-import type { ExerciseWrite } from "./plan";
-import type { VisitWrite } from "./store";
+import { type ActionResponse, recordExercise, recordVisit } from "./actions";
+import { currentEntry, type LocalEntry, type SavedEntry, settleLocal } from "./merge";
+import type { ExerciseWrite, VisitWrite } from "./plan";
 import { WriteQueue } from "./write-queue";
 
-type Write = { kind: "exercise"; write: ExerciseWrite } | { kind: "visit"; visit: VisitWrite };
+type QueuedWrite = { type: "exercise"; exercise: ExerciseWrite } | { type: "visit"; visit: VisitWrite };
 
-/** A rejected write is malformed and would fail forever, so it is dropped (and logged) rather than retried. */
-async function send(write: Write): Promise<void> {
-  const result = write.kind === "exercise" ? await recordExercise(write.write) : await recordVisit(write.visit);
-  if (result === "rejected") console.error("The server rejected a progress write.", write);
-}
-
-export const progressQueue = new WriteQueue<Write>(send);
-
-if (typeof window !== "undefined") window.addEventListener("online", () => progressQueue.online());
-
-const localEntries = new Map<string, ExerciseEntry>();
+const localEntries = new Map<string, LocalEntry>();
 const listeners = new Set<() => void>();
 let version = 0;
 
+function changed(): void {
+  version++;
+  for (const listener of listeners) listener();
+}
+
+/** Settles the local entry with the server's answer. A rejected write is malformed: it is logged and dropped. */
+function settle(exerciseId: string, response: ActionResponse): void {
+  if (response.result === "rejected") console.error("The server rejected a progress write.", exerciseId);
+  const local = localEntries.get(exerciseId);
+  if (!local) return;
+  const settled = settleLocal(local, response.result === "rejected" ? undefined : response.saved);
+  if (settled) localEntries.set(exerciseId, settled);
+  else localEntries.delete(exerciseId);
+  changed();
+}
+
+async function send(write: QueuedWrite): Promise<void> {
+  if (write.type === "exercise") settle(write.exercise.exerciseId, await recordExercise(write.exercise));
+  else if ((await recordVisit(write.visit)).result === "rejected") console.error("The server rejected a visit.", write.visit);
+}
+
+export const progressQueue = new WriteQueue<QueuedWrite>(send);
+
+if (typeof window !== "undefined") window.addEventListener("online", () => progressQueue.online());
+
+/** Subscribes to changes of this tab's entries, for `useSyncExternalStore`. */
 export function subscribeEntries(listener: () => void): () => void {
   listeners.add(listener);
   return () => listeners.delete(listener);
@@ -37,20 +54,35 @@ export function subscribeEntries(listener: () => void): () => void {
 /** Changes on every local change, for `useSyncExternalStore`. */
 export const entriesVersion = () => version;
 
-/** The entry this tab changed, if any; otherwise the page's server state applies. */
-export const localEntry = (exerciseId: string): ExerciseEntry | undefined => localEntries.get(exerciseId);
+/** What an exercise shows: this tab's change, or the page's saved entry, whichever is current. */
+export const entryOf = (exerciseId: string, saved: SavedEntry | undefined): ExerciseEntry =>
+  currentEntry(localEntries.get(exerciseId), saved);
 
 /** Applies a learner action now and queues its write. Does nothing when the action changes nothing. */
-export function act(lessonId: string, item: Item, current: ExerciseEntry, action: ExerciseAction): void {
-  const outcome = applyAction(item, current, action);
+export function submitAction(
+  lessonId: string,
+  item: Item,
+  saved: SavedEntry | undefined,
+  contentHash: string,
+  action: ExerciseAction,
+): void {
+  const outcome = applyAction(item, entryOf(item.id, saved), action);
   if (!outcome) return;
-  localEntries.set(item.id, outcome.entry);
-  version++;
-  for (const listener of listeners) listener();
-  progressQueue.enqueue({ kind: "exercise", write: { eventId: crypto.randomUUID(), lessonId, exerciseId: item.id, ...action } });
+  const local = localEntries.get(item.id);
+  localEntries.set(item.id, { entry: outcome.entry, pending: (local?.pending ?? 0) + 1, savedAt: local?.savedAt ?? null });
+  changed();
+  progressQueue.enqueue({
+    type: "exercise",
+    exercise: { eventId: crypto.randomUUID(), lessonId, exerciseId: item.id, contentHash, at: new Date().toISOString(), ...action },
+  });
 }
 
-/** Records the step being viewed, so reopening the lesson resumes there. */
+let lastVisit = "";
+
+/** Records the step being viewed, so reopening the lesson resumes there. Repeats of the last visit are skipped. */
 export function recordStepVisit(visit: VisitWrite): void {
-  progressQueue.enqueue({ kind: "visit", visit });
+  const key = `${visit.lessonId}/${visit.location}`;
+  if (key === lastVisit) return;
+  lastVisit = key;
+  progressQueue.enqueue({ type: "visit", visit });
 }

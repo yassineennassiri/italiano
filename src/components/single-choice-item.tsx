@@ -1,7 +1,7 @@
 "use client";
 
 import type { Item } from "@/content/schema";
-import { type OptionLook, optionLooks, type SingleChoiceAnswer } from "@/items/single-choice";
+import { isLocked, type OptionLook, optionLooks, type SingleChoiceAnswer } from "@/items/single-choice";
 import type { ExerciseEntry } from "@/items/entry";
 import { ui } from "@/ui-it";
 import { PromptBubble } from "./prompt-bubble";
@@ -22,7 +22,6 @@ const LOOK_CLASSES: Record<OptionLook, string> = {
 export function SingleChoiceItem({ item }: { item: Extract<Item, { options: string[]; answer: number }> }) {
   const [entry, dispatch] = useExercise(item);
   const looks = optionLooks(item, entry as ExerciseEntry<SingleChoiceAnswer>);
-  const locked = entry.state.status === "checked_correct" || entry.state.status === "solved";
 
   return (
     <div className="grid gap-4 md:grid-cols-2 md:items-start">
@@ -51,7 +50,7 @@ export function SingleChoiceItem({ item }: { item: Extract<Item, { options: stri
           <div className="mt-4 text-center">
             <button
               type="button"
-              disabled={locked}
+              disabled={isLocked(entry)}
               onClick={() => dispatch({ kind: "solve" })}
               className="rounded-full border-2 border-brand px-6 py-1.5 font-bold text-brand hover:bg-tint disabled:opacity-40"
             >

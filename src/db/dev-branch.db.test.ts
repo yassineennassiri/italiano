@@ -7,7 +7,8 @@ import { expect, it } from "vitest";
 import { connect } from "./connect";
 import { databaseUrl, loadLocalEnv } from "./env";
 import { migrateDatabase } from "./migrate";
-import { profile } from "./schema";
+import { eq } from "drizzle-orm";
+import { PROFILE_ID, profile } from "./schema";
 import { seedProfile } from "./seed";
 
 loadLocalEnv();
@@ -22,6 +23,7 @@ it("db:seed leaves exactly one profile with the fixed UUID, however often it run
   await seedProfile(db);
   await seedProfile(db);
 
-  const rows = await db.select({ id: profile.id }).from(profile);
+  // Other db tests add throwaway profiles of their own; count only the fixed one.
+  const rows = await db.select({ id: profile.id }).from(profile).where(eq(profile.id, PROFILE_ID));
   expect(rows).toEqual([{ id: "00000000-0000-4000-8000-000000000001" }]);
 });

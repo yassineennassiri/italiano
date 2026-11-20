@@ -4,6 +4,7 @@
  * Wrong: red, and the other options stay open for a retry at 0 points.
  * Solve, when the item is `solvable`, shows the answer for 0 points.
  */
+import { z } from "zod";
 import type { Item } from "@/content/schema";
 import { applyEvent } from "@/scoring/exercise";
 import type { ExerciseEntry, ExerciseOutcome } from "./entry";
@@ -11,16 +12,19 @@ import type { ExerciseEntry, ExerciseOutcome } from "./entry";
 /** single_choice shares its schema variant with image_choice and audio_choice (M2). */
 export type SingleChoiceItem = Pick<Extract<Item, { options: string[]; answer: number }>, "id" | "options" | "answer" | "solvable">;
 
-/** Every option picked so far, in order. */
-export type SingleChoiceAnswer = { picks: number[] };
+/** The stored answer: every option picked so far, in order. */
+export const singleChoiceAnswerSchema = z.strictObject({ picks: z.array(z.number().int().nonnegative()) });
+export type SingleChoiceAnswer = z.infer<typeof singleChoiceAnswerSchema>;
 
+/** How an option button looks: open, green ✓, red ✗, or greyed out. */
 export type OptionLook = "idle" | "correct" | "wrong" | "dimmed";
 
 type Entry = ExerciseEntry<SingleChoiceAnswer>;
 
 const picksOf = (entry: Entry): number[] => (entry.state.status === "untouched" ? [] : (entry.answer?.picks ?? []));
 
-const isLocked = (entry: Entry) => entry.state.status === "checked_correct" || entry.state.status === "solved";
+/** Right, or solved: every option is disabled. */
+export const isLocked = (entry: Pick<ExerciseEntry, "state">) => entry.state.status === "checked_correct" || entry.state.status === "solved";
 
 /** Picks option `index`, or undefined when the click does nothing (locked item, or an option already marked wrong). */
 export function pickOption(item: SingleChoiceItem, entry: Entry, index: number): ExerciseOutcome<SingleChoiceAnswer> | undefined {

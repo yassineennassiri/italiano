@@ -11,6 +11,7 @@ export type ExerciseEntry<A = unknown> = {
   answer: A | null;
 };
 
+/** An exercise the learner hasn't touched. */
 export const NEW_ENTRY: ExerciseEntry<never> = { state: UNTOUCHED, answer: null };
 
 /** One Check or Solve and what it changed, as the attempt history records it. */

@@ -10,6 +10,7 @@ export type SyncStatus = "saved" | "pending" | "offline";
 
 export const RETRY_MS = 30_000;
 
+/** Writes waiting to be sent, in order, with the footer status that goes with them. */
 export class WriteQueue<W> {
   private readonly writes: W[] = [];
   private readonly listeners = new Set<() => void>();
@@ -30,15 +31,21 @@ export class WriteQueue<W> {
     return () => this.listeners.delete(listener);
   }
 
+  /** Queues a write and sends it, unless a failed write is already waiting for its retry. */
   enqueue(write: W): void {
     this.writes.push(write);
-    // While offline, new writes wait for the retry rather than hammering a dead network.
-    if (this.current !== "offline") void this.flush();
+    // While a retry is scheduled, new writes wait for it rather than hammering a dead network.
+    if (this.retryTimer === undefined) void this.flush();
+  }
+
+  /** The database couldn't be read: show Offline until a write gets through. */
+  reportUnreachable(): void {
+    if (this.writes.length === 0) this.setStatus("offline");
   }
 
   /** The browser's `online` event: retry now instead of waiting for the timer. */
   online(): void {
-    if (this.current === "offline") void this.flush();
+    if (this.retryTimer !== undefined) void this.flush();
   }
 
   private async flush(): Promise<void> {

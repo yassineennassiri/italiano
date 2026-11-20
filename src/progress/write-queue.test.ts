@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { WriteQueue } from "./write-queue";
+import { RETRY_MS, WriteQueue } from "./write-queue";
 
 /** A send() whose network can be cut and restored. */
 function fakeServer() {
@@ -42,7 +42,7 @@ describe("WriteQueue", () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(queue.status).toBe("offline");
 
-    await vi.advanceTimersByTimeAsync(29_000);
+    await vi.advanceTimersByTimeAsync(RETRY_MS - 1_000);
     expect(server.received).toEqual([]);
     server.restore();
     await vi.advanceTimersByTimeAsync(1_000);
@@ -64,8 +64,20 @@ describe("WriteQueue", () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(server.received).toEqual(["a", "b"]);
     expect(queue.status).toBe("saved");
-    await vi.advanceTimersByTimeAsync(30_000);
+    await vi.advanceTimersByTimeAsync(RETRY_MS);
     expect(server.received).toEqual(["a", "b"]);
+  });
+
+  it("shows Offline when progress could not be loaded, and sends the next write at once", async () => {
+    const server = fakeServer();
+    const queue = new WriteQueue(server.send);
+    queue.reportUnreachable();
+    expect(queue.status).toBe("offline");
+
+    queue.enqueue("a");
+    await vi.advanceTimersByTimeAsync(0);
+    expect(server.received).toEqual(["a"]);
+    expect(queue.status).toBe("saved");
   });
 
   it("tells subscribers when the status changes", async () => {

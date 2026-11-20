@@ -101,13 +101,19 @@ export function stepLocation(number: number): string {
   return `esercizi/${number}`;
 }
 
+/** The step number in a location (`esercizi/3` → 3), or undefined for anything else. */
+export function parseStepLocation(location: string | null): number | undefined {
+  const segment = /^esercizi\/([1-9]\d*)$/.exec(location ?? "")?.[1];
+  return segment === undefined ? undefined : Number(segment);
+}
+
 /**
  * Where reopening the lesson goes (SPEC §3): the last visited step, or the
  * intro when nothing was visited or that step no longer exists.
  */
 export function resumeHref(lesson: LessonRef & PagedLesson, lastLocation: string | null): string {
-  const segment = /^esercizi\/(\d+)$/.exec(lastLocation ?? "")?.[1];
-  return segment !== undefined && hasPage(lesson, "esercizi", segment)
-    ? lessonPageHref(lesson, "esercizi", Number(segment))
+  const number = parseStepLocation(lastLocation);
+  return number !== undefined && number <= lesson.steps.length
+    ? lessonPageHref(lesson, "esercizi", number)
     : lessonPageHref(lesson, "info");
 }

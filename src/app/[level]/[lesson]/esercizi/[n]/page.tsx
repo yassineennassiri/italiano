@@ -10,11 +10,13 @@ import { ScriptToggle } from "@/components/script-toggle";
 import { SingleChoiceItem } from "@/components/single-choice-item";
 import { StepCounterText, StepProgress } from "@/components/step-progress";
 import { StepInstruction } from "@/components/step-instruction";
+import { exerciseHashes } from "@/content/hash";
 import { type ErrorTag, loadErrorTags, loadLessonBySlug } from "@/content/load";
 import { stepLocation, stepPage } from "@/content/lesson-nav";
 import type { Item, Lesson, Step } from "@/content/schema";
 import { stepScript } from "@/content/script";
 import { readLessonEntries } from "@/progress/read";
+import { lessonExercises } from "@/scoring/lesson";
 import { ui } from "@/ui-it";
 import { type LessonRouteParams, lessonFromParams } from "../../lesson-params";
 
@@ -39,10 +41,12 @@ async function StepView({ params }: Pick<PageProps<"/[level]/[lesson]/esercizi/[
   const counter = ui.lesson.stepCounter(number, total);
   const script = stepScript(lesson, step);
   const errorTags = new Map(loadErrorTags().map((tag) => [tag.id, tag]));
-  const initial = await readLessonEntries(lesson);
+  const { saved, loaded } = await readLessonEntries(lesson);
+  const allHashes = exerciseHashes(lesson);
+  const hashes = Object.fromEntries(lessonExercises({ steps: [step] }).map(({ id }) => [id, allHashes.get(id)!]));
 
   return (
-    <StepProgress lessonId={lesson.id} location={stepLocation(number)} initial={initial} step={step}>
+    <StepProgress lessonId={lesson.id} location={stepLocation(number)} saved={saved} loaded={loaded} hashes={hashes} step={step}>
       <Breadcrumb lesson={lesson} stepTitle={step.title} />
       <div className="mx-auto max-w-5xl px-4 py-6">
         <StepMedia step={step} lesson={lesson} />

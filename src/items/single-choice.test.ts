@@ -1,14 +1,11 @@
 import { describe, expect, it } from "vitest";
+import { loadLesson } from "@/content/load";
 import { UNTOUCHED } from "@/scoring/exercise";
 import { type ExerciseEntry, NEW_ENTRY } from "./entry";
-import { optionLooks, pickOption, solveSingleChoice, type SingleChoiceAnswer } from "./single-choice";
+import { optionLooks, pickOption, type SingleChoiceAnswer, type SingleChoiceItem, solveSingleChoice } from "./single-choice";
 
-const item = {
-  id: "a2.u01.l01.s01.i02",
-  options: ["Bene, ma il treno era in ritardo.", "Male: ha perso il treno.", "Benissimo, il treno era in anticipo."],
-  answer: 0,
-  solvable: true,
-};
+/** "Com'è andato il viaggio di Adam?" from the example lesson (answer: option 0), made solvable. */
+const item: SingleChoiceItem = { ...(loadLesson("a2.u01.l01")!.steps[0].items[1] as SingleChoiceItem), solvable: true };
 
 type Entry = ExerciseEntry<SingleChoiceAnswer>;
 

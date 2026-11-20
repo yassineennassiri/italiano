@@ -8,17 +8,17 @@ import { connection } from "next/server";
 import type { Lesson } from "@/content/schema";
 import { db } from "@/db";
 import { PROFILE_ID } from "@/db/schema";
-import type { ExerciseEntry } from "@/items/entry";
+import type { SavedEntry } from "./merge";
 import { loadLastLocation, loadLessonEntries } from "./store";
 
-/** Exercise id → stored entry, for every exercise of the lesson with a state that still fits its content. */
-export async function readLessonEntries(lesson: Lesson): Promise<Record<string, ExerciseEntry>> {
+/** The lesson's saved entries by exercise id; `loaded` is false when the database couldn't be read. */
+export async function readLessonEntries(lesson: Lesson): Promise<{ saved: Record<string, SavedEntry>; loaded: boolean }> {
   await connection();
   try {
-    return Object.fromEntries(await loadLessonEntries(db(), PROFILE_ID, lesson));
+    return { saved: Object.fromEntries(await loadLessonEntries(db(), PROFILE_ID, lesson)), loaded: true };
   } catch (error) {
     console.error("Could not load progress; the lesson opens without it.", error);
-    return {};
+    return { saved: {}, loaded: false };
   }
 }
 
