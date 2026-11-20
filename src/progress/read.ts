@@ -1,0 +1,34 @@
+/**
+ * Progress reads for Server Components. They run at request time, never at
+ * build time, and fail soft: when Neon is unreachable (a locked-down network,
+ * SPEC §12) the lesson still opens, just without the saved state.
+ */
+import "server-only";
+import { connection } from "next/server";
+import type { Lesson } from "@/content/schema";
+import { db } from "@/db";
+import { PROFILE_ID } from "@/db/schema";
+import type { SavedEntry } from "./merge";
+import { loadLastLocation, loadLessonEntries } from "./store";
+
+/** The lesson's saved entries by exercise id; `loaded` is false when the database couldn't be read. */
+export async function readLessonEntries(lesson: Lesson): Promise<{ saved: Record<string, SavedEntry>; loaded: boolean }> {
+  await connection();
+  try {
+    return { saved: Object.fromEntries(await loadLessonEntries(db(), PROFILE_ID, lesson)), loaded: true };
+  } catch (error) {
+    console.error("Could not load progress; the lesson opens without it.", error);
+    return { saved: {}, loaded: false };
+  }
+}
+
+/** The last visited location in the lesson, or null (also when the database is unreachable). */
+export async function readLastLocation(lessonId: string): Promise<string | null> {
+  await connection();
+  try {
+    return await loadLastLocation(db(), PROFILE_ID, lessonId);
+  } catch (error) {
+    console.error("Could not load the resume point; opening the intro.", error);
+    return null;
+  }
+}

@@ -22,6 +22,14 @@ export function databaseUrl(branch: Branch = "main", env: Env = process.env): st
   return url;
 }
 
+/**
+ * The branch the running app uses: `main` (real progress), or `dev` when
+ * `DB_BRANCH=dev`, as `npm run dev:test` sets it for trying things out.
+ */
+export function appBranch(env: Env = process.env): Branch {
+  return env.DB_BRANCH === "dev" ? "dev" : "main";
+}
+
 /** The branch a db script targets: `dev` with `--test`, otherwise `main`. */
 export function branchFromArgs(args: readonly string[]): Branch {
   return args.includes("--test") ? "dev" : "main";

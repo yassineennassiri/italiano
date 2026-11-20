@@ -4,12 +4,12 @@
  */
 import "server-only";
 import { connect, type Db } from "./connect";
-import { databaseUrl } from "./env";
+import { appBranch, databaseUrl } from "./env";
 
 let client: Db | undefined;
 
-/** The client for `DATABASE_URL`, created on first use. */
+/** The client for the app's branch (`DATABASE_URL`, or `DATABASE_URL_TEST` with `DB_BRANCH=dev`), created on first use. */
 export function db(): Db {
-  client ??= connect(databaseUrl());
+  client ??= connect(databaseUrl(appBranch()));
   return client;
 }

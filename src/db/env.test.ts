@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { branchFromArgs, databaseUrl } from "./env";
+import { appBranch, branchFromArgs, databaseUrl } from "./env";
 
 const env = {
   DATABASE_URL: "postgresql://main.example/neondb",
@@ -32,5 +32,13 @@ describe("branchFromArgs", () => {
   it("targets the main branch unless --test is passed", () => {
     expect(branchFromArgs([])).toBe("main");
     expect(branchFromArgs(["--test"])).toBe("dev");
+  });
+});
+
+describe("appBranch", () => {
+  it("serves the app from the main branch unless DB_BRANCH=dev", () => {
+    expect(appBranch({})).toBe("main");
+    expect(appBranch({ DB_BRANCH: "dev" })).toBe("dev");
+    expect(appBranch({ DB_BRANCH: "staging" })).toBe("main");
   });
 });

@@ -7,6 +7,7 @@
 import type { LevelId } from "@/content/ids";
 import type { LessonPage } from "@/content/lesson-nav";
 import type { Note } from "@/content/schema";
+import type { SyncStatus } from "@/progress/write-queue";
 import type { LessonStatus } from "@/scoring/lesson";
 
 type NoteKind = Note["kind"];
@@ -44,6 +45,12 @@ export const ui = {
 
   footer: {
     contentVersion: (version: string) => `Contenuti ${version}`,
+    /** The sync status (SPEC §8). */
+    sync: {
+      saved: "Salvato",
+      pending: "In attesa",
+      offline: "Offline: non salvato",
+    } satisfies Record<SyncStatus, string>,
   },
 
   comingSoon: "In arrivo",
@@ -109,6 +116,11 @@ export const ui = {
     /** After an Attenzione! note: the link to the page that teaches its error tag. */
     noteRule: "Vedi la regola",
     next: "Avanti",
+    /** Item controls (SPEC §5.1). */
+    solve: "Soluzione",
+    /** Read out with the ✓ and ✗ icons. */
+    correct: "Giusto",
+    wrong: "Sbagliato",
     /** SPEC §6.2; the nouns agree with the total, the points with their count. */
     footerCounter: ({ completed, total, points }: { completed: number; total: number; points: number }) =>
       `${completed} di ${total} ${total === 1 ? "esercizio completato" : "esercizi completati"}. ` +

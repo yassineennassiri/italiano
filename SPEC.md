@@ -370,7 +370,7 @@ Per-computer setup: `git clone` → `npm i` → copy `.env.example` to `.env.loc
 **Sync resilience.** Progress writes are optimistic: the UI updates first, the write follows.
 - **M1:** a failed write is kept in memory and retried every 30 s until it succeeds or the tab closes. The footer shows *Salvato* / *In attesa* / *Offline: non salvato*.
 - **M2:** the same queue persists to IndexedDB, so pending writes survive a reload.
-- Conflict rule per item: the earliest `first_check_correct` wins, and the latest state wins for everything else.
+- Conflict rule per item: the earliest `first_check_correct` wins, and the latest state wins for everything else. "Earliest" is the time the learner acted on their own computer, sent with each write, so a Check made offline and synced late still counts as first.
 
 ---
 
@@ -751,7 +751,7 @@ There's a single user, but every table keeps a `user_id` so a second profile sta
 ### 10.3 `item_state` (current state) and `exercise_attempt` (history)
 **`item_state`**: `user_id`, `item_id`, `lesson_id`, `status` (`untouched` · `checked_correct` · `checked_wrong` · `solved` · `rated_good` · `rated_not_great`), `first_check_correct` bool, `points` smallint (0/1), `answer` jsonb (current inputs, to restore the UI), `content_hash` text, `updated_at`. PK (user_id, item_id). Reset deletes these rows for the lesson.
 - `item_id` is the id of one **exercise**: an item id, or for speaking items an exchange id (`a2.u01.l01.s05.i01.e2`).
-- `content_hash` is a hash of that exercise's content when the row was written. On load, a row whose hash no longer matches the current content is ignored, and the exercise shows as untouched. Every other exercise in the lesson keeps its state.
+- `content_hash` is a hash of that exercise's content when the row was written. Notes are left out, since they explain an item without changing it. On load, a row whose hash no longer matches the current content is ignored, and the exercise shows as untouched. Every other exercise in the lesson keeps its state.
 
 **`exercise_attempt`** (append-only, never reset): `id`, `user_id`, `item_id`, `lesson_id`, `content_version`, `action` (`check` · `solve` · `rate` · `reset`), `answer` jsonb, `result` jsonb (per-gap correct/incorrect), `correct` bool, `created_at`.
 
