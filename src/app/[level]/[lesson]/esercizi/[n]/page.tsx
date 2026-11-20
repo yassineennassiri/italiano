@@ -4,14 +4,17 @@ import { AccentLink } from "@/components/accent-link";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { MediaFrame } from "@/components/media-frame";
 import { NoteRow } from "@/components/note-row";
+import { PromptBubble } from "@/components/prompt-bubble";
 import { ScenePoster } from "@/components/scene-poster";
 import { ScriptToggle } from "@/components/script-toggle";
+import { SingleChoiceItem } from "@/components/single-choice-item";
+import { StepCounterText, StepProgress } from "@/components/step-progress";
 import { StepInstruction } from "@/components/step-instruction";
 import { type ErrorTag, loadErrorTags, loadLessonBySlug } from "@/content/load";
-import { stepPage } from "@/content/lesson-nav";
+import { stepLocation, stepPage } from "@/content/lesson-nav";
 import type { Item, Lesson, Step } from "@/content/schema";
 import { stepScript } from "@/content/script";
-import { lessonExercises } from "@/scoring/lesson";
+import { readLessonEntries } from "@/progress/read";
 import { ui } from "@/ui-it";
 import { type LessonRouteParams, lessonFromParams } from "../../lesson-params";
 
@@ -20,7 +23,7 @@ export function generateStaticParams({ params }: { params: LessonRouteParams }) 
   return (lesson?.steps ?? []).map((_, index) => ({ n: String(index + 1) }));
 }
 
-/** An exercise step (SPEC §4.2). The items' interactions arrive with the item engine. */
+/** An exercise step (SPEC §4.2) with its saved progress. Item types without an engine yet show their prompt only. */
 export default function StepRoute({ params }: PageProps<"/[level]/[lesson]/esercizi/[n]">) {
   return (
     <Suspense fallback={null}>
@@ -33,13 +36,13 @@ async function StepView({ params }: Pick<PageProps<"/[level]/[lesson]/esercizi/[
   const lesson = await lessonFromParams(params);
   const page = stepPage(lesson, (await params).n) ?? notFound();
   const { step, number, total, nextHref } = page;
-  const exercises = lessonExercises(lesson).filter((exercise) => exercise.stepId === step.id);
   const counter = ui.lesson.stepCounter(number, total);
   const script = stepScript(lesson, step);
   const errorTags = new Map(loadErrorTags().map((tag) => [tag.id, tag]));
+  const initial = await readLessonEntries(lesson);
 
   return (
-    <>
+    <StepProgress lessonId={lesson.id} location={stepLocation(number)} initial={initial} step={step}>
       <Breadcrumb lesson={lesson} stepTitle={step.title} />
       <div className="mx-auto max-w-5xl px-4 py-6">
         <StepMedia step={step} lesson={lesson} />
@@ -56,14 +59,13 @@ async function StepView({ params }: Pick<PageProps<"/[level]/[lesson]/esercizi/[
         </div>
       </div>
       <div className="mt-10 bg-tint py-8 text-center">
-        {/* Zeros until the item engine feeds the scoring core's counts (SPEC §6.2). */}
-        <p>{ui.lesson.footerCounter({ completed: 0, total: exercises.length, points: 0 })}</p>
+        <StepCounterText />
         <AccentLink href={nextHref} className="mt-5">
           {ui.lesson.next}
         </AccentLink>
         <p className="mt-5 text-sm tracking-widest text-muted">{counter}</p>
       </div>
-    </>
+    </StepProgress>
   );
 }
 
@@ -79,14 +81,14 @@ function StepMedia({ step, lesson }: { step: Step; lesson: Lesson }) {
   }
 }
 
-/** Where an item's interaction goes: its prompt bubble now, its controls with the item engine. */
+/** One item: its interaction (or just its prompt, for types without an engine yet), then its notes. */
 function ItemSlot({ item, errorTags }: { item: Item; errorTags: ReadonlyMap<string, ErrorTag> }) {
   return (
     <section data-item-id={item.id} data-item-type={item.type}>
-      {item.prompt && (
-        <p className="relative ml-2 inline-block rounded-lg border-2 border-accent bg-background px-4 py-3 font-semibold text-brand after:absolute after:-left-[9px] after:bottom-3 after:size-4 after:rotate-45 after:border-b-2 after:border-l-2 after:border-accent after:bg-background">
-          {item.prompt}
-        </p>
+      {item.type === "single_choice" ? (
+        <SingleChoiceItem item={item} />
+      ) : (
+        item.prompt && <PromptBubble>{item.prompt}</PromptBubble>
       )}
       {item.notes && (
         <div className="mt-4 space-y-2 pl-2">

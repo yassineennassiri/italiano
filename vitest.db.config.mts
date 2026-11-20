@@ -4,5 +4,6 @@ import base, { dbTests } from "./vitest.config.mjs";
 
 export default defineConfig({
   ...base,
-  test: { ...base.test, include: [dbTests], exclude: configDefaults.exclude, testTimeout: 60_000 },
+  // One file at a time: they share the dev branch, and some count rows other files create.
+  test: { ...base.test, include: [dbTests], exclude: configDefaults.exclude, testTimeout: 60_000, fileParallelism: false },
 });

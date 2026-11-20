@@ -95,3 +95,19 @@ export function stepPage<S>(lesson: LessonRef & { steps: readonly S[] }, segment
     nextHref: number < total ? lessonPageHref(lesson, "esercizi", number + 1) : lessonPageHref(lesson, "risultati"),
   };
 }
+
+/** `esercizi/3`: what `lesson_progress.last_location` stores for a step page. */
+export function stepLocation(number: number): string {
+  return `esercizi/${number}`;
+}
+
+/**
+ * Where reopening the lesson goes (SPEC §3): the last visited step, or the
+ * intro when nothing was visited or that step no longer exists.
+ */
+export function resumeHref(lesson: LessonRef & PagedLesson, lastLocation: string | null): string {
+  const segment = /^esercizi\/(\d+)$/.exec(lastLocation ?? "")?.[1];
+  return segment !== undefined && hasPage(lesson, "esercizi", segment)
+    ? lessonPageHref(lesson, "esercizi", Number(segment))
+    : lessonPageHref(lesson, "info");
+}

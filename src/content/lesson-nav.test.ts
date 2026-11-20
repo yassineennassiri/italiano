@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { loadLesson } from "./load";
-import { hasPage, lessonMenu, stepPage } from "./lesson-nav";
+import { hasPage, lessonMenu, resumeHref, stepPage } from "./lesson-nav";
 import { copyContent, editJson, LESSON_FILE } from "./test-content";
 
 const lesson = () => loadLesson("a2.u01.l01")!;
@@ -64,5 +64,17 @@ describe("hasPage", () => {
     const bare = loadLesson("a2.u01.l01", dir)!;
     expect(hasPage(bare, "cultura")).toBe(false);
     expect(hasPage(bare, "vocabolario")).toBe(false);
+  });
+});
+
+describe("resumeHref", () => {
+  it("reopens the lesson at the last visited step", () => {
+    expect(resumeHref(lesson(), "esercizi/3")).toBe("/a2/benvenuto-a-genova/esercizi/3");
+  });
+
+  it("opens the intro when nothing was visited or that step no longer exists", () => {
+    for (const location of [null, "esercizi/9", "esercizi/x", "cultura", "../../evil"]) {
+      expect(resumeHref(lesson(), location)).toBe("/a2/benvenuto-a-genova/info");
+    }
   });
 });
