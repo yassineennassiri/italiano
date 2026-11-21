@@ -1,7 +1,7 @@
 /**
  * The scene player's timing without audio files (SPEC §11.3, fallback mode):
  * estimated line and scene durations, and which panel shows at each line.
- * Pure: the player and the 🔊 buttons share it.
+ * Pure: the scene player and the audio service share it.
  */
 import type { Scene, ScriptLine } from "@/content/schema";
 
@@ -32,7 +32,3 @@ export function panelIndexAt(scene: Pick<Scene, "panels" | "lines">, lineIndex: 
   });
   return shown;
 }
-
-/** Subtitles under the scene: none, Italian, or Italian with English (SPEC §11.3). */
-export const SUBTITLE_MODES = ["off", "it", "it_en"] as const;
-export type SubtitleMode = (typeof SUBTITLE_MODES)[number];

@@ -7,7 +7,7 @@
 import type { LevelId } from "@/content/ids";
 import type { LessonPage } from "@/content/lesson-nav";
 import type { Note } from "@/content/schema";
-import type { SubtitleMode } from "@/audio/scene-timeline";
+import type { SubtitleMode } from "@/audio/subtitles";
 import type { Rating } from "@/items/self-rating";
 import type { SyncStatus } from "@/progress/write-queue";
 import type { LessonStatus } from "@/scoring/lesson";

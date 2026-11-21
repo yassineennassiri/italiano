@@ -16,9 +16,11 @@ export type Clip = { text: string; audio?: string };
 /** How a play ended: it finished, it was stopped (or replaced), or it couldn't be heard at all. */
 export type PlayResult = "ended" | "stopped" | "unavailable";
 
+/** The speaking speed: normal or slower (SPEC §11.3). */
+export type Rate = 1 | 0.75;
+
 export type PlayOptions = {
-  /** 1 or 0.75 (SPEC §11.3). */
-  rate?: number;
+  rate?: Rate;
   /** Identifies the clip while it plays, e.g. a line id, so its button can show it. */
   key?: string;
   /** With no way to speak, wait the clip's estimated time instead of returning "unavailable". */
@@ -46,7 +48,13 @@ export type SpeechLike = {
 };
 
 /** The parts of an HTMLAudioElement the service uses. */
-export type AudioLike = { playbackRate: number; play: () => Promise<void>; pause: () => void; onended: (() => void) | null };
+export type AudioLike = {
+  playbackRate: number;
+  play: () => Promise<void>;
+  pause: () => void;
+  onended: (() => void) | null;
+  onerror: (() => void) | null;
+};
 
 export type AudioEnvironment = {
   speech: SpeechLike | undefined;
@@ -59,29 +67,39 @@ export type Availability = "speech" | "unavailable";
 
 const isItalian = (voice: VoiceLike) => voice.lang.toLowerCase().replace("_", "-").startsWith("it");
 
+/** Whether a clip can be heard: it has an MP3, or there is a working Italian voice. */
+export const canPlayClip = (clip: Clip, availability: Availability): boolean => clip.audio !== undefined || availability === "speech";
+
+/** How long an utterance may take before it counts as lost (Chrome can drop one after cancel). */
+const watchdogMs = (text: string, rate: number) => (estimateLineSeconds(text, rate) * 2 + 2) * 1000;
+
 export class AudioService {
   private readonly listeners = new Set<() => void>();
   private voice: VoiceLike | undefined;
   /** Stops whatever plays now; set while a clip plays. */
   private stopCurrent: (() => void) | undefined;
   private currentKey: string | null = null;
+  /** Set when the voice failed (an offline network voice); cleared when the browser's voices change. */
+  private voiceFailed = false;
+  private changes = 0;
 
   constructor(private readonly env: AudioEnvironment) {
     this.voice = env.speech?.getVoices().find(isItalian);
     // Chrome and Edge load their voices after the page; listen for them.
     env.speech?.addEventListener("voiceschanged", () => {
       this.voice = env.speech?.getVoices().find(isItalian);
+      this.voiceFailed = false;
       this.changed();
     });
   }
 
   availability(): Availability {
-    return this.voice ? "speech" : "unavailable";
+    return this.voice && !this.voiceFailed ? "speech" : "unavailable";
   }
 
-  /** Whether the clip can be heard: it has an MP3, or there is an Italian voice. */
-  canPlay(clip: Clip): boolean {
-    return clip.audio !== undefined || this.voice !== undefined;
+  /** Changes whenever `availability()` or `playing()` does, for `useSyncExternalStore`. */
+  version(): number {
+    return this.changes;
   }
 
   /** The key of the clip playing, or null. */
@@ -119,15 +137,27 @@ export class AudioService {
 
       const speakOrWait = () => {
         if (settled) return;
-        if (this.voice && this.env.speech) {
+        if (this.availability() === "speech" && this.env.speech) {
           const speech = this.env.speech;
           const utterance = this.env.createUtterance?.(clip.text) ?? { text: clip.text };
           utterance.lang = "it-IT";
           utterance.voice = this.voice;
           utterance.rate = rate;
+          // An utterance that never ends (dropped after a cancel) mustn't leave playback stuck.
+          const watchdog = setTimeout(() => settle("ended"), watchdogMs(clip.text, rate));
           utterance.onend = () => settle("ended");
-          utterance.onerror = (event) => settle(event.error === "interrupted" || event.error === "canceled" ? "stopped" : "ended");
+          utterance.onerror = (event) => {
+            if (event.error === "interrupted" || event.error === "canceled") return settle("stopped");
+            // The voice itself failed: count it as unavailable, and carry on without it.
+            clearTimeout(watchdog);
+            utterance.onend = null;
+            utterance.onerror = null;
+            this.voiceFailed = true;
+            this.changed();
+            speakOrWait();
+          };
           cleanup = () => {
+            clearTimeout(watchdog);
             utterance.onend = null;
             utterance.onerror = null;
             speech.cancel();
@@ -147,17 +177,21 @@ export class AudioService {
       }
       const audio = this.env.createAudio(mediaUrl(clip.audio));
       audio.playbackRate = rate;
-      audio.onended = () => settle("ended");
-      cleanup = () => {
-        audio.onended = null;
-        audio.pause();
-      };
-      // A missing or blocked MP3 falls back to the voice.
-      audio.play().catch(() => {
+      // A missing, blocked or broken MP3 falls back to the voice.
+      const fallBack = () => {
         if (settled) return;
         audio.onended = null;
+        audio.onerror = null;
         speakOrWait();
-      });
+      };
+      audio.onended = () => settle("ended");
+      audio.onerror = fallBack;
+      cleanup = () => {
+        audio.onended = null;
+        audio.onerror = null;
+        audio.pause();
+      };
+      audio.play().catch(fallBack);
     });
   }
 
@@ -167,6 +201,7 @@ export class AudioService {
   }
 
   private changed(): void {
+    this.changes++;
     for (const listener of this.listeners) listener();
   }
 }

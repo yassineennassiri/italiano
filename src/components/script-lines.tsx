@@ -23,7 +23,7 @@ export function ScriptLines({ lines }: { lines: readonly ScriptLine[] }) {
     <ol className="space-y-3">
       {lines.map((line) => (
         <li key={line.id} data-line-id={line.id} className="flex items-start gap-2">
-          <SpeakButton id={`line:${line.id}`} clip={{ text: line.it, audio: line.audio }} className="mt-3" />
+          <SpeakButton id={`line:${line.id}`} clip={{ text: line.it, audio: line.audio }} icon="play" className="mt-3" />
           <div className="min-w-0 flex-1">
             <p className="text-xs font-bold tracking-wide text-muted uppercase">{ui.lesson.speakerLabel(line.speaker)}</p>
             <button

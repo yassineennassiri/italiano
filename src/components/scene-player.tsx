@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import { type ReactNode, type Ref, useEffect, useRef, useState } from "react";
-import { audioService } from "@/audio/audio-service";
-import { estimateSceneSeconds, LINE_GAP_S, panelIndexAt, SUBTITLE_MODES, type SubtitleMode } from "@/audio/scene-timeline";
+import { audioService, type Rate } from "@/audio/audio-service";
+import { estimateSceneSeconds, LINE_GAP_S, panelIndexAt } from "@/audio/scene-timeline";
+import { SUBTITLE_MODES, type SubtitleMode } from "@/audio/subtitles";
 import { mediaUrl } from "@/content/media-url";
 import type { Scene } from "@/content/schema";
 import { ui } from "@/ui-it";
@@ -12,10 +13,10 @@ import { useAudio } from "./use-audio";
 /** The audio service's key for the line the player is saying. */
 const PLAYER_KEY = "scene-player";
 const SIZES = "(min-width: 1024px) 960px, 100vw";
-const SPEEDS = [
-  { rate: 1, label: ui.lesson.player.speeds.normal },
-  { rate: 0.75, label: ui.lesson.player.speeds.slow },
-] as const;
+const SPEEDS: readonly { value: Rate; label: string }[] = [
+  { value: 1, label: ui.lesson.player.speeds.normal },
+  { value: 0.75, label: ui.lesson.player.speeds.slow },
+];
 
 function Icon({ path }: { path: string }) {
   return (
@@ -101,7 +102,7 @@ export function ScenePlayer({ scene, lessonTitle }: { scene: Scene; lessonTitle:
   const [playing, setPlaying] = useState(false);
   const [finished, setFinished] = useState(false);
   const [line, setLine] = useState(0);
-  const [rate, setRate] = useState<number>(1);
+  const [rate, setRate] = useState<Rate>(1);
   const [subtitles, setSubtitles] = useState<SubtitleMode>("off");
 
   const total = scene.lines.length;
@@ -163,7 +164,7 @@ export function ScenePlayer({ scene, lessonTitle }: { scene: Scene; lessonTitle:
         {started ? (
           scene.panels.map((scenePanel, index) => (
             <Image
-              key={scenePanel.image}
+              key={index}
               src={mediaUrl(scenePanel.image)}
               alt={ui.lesson.player.panelAlt(index + 1, scene.panels.length)}
               aria-hidden={index !== panel}
@@ -174,7 +175,7 @@ export function ScenePlayer({ scene, lessonTitle }: { scene: Scene; lessonTitle:
           ))
         ) : (
           <>
-            <Image src={mediaUrl(scene.poster)} alt={ui.lesson.posterAlt(lessonTitle)} fill sizes={SIZES} className="object-cover" priority />
+            <Image src={mediaUrl(scene.poster)} alt={ui.lesson.posterAlt(lessonTitle)} fill sizes={SIZES} className="object-cover" loading="eager" />
             <div className="absolute bottom-3 left-3 flex items-center gap-2">
               <button
                 type="button"
@@ -226,7 +227,7 @@ export function ScenePlayer({ scene, lessonTitle }: { scene: Scene; lessonTitle:
           </label>
           <Choice
             label={ui.lesson.player.speed}
-            options={SPEEDS.map(({ rate: value, label }) => ({ value, label }))}
+            options={SPEEDS}
             value={rate}
             onChange={setRate}
           />

@@ -1,18 +1,20 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { audioService, type Availability, type Clip } from "@/audio/audio-service";
+import { audioService, type Availability, canPlayClip, type Clip } from "@/audio/audio-service";
 
+/** The server has no voices: until the page hydrates, speech counts as unavailable. */
+const SERVER = -1;
 const subscribe = (listener: () => void) => audioService().subscribe(listener);
-const snapshot = () => `${audioService().availability()}|${audioService().playing() ?? ""}`;
-// The server has no voices: speech counts as unavailable until the page hydrates.
-const serverSnapshot = () => "unavailable|";
+const version = () => audioService().version();
 
-/**
- * The audio service's state, re-rendering when the voice availability or the
- * clip playing changes. Call `audioService()` itself only in event handlers and effects.
- */
+/** The audio service's state, re-rendering when the voice availability or the clip playing changes. */
 export function useAudio(): { availability: Availability; playing: string | null; canPlay: (clip: Clip) => boolean } {
-  const [availability, playing] = useSyncExternalStore(subscribe, snapshot, serverSnapshot).split("|") as [Availability, string];
-  return { availability, playing: playing || null, canPlay: (clip) => clip.audio !== undefined || availability === "speech" };
+  const hydrated = useSyncExternalStore(subscribe, version, () => SERVER) !== SERVER;
+  const availability = hydrated ? audioService().availability() : "unavailable";
+  return {
+    availability,
+    playing: hydrated ? audioService().playing() : null,
+    canPlay: (clip) => canPlayClip(clip, availability),
+  };
 }
