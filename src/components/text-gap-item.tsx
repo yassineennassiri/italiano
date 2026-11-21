@@ -4,9 +4,8 @@ import { type ReactNode, useRef } from "react";
 import { flushSync } from "react-dom";
 import type { Item } from "@/content/schema";
 import { insertAt } from "@/items/typing";
-import { ui } from "@/ui-it";
 import { CharacterHelper } from "./character-helper";
-import { GAP_INPUT_CLASSES, GapFeedback, GappedItemLayout, GapText, useGappedItem } from "./gapped-item";
+import { GapFeedback, GappedItemLayout, GapText, useGappedItem } from "./gapped-item";
 
 type TextGap = Extract<Item, { type: "text_gap" }>["gaps"][number];
 
@@ -19,7 +18,7 @@ const widthOf = (gap: TextGap) => Math.max(2, ...[gap.answer, ...(gap.accept ?? 
  * character helper inserts at the cursor of the gap last typed in.
  */
 export function TextGapItem({ item, notes }: { item: Extract<Item, { type: "text_gap" }>; notes?: ReactNode }) {
-  const { values, looks, locked, edit, check, solve } = useGappedItem(item);
+  const { looks, locked, gapProps, edit, check, solve } = useGappedItem(item, { typed: true });
   const inputs = useRef(new Map<string, HTMLInputElement>());
   const lastGap = useRef<string | null>(null);
 
@@ -49,14 +48,12 @@ export function TextGapItem({ item, notes }: { item: Extract<Item, { type: "text
                 if (input) inputs.current.set(gap.id, input);
                 else inputs.current.delete(gap.id);
               }}
+              {...gapProps(gap.id, number)}
               type="text"
-              aria-label={ui.lesson.gapLabel(number)}
               size={widthOf(gap)}
               autoComplete="off"
               autoCapitalize="off"
               spellCheck={false}
-              value={values[gap.id] ?? ""}
-              disabled={looks[gap.id].disabled}
               // The gap last typed or clicked in, not just tabbed through on the way to the helper.
               onClick={() => (lastGap.current = gap.id)}
               onKeyUp={(event) => {
@@ -67,11 +64,11 @@ export function TextGapItem({ item, notes }: { item: Extract<Item, { type: "text
                 edit(gap.id, event.target.value);
               }}
               onKeyDown={(event) => {
-                if (event.key !== "Enter") return;
+                // Not while an input method is composing a character.
+                if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
                 event.preventDefault();
                 check();
               }}
-              className={`rounded-md border-2 px-1.5 py-0.5 font-semibold disabled:opacity-100 ${GAP_INPUT_CLASSES[looks[gap.id].look]}`}
             />
             <GapFeedback view={looks[gap.id]} />
           </>

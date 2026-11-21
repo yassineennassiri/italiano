@@ -3,13 +3,13 @@
  * together with Controlla (SPEC §5.1). All right: green, a point if it was the
  * first Check, and the item locks. Otherwise right gaps turn green and lock,
  * wrong gaps turn red and stay editable (editing one clears its red), for a
- * retry at 0 points. An accent-only miss is wrong like any other, with the hint
- * *Controlla l'accento* and logged as `spelling.accent`. Solve, when the item is
- * `solvable`, fills in every gap for 0 points.
+ * retry at 0 points. In typed gaps an accent-only miss is wrong like any other,
+ * with the hint *Controlla l'accento* and `spelling.accent` added to its logged
+ * tags. Solve, when the item is `solvable`, fills in every gap for 0 points.
  */
 import { z } from "zod";
 import type { Gap } from "@/content/schema";
-import { checkGaps, compareTyped } from "@/scoring/compare";
+import { checkGaps, compareTyped, type GapVerdict } from "@/scoring/compare";
 import { applyEvent } from "@/scoring/exercise";
 import { type ExerciseEntry, type ExerciseOutcome, isLocked } from "./entry";
 import type { InputView } from "./input-look";
@@ -31,30 +31,40 @@ export type GapValues = Readonly<Record<string, string>>;
 /** A gap's view: its look, and whether it shows *Controlla l'accento*. */
 export type GapView = InputView & { accentHint?: true };
 
-/** The error tag an accent-only miss is logged with (SPEC §10.4). */
+/** The error tag an accent-only miss in a typed gap is logged with (SPEC §10.4). */
 export const ACCENT_TAG = "spelling.accent";
+
+/**
+ * Typed gaps (text_gap) get the typed-answer accent rule (SPEC §5.1). In chosen
+ * gaps (dropdown) an option that differs only by an accent is plainly wrong.
+ */
+export type GapMode = { typed: boolean };
 
 type Entry = ExerciseEntry<GapsAnswer>;
 
 /** The values at the last Check or Solve; none before the first. */
 const checkedOf = (entry: Entry): GapValues => (entry.state.status === "untouched" ? {} : (entry.answer?.values ?? {}));
 
-const verdictOf = (gap: GappedItem["gaps"][number], value: string | undefined) => compareTyped(value ?? "", gap);
+/** A gap's verdict under the mode: an accent-only miss counts as such only in typed gaps. */
+const forMode = (verdict: GapVerdict, { typed }: GapMode): GapVerdict => (verdict === "accent_only" && !typed ? "wrong" : verdict);
+
+const verdictOf = (gap: GappedItem["gaps"][number], value: string | undefined, mode: GapMode) => forMode(compareTyped(value ?? "", gap), mode);
 
 /**
  * Checks the gap values, or undefined when the Check does nothing (locked item,
  * a gap the item doesn't have). An empty gap is wrong. Gaps right at the last
  * Check stay locked, so their values are kept.
  */
-export function checkGapValues(item: GappedItem, entry: Entry, values: GapValues): ExerciseOutcome<GapsAnswer> | undefined {
+export function checkGapValues(item: GappedItem, entry: Entry, values: GapValues, mode: GapMode): ExerciseOutcome<GapsAnswer> | undefined {
   if (isLocked(entry) || !Object.keys(values).every((gapId) => item.gaps.some((gap) => gap.id === gapId))) return undefined;
   const checked = checkedOf(entry);
   const next: Record<string, string> = {};
   for (const gap of item.gaps) {
-    const value = verdictOf(gap, checked[gap.id]) === "correct" ? checked[gap.id] : values[gap.id];
+    const value = verdictOf(gap, checked[gap.id], mode) === "correct" ? checked[gap.id] : values[gap.id];
     if (value !== undefined) next[gap.id] = value;
   }
-  const { correct, gaps: result } = checkGaps(item.gaps, next);
+  const { correct, gaps } = checkGaps(item.gaps, next);
+  const result = Object.fromEntries(Object.entries(gaps).map(([gapId, verdict]) => [gapId, forMode(verdict, mode)]));
   return {
     entry: { state: applyEvent(entry.state, { type: "check", correct }), answer: { values: next } },
     action: "check",
@@ -65,7 +75,7 @@ export function checkGapValues(item: GappedItem, entry: Entry, values: GapValues
         gapId: gap.id,
         expected: gap.answer,
         given: next[gap.id] ?? "",
-        ...(result[gap.id] === "accent_only" && { tags: [ACCENT_TAG] }),
+        ...(result[gap.id] === "accent_only" && { errorTags: [ACCENT_TAG] }),
       })),
     result,
   };
@@ -95,13 +105,13 @@ export function currentValues(entry: Entry, edits: GapValues): GapValues {
  * the accent hint for an accent-only miss) until the learner edits it
  * (`edits`: the gaps changed since the last Check).
  */
-export function gapLooks(item: GappedItem, entry: Entry, edits: GapValues): Record<string, GapView> {
+export function gapLooks(item: GappedItem, entry: Entry, edits: GapValues, mode: GapMode): Record<string, GapView> {
   const checked = checkedOf(entry);
   const locked = isLocked(entry);
   const wrongChecked = entry.state.status === "checked_wrong";
   return Object.fromEntries(
     item.gaps.map((gap): [string, GapView] => {
-      const verdict = verdictOf(gap, checked[gap.id]);
+      const verdict = verdictOf(gap, checked[gap.id], mode);
       if (locked || (wrongChecked && verdict === "correct")) return [gap.id, { look: "correct", disabled: true }];
       if (!wrongChecked || gap.id in edits) return [gap.id, { look: "idle", disabled: false }];
       return [gap.id, { look: "wrong", disabled: false, ...(verdict === "accent_only" && { accentHint: true as const }) }];

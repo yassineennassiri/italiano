@@ -19,7 +19,14 @@ export function CharacterHelper({ disabled, onInsert }: { disabled: boolean; onI
   }, [open]);
 
   return (
-    <div ref={rootRef} className="relative">
+    <div
+      ref={rootRef}
+      className="relative"
+      // Close once focus leaves the helper (Tab past the last character), so the palette never covers the gaps.
+      onBlur={(event) => {
+        if (open && !event.currentTarget.contains(event.relatedTarget)) close();
+      }}
+    >
       <button
         {...buttonProps}
         disabled={disabled}

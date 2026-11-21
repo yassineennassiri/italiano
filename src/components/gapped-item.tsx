@@ -3,9 +3,8 @@
 import { type ReactNode, useState } from "react";
 import { splitGapText } from "@/content/gap-text";
 import type { Item } from "@/content/schema";
-import { isLocked } from "@/items/entry";
-import { currentValues, type GapView, gapLooks, type GappedItem, type GapsAnswer, type GapValues } from "@/items/gaps";
-import type { ExerciseEntry } from "@/items/entry";
+import { type ExerciseEntry, isLocked } from "@/items/entry";
+import { currentValues, type GapMode, type GapView, gapLooks, type GappedItem, type GapsAnswer, type GapValues } from "@/items/gaps";
 import { ui } from "@/ui-it";
 import { FeedbackIcon, ItemControls } from "./item-controls";
 import { MediaFrame } from "./media-frame";
@@ -14,19 +13,33 @@ import { useExercise } from "./step-progress";
 
 type GappedContent = Extract<Item, { type: "dropdown" | "text_gap" }>;
 
+/** The input classes for each gap look. */
+const GAP_INPUT_CLASSES: Partial<Record<GapView["look"], string>> = {
+  idle: "border-brand bg-background text-brand",
+  correct: "border-ok bg-ok text-white",
+  wrong: "border-bad bg-bad text-white",
+};
+
 /**
  * One gapped item's state: its values (the last Check's, with this tab's edits
  * on top), each gap's look, and the actions. Edits are cleared by Check and Solve.
  */
-export function useGappedItem(item: GappedContent & GappedItem) {
+export function useGappedItem(item: GappedContent & GappedItem, mode: GapMode) {
   const [entry, dispatch] = useExercise(item);
   const current = entry as ExerciseEntry<GapsAnswer>;
   const [edits, setEdits] = useState<GapValues>({});
   const values = currentValues(current, edits);
+  const looks = gapLooks(item, current, edits, mode);
   return {
-    values,
-    looks: gapLooks(item, current, edits),
+    looks,
     locked: isLocked(entry),
+    /** The props every gap's input or select shares: its name, value, state and look. */
+    gapProps: (gapId: string, number: number) => ({
+      "aria-label": ui.lesson.gapLabel(number),
+      value: values[gapId] ?? "",
+      disabled: looks[gapId].disabled,
+      className: `rounded-md border-2 px-1.5 py-0.5 font-semibold disabled:opacity-100 ${GAP_INPUT_CLASSES[looks[gapId].look]}`,
+    }),
     edit: (gapId: string, value: string) => setEdits((before) => ({ ...before, [gapId]: value })),
     check: () => {
       dispatch({ kind: "check", answer: { values } });
@@ -81,6 +94,8 @@ export function GapText<G extends { id: string }>({ text, gaps, renderGap }: { t
       {splitGapText(text).map((piece, index) => {
         if ("text" in piece) return <span key={index}>{piece.text}</span>;
         const number = gaps.findIndex((gap) => gap.id === piece.gap) + 1;
+        // content:check guarantees every marker has a gap.
+        if (number === 0) throw new Error(`Gap marker {{${piece.gap}}} has no gap.`);
         return (
           <span key={index} className="inline-flex flex-wrap items-center gap-1 align-middle">
             {renderGap(gaps[number - 1], number)}
@@ -103,10 +118,3 @@ export function GapFeedback({ view }: { view: GapView }) {
     </>
   );
 }
-
-/** The input classes for each gap look. */
-export const GAP_INPUT_CLASSES: Partial<Record<GapView["look"], string>> = {
-  idle: "border-brand bg-background text-brand",
-  correct: "border-ok bg-ok text-white",
-  wrong: "border-bad bg-bad text-white",
-};

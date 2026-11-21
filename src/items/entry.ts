@@ -32,7 +32,7 @@ export type ExerciseOutcome<A> = {
 
 /**
  * One wrong part of a Check: what was right and what was given, and in which
- * gap for gapped items. `tags` replaces the item's error tags for its row (an
- * accent-only miss is `spelling.accent`).
+ * gap for gapped items. `errorTags` are added to the item's own for its row
+ * (an accent-only miss adds `spelling.accent`).
  */
-export type ErrorDetail = { gapId?: string; expected: string; given: string; tags?: readonly string[] };
+export type ErrorDetail = { gapId?: string; expected: string; given: string; errorTags?: readonly string[] };

@@ -11,5 +11,5 @@ export type DropdownItem = Pick<Extract<Item, { type: "dropdown" }>, "id" | "gap
 /** Checks the chosen options, or undefined when the Check does nothing (see `checkGapValues`, or a value that isn't an option). */
 export function checkDropdown(item: DropdownItem, entry: ExerciseEntry<GapsAnswer>, values: GapValues): ExerciseOutcome<GapsAnswer> | undefined {
   const fits = Object.entries(values).every(([gapId, value]) => item.gaps.find((gap) => gap.id === gapId)?.options.includes(value));
-  return fits ? checkGapValues(item, entry, values) : undefined;
+  return fits ? checkGapValues(item, entry, values, { typed: false }) : undefined;
 }

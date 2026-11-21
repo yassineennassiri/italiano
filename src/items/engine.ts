@@ -81,7 +81,7 @@ const ENGINES: Partial<Record<Item["type"], AnyEngine>> = {
   }),
   text_gap: eraseTypes<GappedItem, GapsAnswer>({
     answerSchema: gapsAnswerSchema,
-    check: (item, entry, answer) => checkGapValues(item, entry, answer.values),
+    check: (item, entry, answer) => checkGapValues(item, entry, answer.values, { typed: true }),
     solve: solveGaps,
   }),
 };
