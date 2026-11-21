@@ -54,7 +54,7 @@ export function ParlaItem({ item, notes }: { item: Extract<Item, { type: "parla"
         />
       </div>
       {notes}
-      <SelfRating entry={entry} onRate={(rating) => dispatch({ kind: "rate", rating, ...(draft.trim() && { note: draft }) })} />
+      <SelfRating entry={entry} onRate={(rating) => dispatch({ kind: "rate", rating, note: draft })} />
     </>
   );
 }

@@ -11,7 +11,7 @@ import { checkDropdown, type DropdownItem } from "./dropdown";
 import type { ExerciseEntry, ExerciseOutcome } from "./entry";
 import { checkGapValues, type GappedItem, type GapsAnswer, gapsAnswerSchema, solveGaps } from "./gaps";
 import { checkMultiSelect, type MultiSelectAnswer, type MultiSelectItem, multiSelectAnswerSchema, solveMultiSelect } from "./multi-select";
-import { type ParlaItem, type Rating, type RatingAnswer, ratingAnswerSchema, ratingSchema, rateExchange, rateParla } from "./self-rating";
+import { NOTE_MAX_LENGTH, type Rating, type RatingAnswer, ratingAnswerSchema, ratingSchema, rateExchange, rateParla } from "./self-rating";
 import { pickOption, type SingleChoiceAnswer, type SingleChoiceItem, singleChoiceAnswerSchema, solveSingleChoice } from "./single-choice";
 import { checkWordOrder, solveWordOrder, type WordOrderAnswer, wordOrderAnswerSchema, type WordOrderItem } from "./word-order";
 
@@ -24,7 +24,7 @@ export const pickActionSchema = z.strictObject({ kind: z.literal("pick"), option
 export const checkActionSchema = z.strictObject({ kind: z.literal("check"), answer: z.unknown() });
 export const solveActionSchema = z.strictObject({ kind: z.literal("solve") });
 /** Bene / Non tanto bene on a self-rated exercise; Parla! sends its hesitation note with it. */
-export const rateActionSchema = z.strictObject({ kind: z.literal("rate"), rating: ratingSchema, note: z.string().max(4000).optional() });
+export const rateActionSchema = z.strictObject({ kind: z.literal("rate"), rating: ratingSchema, note: z.string().max(NOTE_MAX_LENGTH).optional() });
 
 /** A learner action on one exercise: a Check (a pick, or Controlla), Solve, or a self-rating. */
 export const exerciseActionSchema = z.discriminatedUnion("kind", [pickActionSchema, checkActionSchema, solveActionSchema, rateActionSchema]);
@@ -41,6 +41,9 @@ export type Exercise = { id: string; item: Item; exchange?: Exchange };
 
 /** The exercise that is the whole item (every type but speak_rate). */
 export const itemExercise = (item: Item): Exercise => ({ id: item.id, item });
+
+/** The exercise that is one exchange of a speak_rate item. */
+export const exchangeExercise = (item: Item, exchange: Exchange): Exercise => ({ id: exchangeExerciseId(item.id, exchange.id), item, exchange });
 
 type Outcome<A> = ExerciseOutcome<A> | undefined;
 
@@ -111,9 +114,9 @@ const ENGINES: Partial<Record<Item["type"], AnyEngine>> = {
     answerSchema: ratingAnswerSchema,
     rate: (_item, entry, rating, note, exchange) => (exchange ? rateExchange(exchange, entry, rating, note) : undefined),
   }),
-  parla: eraseTypes<ParlaItem, RatingAnswer>({
+  parla: eraseTypes<unknown, RatingAnswer>({
     answerSchema: ratingAnswerSchema,
-    rate: (item, entry, rating, note) => rateParla(item, entry, rating, note),
+    rate: (_item, entry, rating, note) => rateParla(entry, rating, note),
   }),
 };
 
@@ -127,7 +130,7 @@ export function findExercise(lesson: Pick<Lesson, "steps">, exerciseId: string):
       if (!hasEngine(item)) continue;
       if (item.type === "speak_rate") {
         const exchange = item.exchanges.find((candidate) => exchangeExerciseId(item.id, candidate.id) === exerciseId);
-        if (exchange) return { id: exerciseId, item, exchange };
+        if (exchange) return exchangeExercise(item, exchange);
       } else if (item.id === exerciseId) {
         return itemExercise(item);
       }

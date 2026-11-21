@@ -4,7 +4,7 @@
  * client runs it optimistically and the server action runs it for real.
  */
 import type { GapVerdict } from "@/scoring/compare";
-import { type ExerciseState, UNTOUCHED } from "@/scoring/exercise";
+import { type ExerciseState, isLockedStatus, UNTOUCHED } from "@/scoring/exercise";
 
 export type ExerciseEntry<A = unknown> = {
   state: ExerciseState;
@@ -13,7 +13,7 @@ export type ExerciseEntry<A = unknown> = {
 };
 
 /** Right, solved, or self-rated: inputs, Solve, Check and the rating are disabled. */
-export const isLocked = (entry: Pick<ExerciseEntry, "state">) => entry.state.status !== "untouched" && entry.state.status !== "checked_wrong";
+export const isLocked = (entry: Pick<ExerciseEntry, "state">) => isLockedStatus(entry.state.status);
 
 /** An exercise the learner hasn't touched. */
 export const NEW_ENTRY: ExerciseEntry<never> = { state: UNTOUCHED, answer: null };

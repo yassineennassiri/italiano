@@ -1,10 +1,8 @@
 import type { ExerciseEntry } from "@/items/entry";
-import { type Rating, ratingViews } from "@/items/self-rating";
+import { type Rating, ratingSchema, ratingViews } from "@/items/self-rating";
 import { ui } from "@/ui-it";
 import { OptionButton } from "./option-button";
 import { PromptBubble } from "./prompt-bubble";
-
-const RATINGS: readonly Rating[] = ["good", "not_great"];
 
 /**
  * *Com'è andata?* on the left and **Bene** / **Non tanto bene** stacked on the
@@ -19,7 +17,7 @@ export function SelfRating({ entry, onRate }: { entry: Pick<ExerciseEntry, "stat
         <PromptBubble>{ui.lesson.rateQuestion}</PromptBubble>
       </div>
       <ul className="space-y-2">
-        {RATINGS.map((rating) => (
+        {ratingSchema.options.map((rating) => (
           <li key={rating}>
             <OptionButton {...views[rating]} pressed={views[rating].look === "selected"} onClick={() => onRate(rating)}>
               {ui.lesson.rating[rating]}

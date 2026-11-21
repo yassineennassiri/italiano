@@ -1,9 +1,8 @@
 "use client";
 
 import { createContext, type ReactNode, use, useEffect, useSyncExternalStore } from "react";
-import { exchangeExerciseId } from "@/content/ids";
 import type { Exchange, Item } from "@/content/schema";
-import type { Exercise, ExerciseAction } from "@/items/engine";
+import { type Exercise, type ExerciseAction, exchangeExercise, itemExercise } from "@/items/engine";
 import type { ExerciseEntry } from "@/items/entry";
 import { entriesVersion, entryOf, progressQueue, recordStepVisit, submitAction, subscribeEntries } from "@/progress/client";
 import type { SavedEntry } from "@/progress/merge";
@@ -66,7 +65,7 @@ function useStepProgress(): StepProgressValue {
 /** One exercise's entry and the function that applies an action to it: the item, or one exchange of a speak_rate item. */
 export function useExercise(item: Item, exchange?: Exchange): [ExerciseEntry, (action: ExerciseAction) => void] {
   const { entry, dispatch } = useStepProgress();
-  const exercise: Exercise = exchange ? { id: exchangeExerciseId(item.id, exchange.id), item, exchange } : { id: item.id, item };
+  const exercise = exchange ? exchangeExercise(item, exchange) : itemExercise(item);
   return [entry(exercise.id), (action) => dispatch(exercise, action)];
 }
 

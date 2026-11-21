@@ -12,7 +12,6 @@ import { type ErrorDetail, type ExerciseEntry, type ExerciseOutcome, isLocked } 
 import type { InputView } from "./input-look";
 
 export type SpeakRateItem = Pick<Extract<Item, { type: "speak_rate" }>, "id" | "exchanges">;
-export type ParlaItem = Pick<Extract<Item, { type: "parla" }>, "id">;
 
 export const ratingSchema = z.enum(["good", "not_great"]);
 /** Bene or Non tanto bene. */
@@ -50,7 +49,7 @@ export function rateExchange(exchange: Pick<Exchange, "me">, entry: Entry, ratin
 }
 
 /** Rates the Parla! task with its hesitation note (trimmed; a blank one is dropped), or undefined when already rated. */
-export function rateParla(_item: ParlaItem, entry: Entry, rating: Rating, note?: string): ExerciseOutcome<RatingAnswer> | undefined {
+export function rateParla(entry: Entry, rating: Rating, note?: string): ExerciseOutcome<RatingAnswer> | undefined {
   const kept = note?.trim().slice(0, NOTE_MAX_LENGTH) || undefined;
   const errors: ErrorDetail[] = [
     ...(rating === "not_great" ? [{ source: "parla" as const }] : []),
