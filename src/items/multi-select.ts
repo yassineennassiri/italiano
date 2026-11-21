@@ -43,8 +43,9 @@ export function checkMultiSelect(item: MultiSelectItem, entry: Entry, selection:
     entry: { state: applyEvent(entry.state, { type: "check", correct }), answer: { selected } },
     action: "check",
     correct,
-    expected: answers.map((index) => item.options[index]).join(", "),
-    given: selected.map((index) => item.options[index]).join(", "),
+    mistakes: correct
+      ? []
+      : [{ expected: answers.map((index) => item.options[index]).join(", "), given: selected.map((index) => item.options[index]).join(", ") }],
   };
 }
 
@@ -55,6 +56,7 @@ export function solveMultiSelect(item: MultiSelectItem, entry: Entry): ExerciseO
     entry: { state: applyEvent(entry.state, { type: "solve" }), answer: { selected: sorted(item.answers) } },
     action: "solve",
     correct: null,
+    mistakes: [],
   };
 }
 

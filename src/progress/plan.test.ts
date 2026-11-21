@@ -190,7 +190,7 @@ describe("planExerciseWrite", () => {
 describe("planExerciseWrite for multi_select (s01.i03)", () => {
   const I03 = "a2.u01.l01.s01.i03";
   const check = (selected: number[], { contentHash, at = AT }: { contentHash: string; at?: string }) =>
-    ({ eventId: "evt-3", lessonId: "a2.u01.l01", exerciseId: I03, contentHash, at, kind: "check", selected }) as const;
+    ({ eventId: "evt-3", lessonId: "a2.u01.l01", exerciseId: I03, contentHash, at, kind: "check", answer: { selected } }) as const;
 
   it("accepts a Controlla write from the client", () => {
     expect(exerciseWriteSchema.safeParse({ ...check([0, 2], { contentHash: "h" }), eventId: crypto.randomUUID() }).success).toBe(true);
@@ -236,5 +236,21 @@ describe("planExerciseWrite for multi_select (s01.i03)", () => {
       action: check([0, 2, 3], { contentHash: hash, at: "2026-11-20T10:00:00.000Z" }),
     })!;
     expect(plan.itemState).toMatchObject({ status: "checked_correct", firstCheckCorrect: true, points: 1 });
+  });
+});
+
+describe("planExerciseWrite for dropdown (s02.i01)", () => {
+  const ID = "a2.u01.l01.s02.i01";
+
+  it("writes one error_log row per wrong gap on a wrong first Check, with the gap id and the item's tags", () => {
+    const { input } = base();
+    const hash = input.hashes.get(ID)!;
+    const action = { eventId: "evt-4", lessonId: "a2.u01.l01", exerciseId: ID, contentHash: hash, at: AT, kind: "check", answer: { values: { g1: "la", g2: "il", g3: "l'" } } } as const;
+    const plan = planExerciseWrite({ ...input, action })!;
+    expect(plan.itemState).toMatchObject({ status: "checked_wrong", points: 0, answer: { values: { g1: "la", g2: "il", g3: "l'" } } });
+    expect(plan.errors).toEqual([
+      { source: "exercise", lessonId: "a2.u01.l01", itemId: ID, gapId: "g2", errorTags: ["article.elision", "article.lo"], expected: "lo", given: "il", createdAt: new Date(AT) },
+      { source: "exercise", lessonId: "a2.u01.l01", itemId: ID, gapId: "g4", errorTags: ["article.elision", "article.lo"], expected: "il", given: "", createdAt: new Date(AT) },
+    ]);
   });
 });

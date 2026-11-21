@@ -23,7 +23,9 @@ export type ExerciseOutcome<A> = {
   action: "check" | "solve";
   /** Null for Solve. */
   correct: boolean | null;
-  /** For the error log on a wrong first Check: what was right, what was given. */
-  expected?: string;
-  given?: string;
+  /** What was wrong, one per error_log row if this is a wrong first Check (SPEC §10.4); empty when right, and for Solve. */
+  mistakes: Mistake[];
 };
+
+/** One wrong part of a Check: what was right and what was given, and in which gap for gapped items. */
+export type Mistake = { gapId?: string; expected: string; given: string };

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { AccentLink } from "@/components/accent-link";
 import { Breadcrumb } from "@/components/breadcrumb";
+import { DropdownItem } from "@/components/dropdown-item";
 import { MediaFrame } from "@/components/media-frame";
 import { MultiSelectItem } from "@/components/multi-select-item";
 import { NoteRow } from "@/components/note-row";
@@ -92,6 +93,8 @@ function ItemInteraction({ item }: { item: Item }) {
       return <SingleChoiceItem item={item} />;
     case "multi_select":
       return <MultiSelectItem item={item} />;
+    case "dropdown":
+      return <DropdownItem item={item} />;
     default:
       return item.prompt ? <PromptBubble>{item.prompt}</PromptBubble> : null;
   }

@@ -1,6 +1,7 @@
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { mediaFile, mediaUrl } from "./media";
+import { mediaFile } from "./media";
+import { mediaUrl } from "./media-url";
 import { CONTENT_DIR } from "./test-content";
 
 describe("mediaFile", () => {

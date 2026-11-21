@@ -4,8 +4,7 @@ import { useState } from "react";
 import type { Item } from "@/content/schema";
 import { type ExerciseEntry, isLocked } from "@/items/entry";
 import { currentSelection, type MultiSelectAnswer, optionLooks } from "@/items/multi-select";
-import { ui } from "@/ui-it";
-import { ItemControlButton, OptionButton } from "./option-button";
+import { OptionButton, SolveAndCheck } from "./option-button";
 import { PromptBubble } from "./prompt-bubble";
 import { useExercise } from "./step-progress";
 
@@ -21,12 +20,11 @@ export function MultiSelectItem({ item }: { item: Extract<Item, { type: "multi_s
   const [toggled, setToggled] = useState<number[]>([]);
   const selection = currentSelection(current, toggled);
   const looks = optionLooks(item, current, selection);
-  const locked = isLocked(entry);
 
   const toggle = (index: number) =>
     setToggled((before) => (before.includes(index) ? before.filter((other) => other !== index) : [...before, index]));
   const check = () => {
-    dispatch({ kind: "check", selected: selection });
+    dispatch({ kind: "check", answer: { selected: selection } });
     setToggled([]);
   };
   const solve = () => {
@@ -47,16 +45,7 @@ export function MultiSelectItem({ item }: { item: Extract<Item, { type: "multi_s
             </li>
           ))}
         </ul>
-        <div className="mt-4 flex justify-center gap-3">
-          {item.solvable && (
-            <ItemControlButton disabled={locked} onClick={solve}>
-              {ui.lesson.solve}
-            </ItemControlButton>
-          )}
-          <ItemControlButton disabled={locked} onClick={check}>
-            {ui.lesson.check}
-          </ItemControlButton>
-        </div>
+        <SolveAndCheck solvable={item.solvable} locked={isLocked(entry)} onSolve={solve} onCheck={check} />
       </div>
     </div>
   );

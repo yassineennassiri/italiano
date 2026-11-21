@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
-import { mediaUrl } from "@/content/media";
+import { mediaUrl } from "@/content/media-url";
 
 /** A wide 16:9 frame for a content image (the scene poster, a step image), with optional overlays. */
 export function MediaFrame({

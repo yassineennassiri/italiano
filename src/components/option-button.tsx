@@ -43,22 +43,49 @@ export function OptionButton({
   );
 }
 
-/** Soluzione or Controlla under an item. */
-export function ItemControlButton({ disabled, onClick, children }: { disabled: boolean; onClick: () => void; children: ReactNode }) {
+/** Soluzione (secondary) or Controlla (`accent`) under an item (SPEC §4.2). */
+export function ItemControlButton({
+  disabled,
+  accent = false,
+  onClick,
+  children,
+}: {
+  disabled: boolean;
+  accent?: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  const look = accent ? "border-accent bg-accent text-foreground hover:brightness-95" : "border-brand text-brand hover:bg-tint";
   return (
     <button
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="rounded-full border-2 border-brand px-6 py-1.5 font-bold text-brand hover:bg-tint disabled:opacity-40"
+      className={`rounded-full border-2 px-6 py-1.5 font-bold disabled:opacity-40 ${look}`}
     >
       {children}
     </button>
   );
 }
 
+/** Soluzione (when the item is solvable) and Controlla, centred under an item. */
+export function SolveAndCheck({ solvable, locked, onSolve, onCheck }: { solvable?: boolean; locked: boolean; onSolve: () => void; onCheck: () => void }) {
+  return (
+    <div className="mt-4 flex justify-center gap-3">
+      {solvable && (
+        <ItemControlButton disabled={locked} onClick={onSolve}>
+          {ui.lesson.solve}
+        </ItemControlButton>
+      )}
+      <ItemControlButton accent disabled={locked} onClick={onCheck}>
+        {ui.lesson.check}
+      </ItemControlButton>
+    </div>
+  );
+}
+
 /** ✓ or ✗ beside the colour, so feedback never relies on colour alone (SPEC §5.1). */
-function FeedbackIcon({ kind }: { kind: "correct" | "wrong" }) {
+export function FeedbackIcon({ kind }: { kind: "correct" | "wrong" }) {
   return (
     <span className="flex shrink-0 items-center">
       <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true" focusable="false">

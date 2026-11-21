@@ -82,6 +82,7 @@
             { "id": "g4", "options": ["il", "lo", "l'", "la"], "answer": "il" }
           ],
           "error_tags": ["article.elision", "article.lo"],
+          "solvable": true,
           "notes": [{ "kind": "attenzione", "text_en": "Before a vowel, il and la become l': l'ombrello, l'appartamento.", "error_tag": "article.elision" }]
         }
       ]

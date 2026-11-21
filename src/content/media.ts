@@ -19,11 +19,6 @@ const CONTENT_TYPES: Record<string, string> = {
 /** A safe path segment: letters, digits, `_`, `-` and `.`, but not `.` or `..` alone. */
 const SEGMENT = /^(?!\.{1,2}$)[\w.-]+$/;
 
-/** The URL of a content media path, e.g. `images/a2/u01/l01/poster.webp`. */
-export function mediaUrl(mediaPath: string): string {
-  return `/media/${mediaPath}`;
-}
-
 /** The file for a `/media/...` request, or undefined if it is unsafe, of an unknown type, or missing. */
 export function mediaFile(segments: readonly string[]): { file: string; contentType: string } | undefined {
   if (segments.length === 0 || !segments.every((segment) => SEGMENT.test(segment))) return undefined;

@@ -30,8 +30,7 @@ export function pickOption(item: SingleChoiceItem, entry: Entry, index: number):
     entry: { state: applyEvent(entry.state, { type: "check", correct }), answer: { picks: [...picks, index] } },
     action: "check",
     correct,
-    expected: item.options[item.answer],
-    given: item.options[index],
+    mistakes: correct ? [] : [{ expected: item.options[item.answer], given: item.options[index] }],
   };
 }
 
@@ -42,6 +41,7 @@ export function solveSingleChoice(item: SingleChoiceItem, entry: Entry): Exercis
     entry: { state: applyEvent(entry.state, { type: "solve" }), answer: { picks: picksOf(entry) } },
     action: "solve",
     correct: null,
+    mistakes: [],
   };
 }
 
