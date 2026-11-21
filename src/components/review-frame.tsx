@@ -9,16 +9,16 @@ import { AccentLink } from "./accent-link";
  * the ‹ › arrows of the whole sequence (each hidden at its end), the page, then
  * Avanti, or *Finisci la lezione!* on the last review page.
  */
-export function ReviewPage({ heading, nav, children }: { heading: string; nav: ReviewNav; children: ReactNode }) {
+export function ReviewFrame({ heading, nav, children }: { heading: string; nav: ReviewNav; children: ReactNode }) {
   return (
     <>
-      <nav aria-label={ui.lesson.reviewNav} className="border-b border-line bg-tint">
+      <div className="border-b border-line bg-tint">
         <div className="mx-auto grid h-14 max-w-3xl grid-cols-[2.5rem_1fr_2.5rem] items-center gap-2 px-4">
           {nav.previousHref ? <ArrowLink href={nav.previousHref} direction="previous" /> : <span />}
           <h1 className="text-center text-xl font-bold text-brand">{heading}</h1>
           {nav.finishes ? <span /> : <ArrowLink href={nav.nextHref} direction="next" />}
         </div>
-      </nav>
+      </div>
       {children}
       <div className="pt-4 pb-12 text-center">
         <AccentLink href={nav.nextHref}>{nav.finishes ? ui.lesson.finishLesson : ui.lesson.next}</AccentLink>

@@ -4,7 +4,7 @@ import type { VocabEntry } from "@/content/schema";
 import { ui } from "@/ui-it";
 import { SpeakButton } from "./speak-button";
 
-const GENDER_DOT: Record<NonNullable<VocabEntry["gender"]>, string> = { m: "bg-brand-light", f: "bg-bad" };
+const GENDER_DOT: Record<NonNullable<VocabEntry["gender"]>, string> = { m: "bg-brand-light", f: "bg-feminine" };
 
 /**
  * The vocabulary page's striped list (SPEC §4.6), in the order given: 🔊 and
@@ -42,7 +42,11 @@ export function VocabList({ entries }: { entries: readonly VocabEntry[] }) {
 
 function GenderDot({ gender }: { gender: NonNullable<VocabEntry["gender"]> }) {
   return (
-    <span title={ui.lesson.gender[gender]} className={`ml-2 inline-block size-2.5 rounded-full align-middle ${GENDER_DOT[gender]}`}>
+    <span
+      title={ui.lesson.gender[gender]}
+      className={`ml-2 inline-flex size-4 items-center justify-center rounded-full align-middle text-[0.625rem] leading-none font-bold text-white ${GENDER_DOT[gender]}`}
+    >
+      <span aria-hidden="true">{ui.lesson.genderLetter[gender]}</span>
       <span className="sr-only">{ui.lesson.genderLabel(gender)}</span>
     </span>
   );

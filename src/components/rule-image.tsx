@@ -1,12 +1,5 @@
-import { layoutRule, type PlacedArrow, type RuleBlock, type RuleStyle } from "@/content/rule-layout";
+import { isBold, layoutRule, type PlacedArrow, type RuleBlock } from "@/content/rule-layout";
 import { ui } from "@/ui-it";
-
-const TEXT_STYLE: Record<RuleStyle, { fontWeight?: string; fontStyle?: string; className: string }> = {
-  plain: { className: "fill-foreground" },
-  bold: { fontWeight: "bold", className: "fill-foreground" },
-  italic: { fontStyle: "italic", className: "fill-foreground" },
-  highlight: { fontWeight: "bold", className: "fill-brand" },
-};
 
 /** The size of an arrowhead, in the rule's px. */
 const HEAD = 9;
@@ -28,7 +21,6 @@ export function RuleImage({ rule }: { rule: RuleBlock }) {
       fontSize={layout.fontSize}
     >
       {layout.segments.map((segment, index) => {
-        const { className, ...font } = TEXT_STYLE[segment.style];
         return (
           <g key={index}>
             {segment.style === "highlight" && (
@@ -41,7 +33,15 @@ export function RuleImage({ rule }: { rule: RuleBlock }) {
                 className="fill-accent/60"
               />
             )}
-            <text x={segment.x} y={segment.y} textLength={segment.width} lengthAdjust="spacingAndGlyphs" className={className} {...font}>
+            <text
+              x={segment.x}
+              y={segment.y}
+              textLength={segment.width}
+              lengthAdjust="spacingAndGlyphs"
+              className={segment.style === "highlight" ? "fill-brand" : "fill-foreground"}
+              fontWeight={isBold(segment.style) ? "bold" : undefined}
+              fontStyle={segment.style === "italic" ? "italic" : undefined}
+            >
               {segment.text}
             </text>
           </g>

@@ -440,6 +440,8 @@ export type Gap = z.infer<typeof gapSchema>;
 export type Exchange = z.infer<typeof exchangeSchema>;
 export type GrammarPage = z.infer<typeof grammarPageSchema>;
 export type GrammarBlock = z.infer<typeof grammarBlockSchema>;
+/** One kind of grammar block: `GrammarBlockOf<"rule">`. */
+export type GrammarBlockOf<K extends GrammarBlock["kind"]> = Extract<GrammarBlock, { kind: K }>;
 export type RuleSegment = z.infer<typeof ruleSegmentSchema>;
 export type RuleArrow = z.infer<typeof ruleArrowSchema>;
 export type VocabEntry = z.infer<typeof vocabEntrySchema>;

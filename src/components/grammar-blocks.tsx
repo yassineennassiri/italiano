@@ -1,10 +1,8 @@
-import type { GrammarBlock } from "@/content/schema";
+import type { GrammarBlock, GrammarBlockOf as Block } from "@/content/schema";
 import { ui } from "@/ui-it";
 import { MediaFrame } from "./media-frame";
 import { InlineMarkdown, Prose } from "./prose";
 import { RuleImage } from "./rule-image";
-
-type Block<K extends GrammarBlock["kind"]> = Extract<GrammarBlock, { kind: K }>;
 
 /** One block of a grammar page's article (SPEC §4.5, §9.1). `terms` blocks go in `TermsPanel` instead. */
 export function GrammarBlockView({ block }: { block: Exclude<GrammarBlock, { kind: "terms" }> }) {

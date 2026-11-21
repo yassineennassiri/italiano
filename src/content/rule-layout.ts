@@ -5,9 +5,9 @@
  * each segment to its estimated width (`textLength`), so the arrows always
  * meet the words. M1 draws only `down` arrows.
  */
-import type { GrammarBlock, RuleSegment } from "./schema";
+import type { GrammarBlockOf, RuleSegment } from "./schema";
 
-export type RuleBlock = Extract<GrammarBlock, { kind: "rule" }>;
+export type RuleBlock = GrammarBlockOf<"rule">;
 export type RuleStyle = NonNullable<RuleSegment["style"]>;
 
 /** A segment's text, placed: `x` is its left edge, `y` its baseline. */
@@ -41,10 +41,15 @@ function charWidth(char: string): number {
   return 0.56;
 }
 
+/** Whether a segment is drawn bold: `bold`, and the highlighted target form. */
+export function isBold(style: RuleStyle): boolean {
+  return style === "bold" || style === "highlight";
+}
+
 /** The estimated width of `text` in px at the rule's font size; bold runs wider. */
 function textWidth(text: string, style: RuleStyle): number {
   const em = [...text].reduce((sum, char) => sum + charWidth(char), 0);
-  return em * FONT_SIZE * (style === "bold" || style === "highlight" ? 1.08 : 1);
+  return em * FONT_SIZE * (isBold(style) ? 1.08 : 1);
 }
 
 /** Lays out a rule: its segments row by row, then its down arrows between them. */

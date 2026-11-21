@@ -214,16 +214,17 @@ export const ui = {
     grammar: "Grammatica",
     vocabulary: "Vocabolario",
     culture: "Cultura e società",
-    reviewNav: "Pagine di riepilogo",
     previousPage: "Pagina precedente",
     nextPage: "Pagina successiva",
     finishLesson: "Finisci la lezione!",
     /** A grammar example's illustration (SPEC §4.5). */
     exampleImageAlt: "Illustrazione dell'esempio",
-    /** A rule image read out as its rows: "lo straniero → gli stranieri". */
-    ruleImage: (rows: readonly string[]) => rows.join(" → "),
+    /** A rule image read out as its rows, in order: "lo straniero; gli stranieri". */
+    ruleImage: (rows: readonly string[]) => rows.join("; "),
     /** The gender dot on the vocabulary page (SPEC §4.6). */
     gender: { m: "maschile", f: "femminile" } satisfies Record<NonNullable<VocabEntry["gender"]>, string>,
+    /** The letter on the gender dot. */
+    genderLetter: { m: "m", f: "f" } satisfies Record<NonNullable<VocabEntry["gender"]>, string>,
     /** The gender dot read out after the term: " (maschile)". */
     genderLabel: (gender: NonNullable<VocabEntry["gender"]>) => ` (${ui.lesson.gender[gender]})`,
     /** A noun with its plural (SPEC §4.6): "la valigia, le valigie". */
