@@ -131,6 +131,7 @@ export function planExerciseWrite({
   rows,
   progress,
   firstCheckAt,
+  resetAt = null,
   action,
   now,
 }: {
@@ -140,12 +141,16 @@ export function planExerciseWrite({
   progress: StoredProgress;
   /** When the exercise's stored first Check was made, or null when it has none. */
   firstCheckAt: Date | null;
+  /** When the exercise was last reset (Azzera or Correggi), or null. */
+  resetAt?: Date | null;
   action: ExerciseWrite;
   now: Date;
 }): ExerciseWritePlan | undefined {
   const exercise = findExercise(lesson, action.exerciseId);
   const contentHash = hashes.get(action.exerciseId);
   if (!exercise || !contentHash || action.contentHash !== contentHash) return undefined;
+  // Made before the last reset, but synced after it (the other computer, offline): the reset is later, so it wins.
+  if (resetAt !== null && new Date(action.at) <= resetAt) return undefined;
   const { id: exerciseId, item } = exercise;
 
   const entries = restoreEntries(lesson, hashes, rows);
@@ -333,11 +338,12 @@ export type ResetPlan = {
   lessonIds: string[];
   /** One `reset` attempt per deleted exercise: the history keeps that it was cleared. */
   attempts: Row<typeof exerciseAttempt>[];
-  /** What each lesson's `lesson_progress` becomes: not started, with no %, start, completion or resume point. */
-  progress: Pick<
-    typeof lessonProgressTable.$inferInsert,
-    "status" | "lastLocation" | "lastPercent" | "bestPercent" | "startedAt" | "completedAt" | "updatedAt"
-  >;
+  /**
+   * What each lesson's `lesson_progress` becomes: not started, with no %, start,
+   * completion or resume point. `updated_at` stays, so Home's *Continua da dove
+   * eri* still goes where the learner last was.
+   */
+  progress: Pick<typeof lessonProgressTable.$inferInsert, "status" | "lastLocation" | "lastPercent" | "bestPercent" | "startedAt" | "completedAt">;
 };
 
 /**
@@ -349,14 +355,12 @@ export function planReset({
   lessons,
   rows,
   at,
-  now,
 }: {
   lessons: readonly Pick<Lesson, "id" | "version">[];
   /** The stored `item_state` rows; those of other lessons are left alone. */
   rows: readonly Pick<typeof itemState.$inferSelect, "itemId" | "lessonId">[];
   /** When the learner confirmed, on their computer. */
   at: string;
-  now: Date;
 }): ResetPlan {
   const versions = new Map(lessons.map((lesson) => [lesson.id, lesson.version]));
   return {
@@ -373,6 +377,6 @@ export function planReset({
         correct: null,
         createdAt: new Date(at),
       })),
-    progress: { status: "not_started", lastLocation: null, lastPercent: null, bestPercent: null, startedAt: null, completedAt: null, updatedAt: now },
+    progress: { status: "not_started", lastLocation: null, lastPercent: null, bestPercent: null, startedAt: null, completedAt: null },
   };
 }

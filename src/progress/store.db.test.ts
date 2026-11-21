@@ -195,6 +195,10 @@ describe("progress store", () => {
       ["reset", I01],
     ]);
 
+    // A pick made before the reset but synced after it (the other computer) doesn't bring the old state back.
+    expect((await saveExerciseWrite(db, user, pick(1, "2026-11-20T10:29:00.000Z"))).result).toBe("ignored");
+    expect((await loadLessonEntries(db, user, lesson)).size).toBe(0);
+
     // Untouched again: a right first Check scores.
     await saveExerciseWrite(db, user, pick(0, "2026-11-20T10:31:00.000Z"));
     expect((await loadLessonEntries(db, user, lesson)).get(I01)?.entry.state).toEqual({

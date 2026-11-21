@@ -69,5 +69,7 @@ describe("inResetScope", () => {
     expect(inResetScope(lesson, "a2.u01.l02.s01.i01")).toBe(false);
     expect(inResetScope(level, "a2.u03.l02.s01.i01")).toBe(true);
     expect(inResetScope(level, "b1.u01.l01.s01.i01")).toBe(false);
+    expect(inResetScope(lesson, "a2.u01.l01")).toBe(true);
+    expect(inResetScope(level, "a2.u01.l01")).toBe(true);
   });
 });

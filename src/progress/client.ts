@@ -83,7 +83,8 @@ async function send(write: QueuedWrite): Promise<void> {
       const response = await recordReset(write.reset);
       if (logIfRejected(response, write) || response.result === "ignored") {
         // Nothing was reset: the saved entries count again.
-        localResets.splice(localResets.findIndex(({ local }) => local === write.local), 1);
+        const index = localResets.findIndex(({ local }) => local === write.local);
+        if (index !== -1) localResets.splice(index, 1);
       } else {
         write.local.resetAt = response.resetAt;
       }
@@ -163,7 +164,7 @@ export function submitReset(target: ResetTarget): void {
   const local: LocalReset = { resetAt: null };
   localResets.push({ scope, local });
   // The resume point is cleared too: the next visit is recorded again.
-  if (lastVisit && inResetScope(scope, `${lastVisit.lessonId}.`)) lastVisit = undefined;
+  if (lastVisit && inResetScope(scope, lastVisit.lessonId)) lastVisit = undefined;
   changed();
   progressQueue.enqueue({ type: "reset", reset: { ...target, at: new Date().toISOString() }, local });
 }

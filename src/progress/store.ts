@@ -4,7 +4,7 @@
  * branch. The HTTP driver has no interactive transactions, so each write is
  * read-plan-write: one batch of reads, a pure plan (`plan.ts`), one batch of writes.
  */
-import { and, desc, eq, inArray, min } from "drizzle-orm";
+import { and, desc, eq, inArray, max, min } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
 import { exerciseHashes } from "@/content/hash";
 import { loadCourse, loadLesson } from "@/content/load";
@@ -127,7 +127,7 @@ export async function saveExerciseWrite(db: Db, userId: string, write: ExerciseW
   const lesson = loadLesson(write.lessonId);
   if (!lesson) return { result: "ignored" };
 
-  const [rows, [progress], [seen], [firstCheck]] = await db.batch([
+  const [rows, [progress], [seen], [firstCheck], [lastReset]] = await db.batch([
     lessonRows(db, userId, lesson.id),
     storedProgress(db, userId, lesson.id),
     db.select({ id: exerciseAttempt.id }).from(exerciseAttempt).where(eq(exerciseAttempt.id, write.eventId)),
@@ -136,6 +136,12 @@ export async function saveExerciseWrite(db: Db, userId: string, write: ExerciseW
       .from(exerciseAttempt)
       .where(
         and(eq(exerciseAttempt.userId, userId), eq(exerciseAttempt.itemId, write.exerciseId), eq(exerciseAttempt.action, "check")),
+      ),
+    db
+      .select({ at: max(exerciseAttempt.createdAt) })
+      .from(exerciseAttempt)
+      .where(
+        and(eq(exerciseAttempt.userId, userId), eq(exerciseAttempt.itemId, write.exerciseId), eq(exerciseAttempt.action, "reset")),
       ),
   ]);
   const ignored = (): WriteResponse => ({ result: "ignored", saved: savedEntries(lesson, rows).get(write.exerciseId) });
@@ -147,6 +153,7 @@ export async function saveExerciseWrite(db: Db, userId: string, write: ExerciseW
     rows,
     progress,
     firstCheckAt: firstCheck?.at ?? null,
+    resetAt: lastReset?.at ?? null,
     action: write,
     now,
   });
@@ -239,7 +246,7 @@ export async function saveReset(db: Db, userId: string, write: ResetWrite, now =
     .select({ itemId: itemState.itemId, lessonId: itemState.lessonId })
     .from(itemState)
     .where(and(eq(itemState.userId, userId), inArray(itemState.lessonId, lessonIds)));
-  const plan = planReset({ lessons, rows, at: write.at, now });
+  const plan = planReset({ lessons, rows, at: write.at });
 
   const writes: BatchItem<"pg">[] = [
     db.delete(itemState).where(and(eq(itemState.userId, userId), inArray(itemState.lessonId, plan.lessonIds))),

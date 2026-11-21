@@ -45,7 +45,7 @@ export function resetScope(target: ResetTarget): ResetScope {
   return `${target.scope === "lesson" ? target.lessonId : target.levelId}.`;
 }
 
-/** Whether an Azzera of `scope` covers the exercise. */
-export function inResetScope(scope: ResetScope, exerciseId: string): boolean {
-  return exerciseId.startsWith(scope);
+/** Whether an Azzera of `scope` covers an exercise or a lesson, by its id. */
+export function inResetScope(scope: ResetScope, id: string): boolean {
+  return `${id}.`.startsWith(scope);
 }

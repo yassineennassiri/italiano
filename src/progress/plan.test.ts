@@ -187,6 +187,15 @@ describe("planExerciseWrite", () => {
   });
 });
 
+describe("planExerciseWrite after a reset", () => {
+  it("ignores an action made before the exercise's last reset, synced late from the other computer", () => {
+    const { input, hash } = base();
+    const resetAt = new Date("2026-11-20T10:00:00Z");
+    expect(planExerciseWrite({ ...input, resetAt, action: pick(2, { contentHash: hash, at: "2026-11-20T09:59:59.000Z" }) })).toBeUndefined();
+    expect(planExerciseWrite({ ...input, resetAt, action: pick(2, { contentHash: hash, at: "2026-11-20T10:00:01.000Z" }) })).toBeDefined();
+  });
+});
+
 describe("planExerciseWrite for multi_select (s01.i03)", () => {
   const I03 = "a2.u01.l01.s01.i03";
   const check = (selected: number[], { contentHash, at = AT }: { contentHash: string; at?: string }) =>
@@ -463,20 +472,20 @@ describe("planReset (Azzera)", () => {
   ];
 
   it("logs a reset for every stored exercise and puts the lesson back to not started", () => {
-    expect(planReset({ lessons: [lesson], rows: stored, at: AT, now: NOW })).toEqual({
+    expect(planReset({ lessons: [lesson], rows: stored, at: AT })).toEqual({
       lessonIds: ["a2.u01.l01"],
       attempts: [
         { itemId: "a2.u01.l01.s01.i01", lessonId: "a2.u01.l01", contentVersion: 3, action: "reset", answer: null, result: null, correct: null, createdAt: new Date(AT) },
         { itemId: "a2.u01.l01.s05.i01.e2", lessonId: "a2.u01.l01", contentVersion: 3, action: "reset", answer: null, result: null, correct: null, createdAt: new Date(AT) },
       ],
-      progress: { status: "not_started", lastLocation: null, lastPercent: null, bestPercent: null, startedAt: null, completedAt: null, updatedAt: NOW },
+      progress: { status: "not_started", lastLocation: null, lastPercent: null, bestPercent: null, startedAt: null, completedAt: null },
     });
   });
 
   it("covers every lesson given, each attempt with its own lesson's version, and nothing else", () => {
     const other = { id: "a2.u01.l02", version: 1 };
     const rows = [...stored, { itemId: "a2.u01.l02.s01.i01", lessonId: "a2.u01.l02" }, { itemId: "b1.u01.l01.s01.i01", lessonId: "b1.u01.l01" }];
-    const plan = planReset({ lessons: [lesson, other], rows, at: AT, now: NOW });
+    const plan = planReset({ lessons: [lesson, other], rows, at: AT });
     expect(plan.lessonIds).toEqual(["a2.u01.l01", "a2.u01.l02"]);
     expect(plan.attempts.map(({ itemId, contentVersion }) => [itemId, contentVersion])).toEqual([
       ["a2.u01.l01.s01.i01", 3],
@@ -486,6 +495,6 @@ describe("planReset (Azzera)", () => {
   });
 
   it("has no attempts to log when nothing is stored", () => {
-    expect(planReset({ lessons: [lesson], rows: [], at: AT, now: NOW }).attempts).toEqual([]);
+    expect(planReset({ lessons: [lesson], rows: [], at: AT }).attempts).toEqual([]);
   });
 });
