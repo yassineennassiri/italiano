@@ -6,10 +6,12 @@ import { DropdownItem } from "@/components/dropdown-item";
 import { MediaFrame } from "@/components/media-frame";
 import { MultiSelectItem } from "@/components/multi-select-item";
 import { NoteRow } from "@/components/note-row";
+import { ParlaItem } from "@/components/parla-item";
 import { PromptBubble } from "@/components/prompt-bubble";
 import { ScenePoster } from "@/components/scene-poster";
 import { ScriptToggle } from "@/components/script-toggle";
 import { SingleChoiceItem } from "@/components/single-choice-item";
+import { SpeakRateItem } from "@/components/speak-rate-item";
 import { StepCounterText, StepProgress } from "@/components/step-progress";
 import { StepInstruction } from "@/components/step-instruction";
 import { TextGapItem } from "@/components/text-gap-item";
@@ -17,7 +19,7 @@ import { WordOrderItem } from "@/components/word-order-item";
 import { exerciseHashes } from "@/content/hash";
 import { type ErrorTag, loadErrorTags, loadLessonBySlug } from "@/content/load";
 import { stepLocation, stepPage } from "@/content/lesson-nav";
-import type { Item, Lesson, Step } from "@/content/schema";
+import type { Item, Lesson, Note, Step } from "@/content/schema";
 import { stepScript } from "@/content/script";
 import { readLessonEntries } from "@/progress/read";
 import { lessonExercises } from "@/scoring/lesson";
@@ -89,8 +91,12 @@ function StepMedia({ step, lesson }: { step: Step; lesson: Lesson }) {
   }
 }
 
-/** An item's interaction, with its notes placed before Soluzione / Controlla (SPEC §4.2). */
-function ItemInteraction({ item, notes }: { item: Item; notes: ReactNode }) {
+/**
+ * An item's interaction, with its notes placed before Soluzione / Controlla
+ * (SPEC §4.2). `renderNotes` renders a list of notes, for a speaking item's
+ * exchanges (between an exchange and its rating, SPEC §4.3).
+ */
+function ItemInteraction({ item, notes, renderNotes }: { item: Item; notes: ReactNode; renderNotes: (notes?: Note[]) => ReactNode }) {
   switch (item.type) {
     case "single_choice":
       return <SingleChoiceItem item={item} notes={notes} />;
@@ -102,6 +108,12 @@ function ItemInteraction({ item, notes }: { item: Item; notes: ReactNode }) {
       return <TextGapItem item={item} notes={notes} />;
     case "word_order":
       return <WordOrderItem item={item} notes={notes} />;
+    case "speak_rate": {
+      const exchangeNotes = Object.fromEntries(item.exchanges.map((exchange) => [exchange.id, renderNotes(exchange.notes)]));
+      return <SpeakRateItem item={item} exchangeNotes={exchangeNotes} notes={notes} />;
+    }
+    case "parla":
+      return <ParlaItem item={item} notes={notes} />;
     default:
       // No engine yet: just the prompt, then the notes.
       return (
@@ -115,16 +127,17 @@ function ItemInteraction({ item, notes }: { item: Item; notes: ReactNode }) {
 
 /** One item: its interaction (or just its prompt, for types without an engine yet) and its notes. */
 function ItemSlot({ item, errorTags }: { item: Item; errorTags: ReadonlyMap<string, ErrorTag> }) {
-  const notes = item.notes && (
-    <div className="mt-4 space-y-2 pl-2">
-      {item.notes.map((note, index) => (
-        <NoteRow key={index} note={note} errorTag={note.error_tag ? errorTags.get(note.error_tag) : undefined} />
-      ))}
-    </div>
-  );
+  const renderNotes = (notes?: Note[]) =>
+    notes && (
+      <div className="mt-4 space-y-2 pl-2">
+        {notes.map((note, index) => (
+          <NoteRow key={index} note={note} errorTag={note.error_tag ? errorTags.get(note.error_tag) : undefined} />
+        ))}
+      </div>
+    );
   return (
     <section data-item-id={item.id} data-item-type={item.type}>
-      <ItemInteraction item={item} notes={notes} />
+      <ItemInteraction item={item} notes={renderNotes(item.notes)} renderNotes={renderNotes} />
     </section>
   );
 }

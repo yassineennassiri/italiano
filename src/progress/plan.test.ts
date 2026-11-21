@@ -277,3 +277,67 @@ describe("planExerciseWrite for text_gap (s03.i01)", () => {
     expect(plan.attempt.result).toEqual({ g1: "accent_only", g2: "wrong", g3: "correct", g4: "correct", g5: "correct" });
   });
 });
+
+describe("planExerciseWrite for self-ratings (s05 exchanges, s06 Parla!)", () => {
+  const E1 = "a2.u01.l01.s05.i01.e1";
+  const E2 = "a2.u01.l01.s05.i01.e2";
+  const PARLA = "a2.u01.l01.s06.i01";
+  const rate = (exerciseId: string, hashes: ReadonlyMap<string, string>, rating: "good" | "not_great", note?: string) =>
+    ({ eventId: "evt-r", lessonId: "a2.u01.l01", exerciseId, contentHash: hashes.get(exerciseId)!, at: AT, kind: "rate", rating, ...(note !== undefined && { note }) }) as const;
+
+  it("writes one exchange's Non tanto bene under the exchange id, and logs it as a speak_rate error", () => {
+    const { input } = base();
+    const plan = planExerciseWrite({ ...input, action: rate(E2, input.hashes, "not_great") })!;
+    expect(plan.itemState).toMatchObject({ itemId: E2, status: "rated_not_great", firstCheckCorrect: null, points: 0, answer: { rating: "not_great" } });
+    expect(plan.attempt).toMatchObject({ id: "evt-r", itemId: E2, action: "rate", answer: { rating: "not_great" }, result: null, correct: null });
+    expect(plan.errors).toEqual([
+      {
+        source: "speak_rate",
+        lessonId: "a2.u01.l01",
+        itemId: E2,
+        errorTags: ["article.elision", "register.lei"],
+        expected: "Bene, grazie. Il treno / L'aereo era …",
+        createdAt: new Date(AT),
+      },
+    ]);
+  });
+
+  it("leaves points and the lesson % as they were", () => {
+    const { input, hash } = base();
+    const rows = [row(hash, { status: "checked_correct", firstCheckCorrect: true, points: 1, answer: { picks: [0] } })];
+    const plan = planExerciseWrite({ ...input, rows, action: rate(E1, input.hashes, "good") })!;
+    expect(plan.itemState).toMatchObject({ itemId: E1, status: "rated_good", points: 0 });
+    expect(plan.errors).toEqual([]);
+    expect(plan.progress).toMatchObject({ status: "in_progress", lastPercent: 14, bestPercent: 14 });
+  });
+
+  it("logs Parla!'s Non tanto bene and its hesitation note as separate rows", () => {
+    const { input } = base();
+    const plan = planExerciseWrite({ ...input, action: rate(PARLA, input.hashes, "not_great", "il plurale con gli") })!;
+    expect(plan.itemState).toMatchObject({ itemId: PARLA, status: "rated_not_great", answer: { rating: "not_great", note: "il plurale con gli" } });
+    expect(plan.errors).toEqual([
+      { source: "parla", lessonId: "a2.u01.l01", itemId: PARLA, errorTags: ["article.elision", "article.plural_gli"], createdAt: new Date(AT) },
+      {
+        source: "parla_note",
+        lessonId: "a2.u01.l01",
+        itemId: PARLA,
+        errorTags: ["article.elision", "article.plural_gli", "speaking"],
+        note: "il plurale con gli",
+        createdAt: new Date(AT),
+      },
+    ]);
+  });
+
+  it("ignores a second rating: the first one locked the exercise", () => {
+    const { input } = base();
+    const rated: StoredItemRow = { itemId: E2, status: "rated_good", firstCheckCorrect: null, points: 0, answer: { rating: "good" }, contentHash: input.hashes.get(E2)! };
+    expect(planExerciseWrite({ ...input, rows: [rated], action: rate(E2, input.hashes, "not_great") })).toBeUndefined();
+  });
+
+  it("accepts a rating write, and rejects an unknown rating", () => {
+    const { input } = base();
+    const eventId = "6f1c2a4e-0b7d-4c3e-9a51-2d8e7f4b1c90";
+    expect(exerciseWriteSchema.safeParse({ ...rate(PARLA, input.hashes, "good", "gli"), eventId }).success).toBe(true);
+    expect(exerciseWriteSchema.safeParse({ ...rate(E1, input.hashes, "good"), eventId, rating: "great" }).success).toBe(false);
+  });
+});

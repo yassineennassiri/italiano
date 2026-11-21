@@ -12,27 +12,40 @@ export type ExerciseEntry<A = unknown> = {
   answer: A | null;
 };
 
-/** Right, or solved: inputs, Solve and Check are disabled. */
-export const isLocked = (entry: Pick<ExerciseEntry, "state">) => entry.state.status === "checked_correct" || entry.state.status === "solved";
+/** Right, solved, or self-rated: inputs, Solve, Check and the rating are disabled. */
+export const isLocked = (entry: Pick<ExerciseEntry, "state">) => entry.state.status !== "untouched" && entry.state.status !== "checked_wrong";
 
 /** An exercise the learner hasn't touched. */
 export const NEW_ENTRY: ExerciseEntry<never> = { state: UNTOUCHED, answer: null };
 
-/** One Check or Solve and what it changed, as the attempt history records it. */
+/** One Check, Solve or self-rating and what it changed, as the attempt history records it. */
 export type ExerciseOutcome<A> = {
   entry: ExerciseEntry<A>;
-  action: "check" | "solve";
-  /** Null for Solve. */
+  action: "check" | "solve" | "rate";
+  /** Null for Solve and self-ratings. */
   correct: boolean | null;
-  /** What was wrong, one per error_log row if this is a wrong first Check (SPEC §10.4); empty when right, and for Solve. */
+  /**
+   * What went wrong, one error_log row each (SPEC §10.4): logged for a wrong
+   * first Check, and for a self-rating (Non tanto bene, a hesitation note).
+   * Empty when right, and for Solve.
+   */
   errors: ErrorDetail[];
   /** Gapped items: gap id → verdict, for `exercise_attempt.result` (SPEC §10.3). */
   result?: Record<string, GapVerdict>;
 };
 
 /**
- * One wrong part of a Check: what was right and what was given, and in which
- * gap for gapped items. `errorTags` are added to the item's own for its row
- * (an accent-only miss adds `spelling.accent`).
+ * One error_log row's details. For a Check: what was right and what was
+ * given, and in which gap for gapped items. For a self-rating: its `source`,
+ * my expected reply, or the hesitation `note`. `errorTags` are added to the
+ * item's own for its row (an accent-only miss adds `spelling.accent`).
  */
-export type ErrorDetail = { gapId?: string; expected: string; given: string; errorTags?: readonly string[] };
+export type ErrorDetail = {
+  /** Unset for a Check (`exercise`). */
+  source?: "speak_rate" | "parla" | "parla_note";
+  gapId?: string;
+  expected?: string;
+  given?: string;
+  note?: string;
+  errorTags?: readonly string[];
+};

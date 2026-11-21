@@ -7,6 +7,7 @@
 import type { LevelId } from "@/content/ids";
 import type { LessonPage } from "@/content/lesson-nav";
 import type { Note } from "@/content/schema";
+import type { Rating } from "@/items/self-rating";
 import type { SyncStatus } from "@/progress/write-queue";
 import type { LessonStatus } from "@/scoring/lesson";
 
@@ -131,6 +132,14 @@ export const ui = {
     characterHelper: "Caratteri italiani",
     /** The accessible name of a palette button. */
     insertCharacter: (character: string) => `Inserisci ${character}`,
+    /** Self-rating after a speaking exchange or Parla! (SPEC §5.2.11, §5.2.12). */
+    rateQuestion: "Com'è andata?",
+    rating: { good: "Bene", not_great: "Non tanto bene" } satisfies Record<Rating, string>,
+    /** Parla! (SPEC §5.2.12). */
+    parlaExample: "Esempio di risposta",
+    parlaChecklist: "Obiettivi",
+    hesitationNote: "Su cosa hai esitato?",
+    hesitationPlaceholder: "Facoltativo: una parola, una struttura, un dubbio…",
     /** A word_order item's answer box and the tiles still to place (SPEC §5.2.3). */
     answerBox: "La tua risposta",
     tileTray: "Parole da mettere in ordine",
