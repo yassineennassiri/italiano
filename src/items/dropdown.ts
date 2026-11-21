@@ -7,16 +7,21 @@
  */
 import { z } from "zod";
 import type { Item } from "@/content/schema";
-import { compareTyped } from "@/scoring/compare";
+import { checkGaps, compareTyped } from "@/scoring/compare";
 import { applyEvent } from "@/scoring/exercise";
-import { type ExerciseEntry, type ExerciseOutcome, isLocked, type Mistake } from "./entry";
-import type { OptionView } from "./option-look";
+import { type ExerciseEntry, type ExerciseOutcome, isLocked } from "./entry";
+import type { InputView } from "./input-look";
 
 export type DropdownItem = Pick<Extract<Item, { type: "dropdown" }>, "id" | "gaps" | "solvable">;
 type DropdownGap = DropdownItem["gaps"][number];
 
-/** The stored answer: the value of each gap at the last Check (after Solve, the answers). Unchosen gaps are left out. */
-export const dropdownAnswerSchema = z.strictObject({ values: z.record(z.string(), z.string()) });
+/**
+ * The stored answer: the value of each gap at the last Check (after Solve, the
+ * answers). Unchosen gaps are left out. Bounded, as it also arrives with Controlla.
+ */
+export const dropdownAnswerSchema = z.strictObject({
+  values: z.record(z.string().max(32), z.string().max(200)).refine((values) => Object.keys(values).length <= 64),
+});
 export type DropdownAnswer = z.infer<typeof dropdownAnswerSchema>;
 
 /** Gap id → chosen option. */
@@ -41,18 +46,19 @@ export function checkDropdown(item: DropdownItem, entry: Entry, values: GapValue
 
   const checked = checkedOf(entry);
   const next: Record<string, string> = {};
-  const mistakes: Mistake[] = [];
   for (const gap of item.gaps) {
     const value = isRight(gap, checked[gap.id]) ? checked[gap.id] : values[gap.id];
     if (value !== undefined) next[gap.id] = value;
-    if (!isRight(gap, value)) mistakes.push({ gapId: gap.id, expected: gap.answer, given: value ?? "" });
   }
-  const correct = mistakes.length === 0;
+  const { correct, gaps: result } = checkGaps(item.gaps, next);
   return {
     entry: { state: applyEvent(entry.state, { type: "check", correct }), answer: { values: next } },
     action: "check",
     correct,
-    mistakes,
+    errors: item.gaps
+      .filter((gap) => result[gap.id] !== "correct")
+      .map((gap) => ({ gapId: gap.id, expected: gap.answer, given: next[gap.id] ?? "" })),
+    result,
   };
 }
 
@@ -66,7 +72,7 @@ export function solveDropdown(item: DropdownItem, entry: Entry): ExerciseOutcome
     },
     action: "solve",
     correct: null,
-    mistakes: [],
+    errors: [],
   };
 }
 
@@ -75,16 +81,18 @@ export function currentValues(entry: Entry, edits: GapValues): GapValues {
   return { ...checkedOf(entry), ...edits };
 }
 
-/** How each gap looks for the current values (gap id → view): open, green ✓ and locked, or red ✗ until changed. */
-export function gapLooks(item: DropdownItem, entry: Entry, values: GapValues): Record<string, OptionView> {
+/**
+ * How each gap looks (gap id → view): open, green ✓ and locked, or red ✗ until
+ * the learner edits it (`edits`: the gaps changed since the last Check).
+ */
+export function gapLooks(item: DropdownItem, entry: Entry, edits: GapValues): Record<string, InputView> {
   const checked = checkedOf(entry);
   const locked = isLocked(entry);
   const wrongChecked = entry.state.status === "checked_wrong";
   return Object.fromEntries(
-    item.gaps.map((gap): [string, OptionView] => {
+    item.gaps.map((gap): [string, InputView] => {
       if (locked || (wrongChecked && isRight(gap, checked[gap.id]))) return [gap.id, { look: "correct", disabled: true }];
-      const unchanged = values[gap.id] === checked[gap.id];
-      return [gap.id, { look: wrongChecked && unchanged ? "wrong" : "idle", disabled: false }];
+      return [gap.id, { look: wrongChecked && !(gap.id in edits) ? "wrong" : "idle", disabled: false }];
     }),
   );
 }

@@ -9,12 +9,12 @@ import { z } from "zod";
 import type { Item } from "@/content/schema";
 import { applyEvent } from "@/scoring/exercise";
 import { type ExerciseEntry, type ExerciseOutcome, isLocked } from "./entry";
-import type { OptionView } from "./option-look";
+import type { InputView } from "./input-look";
 
 export type MultiSelectItem = Pick<Extract<Item, { type: "multi_select" }>, "id" | "options" | "answers" | "solvable">;
 
 /** The stored answer: the selection at the last Check (after Solve, the right options), in option order. */
-export const multiSelectAnswerSchema = z.strictObject({ selected: z.array(z.number().int().nonnegative()) });
+export const multiSelectAnswerSchema = z.strictObject({ selected: z.array(z.number().int().nonnegative()).max(64) });
 export type MultiSelectAnswer = z.infer<typeof multiSelectAnswerSchema>;
 
 type Entry = ExerciseEntry<MultiSelectAnswer>;
@@ -43,7 +43,7 @@ export function checkMultiSelect(item: MultiSelectItem, entry: Entry, selection:
     entry: { state: applyEvent(entry.state, { type: "check", correct }), answer: { selected } },
     action: "check",
     correct,
-    mistakes: correct
+    errors: correct
       ? []
       : [{ expected: answers.map((index) => item.options[index]).join(", "), given: selected.map((index) => item.options[index]).join(", ") }],
   };
@@ -56,7 +56,7 @@ export function solveMultiSelect(item: MultiSelectItem, entry: Entry): ExerciseO
     entry: { state: applyEvent(entry.state, { type: "solve" }), answer: { selected: sorted(item.answers) } },
     action: "solve",
     correct: null,
-    mistakes: [],
+    errors: [],
   };
 }
 
@@ -71,7 +71,7 @@ export function currentSelection(entry: Entry, toggled: readonly number[]): numb
 }
 
 /** How each option looks for the current selection, and whether it can be clicked. */
-export function optionLooks(item: MultiSelectItem, entry: Entry, selection: readonly number[]): OptionView[] {
+export function optionLooks(item: MultiSelectItem, entry: Entry, selection: readonly number[]): InputView[] {
   const checked = checkedOf(entry);
   const locked = isLocked(entry);
   return item.options.map((_, index) => {

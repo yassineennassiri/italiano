@@ -42,7 +42,7 @@ type Engine<I, A> = {
 type AnyEngine = { answerSchema: z.ZodType; apply: (item: Item, entry: ExerciseEntry, action: ExerciseAction) => Outcome<unknown> };
 
 /** Erases an engine's types for the registry; the content and the stored answer were validated on the way in. */
-function register<I, A>(engine: Engine<I, A>): AnyEngine {
+function eraseTypes<I, A>(engine: Engine<I, A>): AnyEngine {
   return {
     answerSchema: engine.answerSchema,
     apply: (item, entry, action) => {
@@ -63,17 +63,17 @@ function register<I, A>(engine: Engine<I, A>): AnyEngine {
 }
 
 const ENGINES: Partial<Record<Item["type"], AnyEngine>> = {
-  single_choice: register<SingleChoiceItem, SingleChoiceAnswer>({
+  single_choice: eraseTypes<SingleChoiceItem, SingleChoiceAnswer>({
     answerSchema: singleChoiceAnswerSchema,
     pick: pickOption,
     solve: solveSingleChoice,
   }),
-  multi_select: register<MultiSelectItem, MultiSelectAnswer>({
+  multi_select: eraseTypes<MultiSelectItem, MultiSelectAnswer>({
     answerSchema: multiSelectAnswerSchema,
     check: (item, entry, answer) => checkMultiSelect(item, entry, answer.selected),
     solve: solveMultiSelect,
   }),
-  dropdown: register<DropdownItem, DropdownAnswer>({
+  dropdown: eraseTypes<DropdownItem, DropdownAnswer>({
     answerSchema: dropdownAnswerSchema,
     check: (item, entry, answer) => checkDropdown(item, entry, answer.values),
     solve: solveDropdown,

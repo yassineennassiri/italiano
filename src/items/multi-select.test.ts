@@ -25,7 +25,7 @@ describe("checkMultiSelect", () => {
       state: { status: "checked_wrong", firstCheckCorrect: false, points: 0 },
       answer: { selected: [0, 1] },
     });
-    expect(wrong.mistakes).toEqual([{ expected: "la valigia, lo zaino, l'ombrello", given: "la valigia, la bicicletta" }]);
+    expect(wrong.errors).toEqual([{ expected: "la valigia, lo zaino, l'ombrello", given: "la valigia, la bicicletta" }]);
   });
 
   it("keeps right picks from the last Check locked: a retry that leaves them out still counts them", () => {
@@ -42,7 +42,7 @@ describe("checkMultiSelect", () => {
     const empty = checkMultiSelect(item, NEW_ENTRY, [])!;
     expect(empty.correct).toBe(false);
     expect(empty.entry.state.status).toBe("checked_wrong");
-    expect(empty.mistakes).toEqual([{ expected: "la valigia, lo zaino, l'ombrello", given: "" }]);
+    expect(empty.errors).toEqual([{ expected: "la valigia, lo zaino, l'ombrello", given: "" }]);
   });
 
   it("ignores an index outside the options", () => {

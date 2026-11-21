@@ -155,12 +155,12 @@ export function planExerciseWrite({
       contentVersion: lesson.version,
       action: outcome.action,
       answer: entry.answer,
-      result: null,
+      result: outcome.result ?? null,
       correct: outcome.correct,
       createdAt: at,
     },
     errors: firstCheckWrong
-      ? outcome.mistakes.map(({ gapId, expected, given }) => ({
+      ? outcome.errors.map(({ gapId, expected, given }) => ({
           source: "exercise" as const,
           lessonId: lesson.id,
           itemId: item.id,

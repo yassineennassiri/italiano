@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import type { Item } from "@/content/schema";
 import { type ExerciseEntry, isLocked } from "@/items/entry";
 import { currentSelection, type MultiSelectAnswer, optionLooks } from "@/items/multi-select";
-import { OptionButton, SolveAndCheck } from "./option-button";
+import { ItemControls } from "./item-controls";
+import { OptionButton } from "./option-button";
 import { PromptBubble } from "./prompt-bubble";
 import { useExercise } from "./step-progress";
 
@@ -13,7 +14,7 @@ import { useExercise } from "./step-progress";
  * toggle on and off. Controlla checks the selection; Soluzione, when the item
  * is solvable, fills in the right options.
  */
-export function MultiSelectItem({ item }: { item: Extract<Item, { type: "multi_select" }> }) {
+export function MultiSelectItem({ item, notes }: { item: Extract<Item, { type: "multi_select" }>; notes?: ReactNode }) {
   const [entry, dispatch] = useExercise(item);
   const current = entry as ExerciseEntry<MultiSelectAnswer>;
   // Options clicked since the last Check; the selection is the last Check's with these flipped.
@@ -33,20 +34,22 @@ export function MultiSelectItem({ item }: { item: Extract<Item, { type: "multi_s
   };
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 md:items-start">
-      <div>{item.prompt && <PromptBubble>{item.prompt}</PromptBubble>}</div>
-      <div>
-        <ul className="space-y-2">
-          {item.options.map((option, index) => (
-            <li key={index}>
-              <OptionButton {...looks[index]} pressed={selection.includes(index)} onClick={() => toggle(index)}>
-                {option}
-              </OptionButton>
-            </li>
-          ))}
-        </ul>
-        <SolveAndCheck solvable={item.solvable} locked={isLocked(entry)} onSolve={solve} onCheck={check} />
+    <>
+      <div className="grid gap-4 md:grid-cols-2 md:items-start">
+        <div>{item.prompt && <PromptBubble>{item.prompt}</PromptBubble>}</div>
+        <div>
+          <ul className="space-y-2">
+            {item.options.map((option, index) => (
+              <li key={index}>
+                <OptionButton {...looks[index]} pressed={selection.includes(index)} onClick={() => toggle(index)}>
+                  {option}
+                </OptionButton>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
-    </div>
+      <ItemControls notes={notes} solvable={item.solvable} locked={isLocked(entry)} onSolve={solve} onCheck={check} />
+    </>
   );
 }

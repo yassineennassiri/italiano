@@ -4,7 +4,7 @@ import { checkDropdown, currentValues, type DropdownItem, gapLooks, solveDropdow
 import { NEW_ENTRY } from "./entry";
 
 /** "{{g1}} valigia, {{g2}} zaino, {{g3}} ombrello e {{g4}} computer." from the example lesson: la, lo, l', il. */
-const item: DropdownItem = { ...(loadLesson("a2.u01.l01")!.steps[1].items[0] as DropdownItem), solvable: true };
+const item = loadLesson("a2.u01.l01")!.steps[1].items[0] as DropdownItem;
 
 const ALL_RIGHT = { g1: "la", g2: "lo", g3: "l'", g4: "il" };
 
@@ -16,7 +16,7 @@ describe("checkDropdown", () => {
       state: { status: "checked_correct", firstCheckCorrect: true, points: 1 },
       answer: { values: ALL_RIGHT },
     });
-    expect(result.mistakes).toEqual([]);
+    expect(result.errors).toEqual([]);
     expect(checkDropdown(item, result.entry, ALL_RIGHT)).toBeUndefined();
   });
 
@@ -27,11 +27,12 @@ describe("checkDropdown", () => {
       state: { status: "checked_wrong", firstCheckCorrect: false, points: 0 },
       answer: { values: { g1: "la", g2: "il", g3: "la" } },
     });
-    expect(wrong.mistakes).toEqual([
+    expect(wrong.errors).toEqual([
       { gapId: "g2", expected: "lo", given: "il" },
       { gapId: "g3", expected: "l'", given: "la" },
       { gapId: "g4", expected: "il", given: "" },
     ]);
+    expect(wrong.result).toEqual({ g1: "correct", g2: "wrong", g3: "wrong", g4: "wrong" });
   });
 
   it("keeps the gaps right at the last Check locked, and a right retry scores 0", () => {
@@ -84,16 +85,16 @@ describe("gapLooks", () => {
 
   it("after a wrong Check: right gaps green and locked, wrong and unchosen gaps red but editable", () => {
     const wrong = checkDropdown(item, NEW_ENTRY, { g1: "la", g2: "il", g3: "l'" })!.entry;
-    expect(gapLooks(item, wrong, currentValues(wrong, {}))).toEqual({ g1: green, g2: red, g3: green, g4: red });
+    expect(gapLooks(item, wrong, {})).toEqual({ g1: green, g2: red, g3: green, g4: red });
   });
 
-  it("clears a gap's red as soon as its value changes", () => {
+  it("clears a gap's red once it is edited, even back to the value that was wrong", () => {
     const wrong = checkDropdown(item, NEW_ENTRY, { g1: "la", g2: "il", g3: "l'" })!.entry;
-    expect(gapLooks(item, wrong, currentValues(wrong, { g2: "la", g4: "il" }))).toEqual({ g1: green, g2: idle, g3: green, g4: idle });
+    expect(gapLooks(item, wrong, { g2: "il", g4: "il" })).toEqual({ g1: green, g2: idle, g3: green, g4: idle });
   });
 
   it("shows every gap green and disabled once right or solved", () => {
     const solved = solveDropdown(item, NEW_ENTRY)!.entry;
-    expect(gapLooks(item, solved, currentValues(solved, {}))).toEqual({ g1: green, g2: green, g3: green, g4: green });
+    expect(gapLooks(item, solved, {})).toEqual({ g1: green, g2: green, g3: green, g4: green });
   });
 });

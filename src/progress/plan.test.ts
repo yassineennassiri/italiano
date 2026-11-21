@@ -248,6 +248,7 @@ describe("planExerciseWrite for dropdown (s02.i01)", () => {
     const action = { eventId: "evt-4", lessonId: "a2.u01.l01", exerciseId: ID, contentHash: hash, at: AT, kind: "check", answer: { values: { g1: "la", g2: "il", g3: "l'" } } } as const;
     const plan = planExerciseWrite({ ...input, action })!;
     expect(plan.itemState).toMatchObject({ status: "checked_wrong", points: 0, answer: { values: { g1: "la", g2: "il", g3: "l'" } } });
+    expect(plan.attempt).toMatchObject({ correct: false, result: { g1: "correct", g2: "wrong", g3: "correct", g4: "wrong" } });
     expect(plan.errors).toEqual([
       { source: "exercise", lessonId: "a2.u01.l01", itemId: ID, gapId: "g2", errorTags: ["article.elision", "article.lo"], expected: "lo", given: "il", createdAt: new Date(AT) },
       { source: "exercise", lessonId: "a2.u01.l01", itemId: ID, gapId: "g4", errorTags: ["article.elision", "article.lo"], expected: "il", given: "", createdAt: new Date(AT) },
