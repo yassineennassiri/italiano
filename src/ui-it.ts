@@ -131,6 +131,9 @@ export const ui = {
     characterHelper: "Caratteri italiani",
     /** The accessible name of a palette button. */
     insertCharacter: (character: string) => `Inserisci ${character}`,
+    /** A word_order item's answer box and the tiles still to place (SPEC §5.2.3). */
+    answerBox: "La tua risposta",
+    tileTray: "Parole da mettere in ordine",
     /** Read out with the ✓ and ✗ icons. */
     correct: "Giusto",
     wrong: "Sbagliato",
