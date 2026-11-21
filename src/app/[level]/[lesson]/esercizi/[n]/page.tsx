@@ -7,8 +7,8 @@ import { MediaFrame } from "@/components/media-frame";
 import { MultiSelectItem } from "@/components/multi-select-item";
 import { NoteRow } from "@/components/note-row";
 import { ParlaItem } from "@/components/parla-item";
-import { PromptBubble } from "@/components/prompt-bubble";
-import { ScenePoster } from "@/components/scene-poster";
+import { ItemPrompt } from "@/components/prompt-bubble";
+import { ScenePlayer } from "@/components/scene-player";
 import { ScriptToggle } from "@/components/script-toggle";
 import { SingleChoiceItem } from "@/components/single-choice-item";
 import { SpeakRateItem } from "@/components/speak-rate-item";
@@ -82,7 +82,7 @@ async function StepView({ params }: Pick<PageProps<"/[level]/[lesson]/esercizi/[
 function StepMedia({ step, lesson }: { step: Step; lesson: Lesson }) {
   switch (step.media?.kind) {
     case "scene":
-      return <ScenePoster scene={lesson.scene} lessonTitle={lesson.title} />;
+      return <ScenePlayer scene={lesson.scene} lessonTitle={lesson.title} />;
     case "image":
       return <MediaFrame src={step.media.src} alt={step.media.alt} fit="contain" />;
     default:
@@ -118,7 +118,7 @@ function ItemInteraction({ item, notes, renderNotes }: { item: Item; notes: Reac
       // No engine yet: just the prompt, then the notes.
       return (
         <>
-          {item.prompt && <PromptBubble>{item.prompt}</PromptBubble>}
+          <ItemPrompt item={item} />
           {notes}
         </>
       );

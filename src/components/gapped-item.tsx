@@ -8,7 +8,7 @@ import { currentValues, type GapMode, type GapView, gapLooks, type GappedItem, t
 import { ui } from "@/ui-it";
 import { FeedbackIcon, ItemControls } from "./item-controls";
 import { MediaFrame } from "./media-frame";
-import { PromptBubble } from "./prompt-bubble";
+import { ItemPrompt } from "./prompt-bubble";
 import { useExercise } from "./step-progress";
 
 type GappedContent = Extract<Item, { type: "dropdown" | "text_gap" }>;
@@ -65,7 +65,7 @@ export function GappedItemLayout({
   onCheck,
   children,
 }: {
-  item: Pick<GappedContent, "prompt" | "image" | "solvable">;
+  item: Pick<GappedContent, "id" | "prompt" | "prompt_audio" | "image" | "solvable">;
   notes?: ReactNode;
   locked: boolean;
   onSolve: () => void;
@@ -77,7 +77,7 @@ export function GappedItemLayout({
     <>
       <div className="grid gap-4 md:grid-cols-2 md:items-start">
         <div className="space-y-4">
-          {item.prompt && <PromptBubble>{item.prompt}</PromptBubble>}
+          <ItemPrompt item={item} />
           {item.image && <MediaFrame src={item.image} alt={ui.lesson.itemImageAlt} fit="contain" />}
         </div>
         <div>{children}</div>

@@ -6,7 +6,7 @@ import { type ExerciseEntry, isLocked } from "@/items/entry";
 import { currentSelection, type MultiSelectAnswer, optionLooks } from "@/items/multi-select";
 import { ItemControls } from "./item-controls";
 import { OptionButton } from "./option-button";
-import { PromptBubble } from "./prompt-bubble";
+import { ItemPrompt } from "./prompt-bubble";
 import { useExercise } from "./step-progress";
 
 /**
@@ -36,7 +36,7 @@ export function MultiSelectItem({ item, notes }: { item: Extract<Item, { type: "
   return (
     <>
       <div className="grid gap-4 md:grid-cols-2 md:items-start">
-        <div>{item.prompt && <PromptBubble>{item.prompt}</PromptBubble>}</div>
+        <div><ItemPrompt item={item} /></div>
         <div>
           <ul className="space-y-2">
             {item.options.map((option, index) => (

@@ -23,7 +23,7 @@ export function ParlaItem({ item, notes }: { item: Extract<Item, { type: "parla"
 
   return (
     <>
-      <PromptBubble>{item.task}</PromptBubble>
+      <PromptBubble speak={{ id: `prompt:${item.id}`, clip: { text: item.task } }}>{item.task}</PromptBubble>
       <div className="mt-6 grid gap-4 md:grid-cols-2 md:items-start">
         <div className="rounded-lg bg-tint px-4 py-3">
           <h2 className="text-sm font-bold tracking-wide text-muted uppercase">{ui.lesson.parlaExample}</h2>

@@ -4,6 +4,7 @@ import { useId, useState } from "react";
 import type { ScriptLine } from "@/content/schema";
 import { ui } from "@/ui-it";
 import { ChevronIcon } from "./chevron-icon";
+import { ScriptLines } from "./script-lines";
 
 /** Copione ⌄: the transcript a step uses, collapsed by default (SPEC §4.2). */
 export function ScriptToggle({ lines }: { lines: ScriptLine[] }) {
@@ -21,14 +22,9 @@ export function ScriptToggle({ lines }: { lines: ScriptLine[] }) {
         {ui.lesson.script}
         <ChevronIcon open={open} className="size-5" />
       </button>
-      <dl id={panelId} hidden={!open} className="mt-3 space-y-3 border-l-4 border-tint pl-4">
-        {lines.map((line) => (
-          <div key={line.id}>
-            <dt className="text-xs font-bold uppercase tracking-wide text-muted">{line.speaker}</dt>
-            <dd>{line.it}</dd>
-          </div>
-        ))}
-      </dl>
+      <div id={panelId} hidden={!open} className="mt-3 border-l-4 border-tint pl-2">
+        <ScriptLines lines={lines} />
+      </div>
     </div>
   );
 }
