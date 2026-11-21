@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { LanternaLogo } from "@/components/lanterna-logo";
+import { LevelResetButton } from "@/components/reset-dialog";
 import { StatusCircle } from "@/components/status-circle";
 import type { LevelId } from "@/content/ids";
 import { loadCourse } from "@/content/load";
@@ -50,6 +51,7 @@ async function LevelOverviewView({ params, searchParams }: Pick<PageProps<"/[lev
       )}
 
       <div className="mt-3 flex items-center justify-end gap-2 px-2">
+        <LevelResetButton levelId={overview.id} levelTitle={overview.title} />
         <span className="text-sm text-muted">{ui.percent(progress.percent)}</span>
         <StatusCircle status={progress.status} label={ui.level.levelStatus(progress.status, progress.percent)} />
       </div>

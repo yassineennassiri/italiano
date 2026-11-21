@@ -4,11 +4,16 @@ import Link from "next/link";
 import type { MenuEntry } from "@/content/lesson-nav";
 import { ui } from "@/ui-it";
 import { ChevronIcon } from "./chevron-icon";
+import { ResetDialog, useResetDialog } from "./reset-dialog";
 import { usePopover } from "./use-popover";
 
-/** The lesson menu behind the lesson bar's chevron (SPEC §3.1, `[23]`). */
-export function LessonMenu({ entries }: { entries: MenuEntry[] }) {
+/**
+ * The lesson menu behind the lesson bar's chevron (SPEC §3.1, `[23]`), with
+ * *Azzera gli esercizi* before *Panoramica del corso* (§4.10).
+ */
+export function LessonMenu({ entries, lessonId, lessonTitle }: { entries: MenuEntry[]; lessonId: string; lessonTitle: string }) {
   const { open, close, rootRef, buttonProps, panelProps } = usePopover();
+  const reset = useResetDialog();
   return (
     <div ref={rootRef} className="relative">
       <button
@@ -26,6 +31,18 @@ export function LessonMenu({ entries }: { entries: MenuEntry[] }) {
         <ul>
           {entries.map((entry) => (
             <li key={entry.page}>
+              {entry.page === "corso" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    close();
+                    reset.open();
+                  }}
+                  className="mb-1 block w-full rounded px-4 py-3 text-left font-semibold text-white hover:bg-white/15 focus-visible:outline-white"
+                >
+                  {ui.reset.lessonButton}
+                </button>
+              )}
               <Link
                 href={entry.href}
                 onClick={close}
@@ -37,6 +54,12 @@ export function LessonMenu({ entries }: { entries: MenuEntry[] }) {
           ))}
         </ul>
       </nav>
+      <ResetDialog
+        target={{ scope: "lesson", lessonId }}
+        question={ui.reset.lessonQuestion}
+        text={ui.reset.lessonText(lessonTitle)}
+        dialogRef={reset.dialogRef}
+      />
     </div>
   );
 }

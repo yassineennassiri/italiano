@@ -4,10 +4,10 @@
  * branch. The HTTP driver has no interactive transactions, so each write is
  * read-plan-write: one batch of reads, a pure plan (`plan.ts`), one batch of writes.
  */
-import { and, desc, eq, min } from "drizzle-orm";
+import { and, desc, eq, inArray, min } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
 import { exerciseHashes } from "@/content/hash";
-import { loadLesson } from "@/content/load";
+import { loadCourse, loadLesson } from "@/content/load";
 import type { Lesson } from "@/content/schema";
 import type { Db } from "@/db/connect";
 import { errorLog, exerciseAttempt, itemState, lessonProgress } from "@/db/schema";
@@ -19,6 +19,8 @@ import {
   planCorrection,
   planExerciseWrite,
   planFinish,
+  planReset,
+  type ResetWrite,
   restoreEntries,
   type Row,
   type StoredItemRow,
@@ -27,6 +29,9 @@ import {
 
 /** What a write did, and the exercise's entry as now saved (none when nothing fitting is stored). */
 export type WriteResponse = { result: "saved" | "ignored"; saved?: SavedEntry };
+
+/** What Azzera did; `resetAt` is the server's time of the reset, comparable with `item_state.updated_at`. */
+export type ResetResponse = { result: "saved"; resetAt: string } | { result: "ignored" };
 
 /** What Correggi i miei errori did, and the reopened entries as now saved, by exercise id. */
 export type CorrectionResponse = { result: "saved" | "ignored"; saved?: Record<string, SavedEntry> };
@@ -209,4 +214,41 @@ export async function saveVisit(db: Db, userId: string, visit: VisitWrite, now =
       set: { lastLocation: visit.location, updatedAt: now },
     });
   return { result: "saved" };
+}
+
+/** The lessons an Azzera covers: the one lesson, or every lesson of the level. Empty for content we don't have. */
+function resetLessons(write: ResetWrite): Lesson[] {
+  if (write.scope === "lesson") {
+    const lesson = loadLesson(write.lessonId);
+    return lesson ? [lesson] : [];
+  }
+  const level = loadCourse().levels.find((candidate) => candidate.id === write.levelId);
+  return (level?.units ?? []).flatMap((unit) => unit.lessons.map((lessonId) => loadLesson(lessonId)!));
+}
+
+/**
+ * Azzera (SPEC §4.10): deletes the lessons' exercise states, puts the lessons
+ * back to not started and logs a `reset` attempt per cleared exercise. The
+ * error log is kept. A retry finds nothing to clear and changes nothing more.
+ */
+export async function saveReset(db: Db, userId: string, write: ResetWrite, now = new Date()): Promise<ResetResponse> {
+  const lessons = resetLessons(write);
+  if (lessons.length === 0) return { result: "ignored" };
+  const lessonIds = lessons.map((lesson) => lesson.id);
+  const rows = await db
+    .select({ itemId: itemState.itemId, lessonId: itemState.lessonId })
+    .from(itemState)
+    .where(and(eq(itemState.userId, userId), inArray(itemState.lessonId, lessonIds)));
+  const plan = planReset({ lessons, rows, at: write.at, now });
+
+  const writes: BatchItem<"pg">[] = [
+    db.delete(itemState).where(and(eq(itemState.userId, userId), inArray(itemState.lessonId, plan.lessonIds))),
+    db
+      .update(lessonProgress)
+      .set(plan.progress)
+      .where(and(eq(lessonProgress.userId, userId), inArray(lessonProgress.lessonId, plan.lessonIds))),
+  ];
+  if (plan.attempts.length > 0) writes.push(db.insert(exerciseAttempt).values(plan.attempts.map((row) => ({ ...row, userId }))));
+  await db.batch(writes as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
+  return { result: "saved", resetAt: now.toISOString() };
 }

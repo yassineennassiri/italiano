@@ -6,8 +6,17 @@
  */
 import { db } from "@/db";
 import { PROFILE_ID } from "@/db/schema";
-import { correctionWriteSchema, exerciseWriteSchema, finishWriteSchema, visitWriteSchema } from "./plan";
-import { type CorrectionResponse, saveCorrection, saveExerciseWrite, saveFinish, saveVisit, type WriteResponse } from "./store";
+import { correctionWriteSchema, exerciseWriteSchema, finishWriteSchema, resetWriteSchema, visitWriteSchema } from "./plan";
+import {
+  type CorrectionResponse,
+  type ResetResponse,
+  saveCorrection,
+  saveExerciseWrite,
+  saveFinish,
+  saveReset,
+  saveVisit,
+  type WriteResponse,
+} from "./store";
 
 /** "rejected" is malformed input: the queue drops it rather than retrying it forever. */
 export type ActionResponse = WriteResponse | { result: "rejected" };
@@ -38,4 +47,11 @@ export async function recordFinish(input: unknown): Promise<ActionResponse> {
   const parsed = finishWriteSchema.safeParse(input);
   if (!parsed.success) return { result: "rejected" };
   return saveFinish(db(), PROFILE_ID, parsed.data);
+}
+
+/** Azzera, confirmed: clears the lesson's (or level's) exercises and puts its lessons back to not started. */
+export async function recordReset(input: unknown): Promise<ResetResponse | { result: "rejected" }> {
+  const parsed = resetWriteSchema.safeParse(input);
+  if (!parsed.success) return { result: "rejected" };
+  return saveReset(db(), PROFILE_ID, parsed.data);
 }

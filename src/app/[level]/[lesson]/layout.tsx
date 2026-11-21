@@ -33,7 +33,7 @@ async function LessonBar({ params }: { params: Promise<LessonRouteParams> }) {
     <div className="mx-auto grid h-14 max-w-6xl grid-cols-[2.5rem_1fr_2.5rem] items-center gap-2 px-4">
       <span />
       <p className="truncate text-center text-xl font-bold text-white">{lesson.title}</p>
-      <LessonMenu entries={lessonMenu(lesson)} />
+      <LessonMenu entries={lessonMenu(lesson)} lessonId={lesson.id} lessonTitle={lesson.title} />
     </div>
   );
 }

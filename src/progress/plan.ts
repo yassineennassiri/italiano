@@ -313,3 +313,66 @@ export function planFinish({
     completedAt: progress?.completedAt ?? now,
   };
 }
+
+const lessonResetTarget = z.strictObject({ scope: z.literal("lesson"), lessonId: z.string().min(1) });
+const levelResetTarget = z.strictObject({ scope: z.literal("level"), levelId: z.string().min(1) });
+
+/** What Azzera clears: one lesson (lesson menu) or every lesson of a level (level overview), SPEC §4.10. */
+export type ResetTarget = z.infer<typeof lessonResetTarget> | z.infer<typeof levelResetTarget>;
+
+/** Azzera, confirmed; `at` is when, on the learner's computer. */
+export const resetWriteSchema = z.discriminatedUnion("scope", [
+  lessonResetTarget.extend({ at: z.iso.datetime() }),
+  levelResetTarget.extend({ at: z.iso.datetime() }),
+]);
+export type ResetWrite = z.infer<typeof resetWriteSchema>;
+
+/** The rows Azzera writes. */
+export type ResetPlan = {
+  /** The lessons whose `item_state` rows are deleted and whose `lesson_progress` is reset. */
+  lessonIds: string[];
+  /** One `reset` attempt per deleted exercise: the history keeps that it was cleared. */
+  attempts: Row<typeof exerciseAttempt>[];
+  /** What each lesson's `lesson_progress` becomes: not started, with no %, start, completion or resume point. */
+  progress: Pick<
+    typeof lessonProgressTable.$inferInsert,
+    "status" | "lastLocation" | "lastPercent" | "bestPercent" | "startedAt" | "completedAt" | "updatedAt"
+  >;
+};
+
+/**
+ * Azzera (SPEC §4.10): the lessons' exercises go back to untouched and the
+ * lessons to not started. The error log is learning history and stays; so do
+ * the attempts, which gain a `reset` row per cleared exercise.
+ */
+export function planReset({
+  lessons,
+  rows,
+  at,
+  now,
+}: {
+  lessons: readonly Pick<Lesson, "id" | "version">[];
+  /** The stored `item_state` rows; those of other lessons are left alone. */
+  rows: readonly Pick<typeof itemState.$inferSelect, "itemId" | "lessonId">[];
+  /** When the learner confirmed, on their computer. */
+  at: string;
+  now: Date;
+}): ResetPlan {
+  const versions = new Map(lessons.map((lesson) => [lesson.id, lesson.version]));
+  return {
+    lessonIds: [...versions.keys()],
+    attempts: rows
+      .filter((row) => versions.has(row.lessonId))
+      .map(({ itemId, lessonId }) => ({
+        itemId,
+        lessonId,
+        contentVersion: versions.get(lessonId)!,
+        action: "reset" as const,
+        answer: null,
+        result: null,
+        correct: null,
+        createdAt: new Date(at),
+      })),
+    progress: { status: "not_started", lastLocation: null, lastPercent: null, bestPercent: null, startedAt: null, completedAt: null, updatedAt: now },
+  };
+}
