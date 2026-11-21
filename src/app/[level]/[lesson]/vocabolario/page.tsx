@@ -1,7 +1,29 @@
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { ReviewFrame } from "@/components/review-frame";
+import { VocabList } from "@/components/vocab-list";
+import { hasPage, reviewNav } from "@/content/lesson-nav";
+import { sortVocab } from "@/content/vocab";
 import { ui } from "@/ui-it";
-import { StubPage } from "../stub-page";
+import { type LessonRouteParams, lessonFromParams } from "../lesson-params";
 
-/** Vocabulary page (SPEC §4.6), filled in by #16. */
+/** The vocabulary page (SPEC §4.6): the lesson's words, sorted ignoring the article. */
 export default function VocabularyPage({ params }: PageProps<"/[level]/[lesson]/vocabolario">) {
-  return <StubPage params={params} heading={ui.lesson.vocabulary} page="vocabolario" />;
+  return (
+    <Suspense fallback={null}>
+      <Vocabulary params={params} />
+    </Suspense>
+  );
+}
+
+async function Vocabulary({ params }: { params: Promise<LessonRouteParams> }) {
+  const lesson = await lessonFromParams(params);
+  if (!hasPage(lesson, "vocabolario")) notFound();
+  return (
+    <ReviewFrame heading={ui.lesson.vocabulary} nav={reviewNav(lesson, "vocabolario")}>
+      <div className="mx-auto max-w-3xl px-4 py-8">
+        <VocabList entries={sortVocab(lesson.vocab)} />
+      </div>
+    </ReviewFrame>
+  );
 }

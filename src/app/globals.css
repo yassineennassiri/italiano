@@ -10,6 +10,7 @@
   --panel: #5b6670; /* slate: results panel */
   --ok: #3bb273;
   --bad: #e5484d;
+  --feminine: #b4407c; /* the vocabulary gender dot, apart from the feedback red */
   --tint: #eef4fa; /* light card tint */
   --tint-strong: #dfeaf5; /* card hover */
   --muted: #5f6b76;
@@ -25,6 +26,7 @@
   --color-panel: var(--panel);
   --color-ok: var(--ok);
   --color-bad: var(--bad);
+  --color-feminine: var(--feminine);
   --color-tint: var(--tint);
   --color-tint-strong: var(--tint-strong);
   --color-muted: var(--muted);

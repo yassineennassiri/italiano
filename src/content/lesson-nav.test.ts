@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { loadLesson } from "./load";
-import { hasPage, lessonMenu, resumeHref, reviewPages, reviewStartHref, stepPage } from "./lesson-nav";
+import { hasPage, lessonMenu, resumeHref, reviewNav, reviewPages, reviewStartHref, stepPage } from "./lesson-nav";
 import { copyContent, editJson, LESSON_FILE } from "./test-content";
 
 const lesson = () => loadLesson("a2.u01.l01")!;
@@ -99,5 +99,36 @@ describe("reviewPages", () => {
       data.vocab = [];
     });
     expect(reviewStartHref(loadLesson("a2.u01.l01", dir)!)).toBe("/a2/benvenuto-a-genova/fine");
+  });
+});
+
+describe("reviewNav", () => {
+  const base = "/a2/benvenuto-a-genova";
+
+  it("chains grammar 1, grammar 2, vocabulary and culture: the first page has only ›, the last only ‹", () => {
+    expect(reviewNav(lesson(), "grammatica", 1)).toEqual({ nextHref: `${base}/grammatica/2`, finishes: false });
+    expect(reviewNav(lesson(), "grammatica", 2)).toEqual({
+      previousHref: `${base}/grammatica/1`,
+      nextHref: `${base}/vocabolario`,
+      finishes: false,
+    });
+    expect(reviewNav(lesson(), "vocabolario")).toEqual({
+      previousHref: `${base}/grammatica/2`,
+      nextHref: `${base}/cultura`,
+      finishes: false,
+    });
+    expect(reviewNav(lesson(), "cultura")).toEqual({ previousHref: `${base}/vocabolario`, nextHref: `${base}/fine`, finishes: true });
+  });
+
+  it("ends at vocabulary when the lesson has no culture page", () => {
+    const dir = copyContent();
+    editJson(dir, LESSON_FILE, (data) => {
+      delete data.culture;
+    });
+    expect(reviewNav(loadLesson("a2.u01.l01", dir)!, "vocabolario")).toEqual({
+      previousHref: `${base}/grammatica/2`,
+      nextHref: `${base}/fine`,
+      finishes: true,
+    });
   });
 });
