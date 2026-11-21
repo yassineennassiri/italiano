@@ -33,6 +33,10 @@ _Avoid_: Transcript, subtitles
 One numbered exercise page inside a lesson ("3 / 9"), holding one or more items.
 _Avoid_: Page, exercise, screen
 
+**Vocab link**:
+A word in a prompt, script or reading text that is linked to an entry in the same lesson's vocabulary list and shows its meaning on hover or tap.
+_Avoid_: Tooltip, gloss
+
 **Review sequence**:
 The pages after the results: grammar pages, then vocabulary, then culture if the lesson has it, navigated as one line.
 _Avoid_: Appendix, overview
@@ -101,14 +105,53 @@ _Avoid_: Error type, label, category
 The permanent record of the learner's mistakes: wrong first Checks, *Non tanto bene* ratings, hesitation notes and pasted corrections, each with error tags. Resetting a lesson never clears it.
 _Avoid_: Mistake history, wrong answers
 
+**Correction**:
+A mistake the learner made outside the app (e.g. with a tutor), entered by hand as what they said and the corrected version. It becomes an error log entry and an error card.
+_Avoid_: Fix, manual entry
+
+**Resolved**:
+An error log entry whose review card has been answered well three times in a row. It stays in the log but no longer counts toward the learner's top error tags.
+_Avoid_: Fixed, closed
+
 **Review card**:
-A spaced-repetition card scheduled from the learner's history: a vocabulary entry, an item to re-ask, or a logged error.
+A spaced-repetition card scheduled from the learner's history. There are three kinds: vocab card, item card, error card.
 _Avoid_: Flashcard (except in the vocab trainer UI)
 
+**Vocab card**:
+A review card for one vocabulary entry: English meaning on the front, the Italian term with its article on the back. The learner grades it themselves.
+
+**Item card**:
+A review card that re-asks one exercise the learner got wrong, solved without trying, or rated *Non tanto bene*.
+
+**Error card**:
+A review card built from a correction: it shows the wrong version and asks for the corrected one.
+
+**Grade**:
+How well a review went: *again*, *hard*, *good* or *easy*. The app sets it from the answer wherever it can check; only vocab cards are graded by the learner.
+_Avoid_: Score, rating (rating is for self-rating)
+
+**Review hub**:
+The page for spaced review outside lessons: due cards, the learner's top error tags, and adding corrections. Shown as *Ripasso*.
+_Avoid_: Dashboard, trainer
+
+**Review session**:
+One run through due review cards in the review hub, at most twenty at a time.
+_Avoid_: Quiz, round
+
+**Tag drill**:
+A short run of exercises sharing one error tag, taken from completed lessons and started from the review hub.
+_Avoid_: Practice mode
+
 **Ripasso personale**:
-An extra step inserted before Parla! with due review cards whose error tags match the lesson.
+An extra step inserted before Parla! with up to three due item cards from other lessons, preferring those whose error tags match the lesson. It is chosen once per lesson visit and never scores.
 _Avoid_: Bonus step, review step
 
 **Reset**:
 Clearing a lesson's (or level's) exercise state and score so it can be played again. Shown as *Azzera*. The error log and review cards survive it.
 _Avoid_: Clear, restart
+
+### Notes
+
+**Feedback note**:
+A note the learner writes about content to fix, attached to a level or to a page of a lesson. It is marked done once fixed.
+_Avoid_: Comment, bug report
