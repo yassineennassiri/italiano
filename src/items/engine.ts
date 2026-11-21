@@ -12,7 +12,7 @@ import { pickOption, type SingleChoiceItem, singleChoiceAnswerSchema, solveSingl
 
 /** single_choice: clicking an option checks it at once. */
 export const pickActionSchema = z.strictObject({ kind: z.literal("pick"), option: z.number().int().nonnegative() });
-/** Controlla on an item with a selection (multi_select). */
+/** Controlla on an item with a selection (multi_select). The cap only bounds what a POST can send. */
 export const checkActionSchema = z.strictObject({ kind: z.literal("check"), selected: z.array(z.number().int().nonnegative()).max(64) });
 export const solveActionSchema = z.strictObject({ kind: z.literal("solve") });
 

@@ -7,7 +7,8 @@
 import { z } from "zod";
 import type { Item } from "@/content/schema";
 import { applyEvent } from "@/scoring/exercise";
-import type { ExerciseEntry, ExerciseOutcome } from "./entry";
+import { type ExerciseEntry, type ExerciseOutcome, isLocked } from "./entry";
+import type { OptionView } from "./option-look";
 
 /** single_choice shares its schema variant with image_choice and audio_choice (M2). */
 export type SingleChoiceItem = Pick<Extract<Item, { options: string[]; answer: number }>, "id" | "options" | "answer" | "solvable">;
@@ -16,15 +17,9 @@ export type SingleChoiceItem = Pick<Extract<Item, { options: string[]; answer: n
 export const singleChoiceAnswerSchema = z.strictObject({ picks: z.array(z.number().int().nonnegative()) });
 export type SingleChoiceAnswer = z.infer<typeof singleChoiceAnswerSchema>;
 
-/** How an option button looks: open, green ✓, red ✗, or greyed out. */
-export type OptionLook = "idle" | "correct" | "wrong" | "dimmed";
-
 type Entry = ExerciseEntry<SingleChoiceAnswer>;
 
 const picksOf = (entry: Entry): number[] => (entry.state.status === "untouched" ? [] : (entry.answer?.picks ?? []));
-
-/** Right, or solved: every option is disabled. */
-export const isLocked = (entry: Pick<ExerciseEntry, "state">) => entry.state.status === "checked_correct" || entry.state.status === "solved";
 
 /** Picks option `index`, or undefined when the click does nothing (locked item, or an option already marked wrong). */
 export function pickOption(item: SingleChoiceItem, entry: Entry, index: number): ExerciseOutcome<SingleChoiceAnswer> | undefined {
@@ -51,7 +46,7 @@ export function solveSingleChoice(item: SingleChoiceItem, entry: Entry): Exercis
 }
 
 /** How each option looks and whether it can be clicked. */
-export function optionLooks(item: SingleChoiceItem, entry: Entry): { look: OptionLook; disabled: boolean }[] {
+export function optionLooks(item: SingleChoiceItem, entry: Entry): OptionView[] {
   const picks = picksOf(entry);
   const locked = isLocked(entry);
   return item.options.map((_, index) => {

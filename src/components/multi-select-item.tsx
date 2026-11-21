@@ -2,18 +2,17 @@
 
 import { useState } from "react";
 import type { Item } from "@/content/schema";
-import type { ExerciseEntry } from "@/items/entry";
+import { type ExerciseEntry, isLocked } from "@/items/entry";
 import { currentSelection, type MultiSelectAnswer, optionLooks } from "@/items/multi-select";
-import { isLocked } from "@/items/single-choice";
 import { ui } from "@/ui-it";
-import { ItemButton, OptionButton } from "./option-button";
+import { ItemControlButton, OptionButton } from "./option-button";
 import { PromptBubble } from "./prompt-bubble";
 import { useExercise } from "./step-progress";
 
 /**
  * A `multi_select` item (SPEC §5.2.5): the prompt bubble, then options that
  * toggle on and off. Controlla checks the selection; Soluzione, when the item
- * is solvable, shows every right option.
+ * is solvable, fills in the right options.
  */
 export function MultiSelectItem({ item }: { item: Extract<Item, { type: "multi_select" }> }) {
   const [entry, dispatch] = useExercise(item);
@@ -50,13 +49,13 @@ export function MultiSelectItem({ item }: { item: Extract<Item, { type: "multi_s
         </ul>
         <div className="mt-4 flex justify-center gap-3">
           {item.solvable && (
-            <ItemButton disabled={locked} onClick={solve}>
+            <ItemControlButton disabled={locked} onClick={solve}>
               {ui.lesson.solve}
-            </ItemButton>
+            </ItemControlButton>
           )}
-          <ItemButton disabled={locked || selection.length === 0} onClick={check}>
+          <ItemControlButton disabled={locked} onClick={check}>
             {ui.lesson.check}
-          </ItemButton>
+          </ItemControlButton>
         </div>
       </div>
     </div>

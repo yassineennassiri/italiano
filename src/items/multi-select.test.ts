@@ -39,18 +39,24 @@ describe("checkMultiSelect", () => {
     });
   });
 
-  it("ignores an empty selection or an index outside the options", () => {
-    expect(checkMultiSelect(item, NEW_ENTRY, [])).toBeUndefined();
+  it("treats Controlla with nothing selected as a wrong Check (SPEC 5.1: Controlla is enabled while untouched)", () => {
+    const empty = checkMultiSelect(item, NEW_ENTRY, [])!;
+    expect(empty.correct).toBe(false);
+    expect(empty.entry.state.status).toBe("checked_wrong");
+    expect(empty.given).toBe("");
+  });
+
+  it("ignores an index outside the options", () => {
     expect(checkMultiSelect(item, NEW_ENTRY, [0, 4])).toBeUndefined();
   });
 });
 
 describe("solveMultiSelect", () => {
-  it("solves for 0 points, keeps the last Check's selection, and locks the item", () => {
+  it("solves for 0 points, fills in the right options, and locks the item", () => {
     const wrong = checkMultiSelect(item, NEW_ENTRY, [1])!.entry;
     const solved = solveMultiSelect(item, wrong)!;
     expect(solved.action).toBe("solve");
-    expect(solved.entry).toEqual({ state: { status: "solved", firstCheckCorrect: false, points: 0 }, answer: { selected: [1] } });
+    expect(solved.entry).toEqual({ state: { status: "solved", firstCheckCorrect: false, points: 0 }, answer: { selected: [0, 2, 3] } });
     expect(checkMultiSelect(item, solved.entry, [0, 2, 3])).toBeUndefined();
   });
 
@@ -103,11 +109,11 @@ describe("optionLooks", () => {
     ]);
   });
 
-  it("after Solve: every right option green, the last Check's wrong picks still red, all disabled", () => {
+  it("after Solve: every right option green, the rest greyed out, all disabled", () => {
     const solved = solveMultiSelect(item, checkMultiSelect(item, NEW_ENTRY, [1])!.entry)!.entry;
-    expect(optionLooks(item, solved, [1])).toEqual([
+    expect(optionLooks(item, solved, currentSelection(solved, []))).toEqual([
       { look: "correct", disabled: true },
-      { look: "wrong", disabled: true },
+      { look: "dimmed", disabled: true },
       { look: "correct", disabled: true },
       { look: "correct", disabled: true },
     ]);

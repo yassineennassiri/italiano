@@ -1,10 +1,10 @@
 "use client";
 
 import type { Item } from "@/content/schema";
-import { isLocked, optionLooks, type SingleChoiceAnswer } from "@/items/single-choice";
-import type { ExerciseEntry } from "@/items/entry";
+import { type ExerciseEntry, isLocked } from "@/items/entry";
+import { optionLooks, type SingleChoiceAnswer } from "@/items/single-choice";
 import { ui } from "@/ui-it";
-import { ItemButton, OptionButton } from "./option-button";
+import { ItemControlButton, OptionButton } from "./option-button";
 import { PromptBubble } from "./prompt-bubble";
 import { useExercise } from "./step-progress";
 
@@ -23,7 +23,7 @@ export function SingleChoiceItem({ item }: { item: Extract<Item, { options: stri
         <ul className="space-y-2">
           {item.options.map((option, index) => (
             <li key={index}>
-              <OptionButton {...looks[index]} onClick={() => dispatch({ kind: "pick", option: index })}>
+              <OptionButton {...looks[index]} tail onClick={() => dispatch({ kind: "pick", option: index })}>
                 {option}
               </OptionButton>
             </li>
@@ -31,9 +31,9 @@ export function SingleChoiceItem({ item }: { item: Extract<Item, { options: stri
         </ul>
         {item.solvable && (
           <div className="mt-4 text-center">
-            <ItemButton disabled={isLocked(entry)} onClick={() => dispatch({ kind: "solve" })}>
+            <ItemControlButton disabled={isLocked(entry)} onClick={() => dispatch({ kind: "solve" })}>
               {ui.lesson.solve}
-            </ItemButton>
+            </ItemControlButton>
           </div>
         )}
       </div>
