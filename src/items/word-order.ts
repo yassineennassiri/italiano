@@ -10,6 +10,7 @@ import { z } from "zod";
 import type { Item } from "@/content/schema";
 import { applyEvent } from "@/scoring/exercise";
 import { type ExerciseEntry, type ExerciseOutcome, isLocked } from "./entry";
+import type { InputLook } from "./input-look";
 
 export type WordOrderItem = Pick<Extract<Item, { type: "word_order" }>, "id" | "tiles" | "accept" | "solvable">;
 
@@ -23,6 +24,9 @@ export type WordOrderAnswer = z.infer<typeof wordOrderAnswerSchema>;
 
 type Entry = ExerciseEntry<WordOrderAnswer>;
 
+/** The placement at the last Check or Solve; none before the first. */
+const checkedOf = (entry: Entry): number[] => (entry.state.status === "untouched" ? [] : (entry.answer?.placed ?? []));
+
 /** FNV-1a: a 32-bit hash of the item id, the same on every computer. */
 function seedOf(id: string): number {
   let hash = 0x811c9dc5;
@@ -33,8 +37,8 @@ function seedOf(id: string): number {
   return hash >>> 0;
 }
 
-/** mulberry32: a small seeded generator of numbers in [0, 1). */
-function generator(seed: number): () => number {
+/** mulberry32: a seeded random number generator of numbers in [0, 1). */
+function seededRandom(seed: number): () => number {
   let state = seed;
   return () => {
     state = (state + 0x6d2b79f5) | 0;
@@ -56,15 +60,30 @@ const isSolution = (item: WordOrderItem, placed: readonly number[]) => {
 };
 
 const MAX_SHUFFLES = 20;
+/** Bounds the fallback scan (7 tiles have 5040 orders). */
+const MAX_ORDERS = 5040;
+
+/** The next order in lexicographic order, or undefined after the last. */
+function nextOrder(order: readonly number[]): number[] | undefined {
+  const next = [...order];
+  let i = next.length - 2;
+  while (i >= 0 && next[i] >= next[i + 1]) i--;
+  if (i < 0) return undefined;
+  let j = next.length - 1;
+  while (next[j] <= next[i]) j--;
+  [next[i], next[j]] = [next[j], next[i]];
+  return [...next.slice(0, i + 1), ...next.slice(i + 1).reverse()];
+}
 
 /**
  * The order the tiles are shown in, as indexes into `tiles`: shuffled with the
  * item id as the seed, so it is stable across reloads and computers, and never
- * already a solution. If every shuffle comes out solved (two tiles), the tiles
- * are rotated by one instead.
+ * already a solution. If every shuffle comes out solved (`accept` lists most
+ * orders), the orders are scanned for one that isn't; only if each order is a
+ * solution are the tiles shown solved.
  */
 export function shuffledTiles(item: WordOrderItem): number[] {
-  const random = generator(seedOf(item.id));
+  const random = seededRandom(seedOf(item.id));
   const indexes = item.tiles.map((_, index) => index);
   for (let attempt = 0; attempt < MAX_SHUFFLES; attempt++) {
     const order = [...indexes];
@@ -74,24 +93,35 @@ export function shuffledTiles(item: WordOrderItem): number[] {
     }
     if (!isSolution(item, order)) return order;
   }
-  return [...indexes.slice(1), indexes[0]];
+  let order: number[] | undefined = indexes;
+  for (let scanned = 0; order && scanned < MAX_ORDERS; scanned++, order = nextOrder(order)) {
+    if (!isSolution(item, order)) return order;
+  }
+  return indexes;
 }
 
-/** Tiles as a sentence, for the error log: spaced, with no space before punctuation tiles. */
-const sentence = (texts: readonly string[]) => texts.join(" ").replace(/ ([.,;:!?…])/g, "$1");
+/**
+ * Tiles as a sentence, for the error log: spaced, with no space before
+ * punctuation tiles or after an elided one (l', dell'); the truncated po' keeps its space.
+ */
+const sentence = (texts: readonly string[]) =>
+  texts
+    .join(" ")
+    .replace(/ ([.,;:!?…])/g, "$1")
+    .replace(/(?<!\bpo)(['’]) /gi, "$1");
 
-/** Whether each index names a tile, and no tile is placed twice. */
-const fits = (item: WordOrderItem, placed: readonly number[]) =>
+/** Whether the indexes are a placement of this item's tiles: each names a tile, and no tile is placed twice. */
+const isPlacement = (item: WordOrderItem, placed: readonly number[]) =>
   new Set(placed).size === placed.length && placed.every((index) => Number.isInteger(index) && index >= 0 && index < item.tiles.length);
 
 /**
  * Checks the tiles in the answer box, or undefined when the Check does nothing
- * (locked item, a placement that doesn't fit the tiles). Tiles left out make it
+ * (locked item, indexes that aren't a placement of the tiles). Tiles left out make it
  * wrong; nothing placed is a wrong Check, as Controlla is enabled while
  * untouched (SPEC §5.1).
  */
 export function checkWordOrder(item: WordOrderItem, entry: Entry, placed: readonly number[]): ExerciseOutcome<WordOrderAnswer> | undefined {
-  if (isLocked(entry) || !fits(item, placed)) return undefined;
+  if (isLocked(entry) || !isPlacement(item, placed)) return undefined;
   const correct = isSolution(item, placed);
   return {
     entry: { state: applyEvent(entry.state, { type: "check", correct }), answer: { placed: [...placed] } },
@@ -121,8 +151,8 @@ export type WordOrderView = {
   placed: number[];
   /** In the shuffled order. */
   tray: number[];
-  /** The answer box border: green, red, or the plain dotted one. */
-  box: "idle" | "correct" | "wrong";
+  /** The answer box border: the plain dashed one, green or red. */
+  look: Extract<InputLook, "idle" | "correct" | "wrong">;
   locked: boolean;
 };
 
@@ -133,8 +163,8 @@ export type WordOrderView = {
  */
 export function wordOrderView(item: WordOrderItem, entry: Entry, draft: readonly number[] | null): WordOrderView {
   const locked = isLocked(entry);
-  const checked = entry.state.status === "untouched" ? [] : (entry.answer?.placed ?? []);
+  const checked = checkedOf(entry);
   const placed = [...(locked ? checked : (draft ?? checked))];
-  const box = locked ? "correct" : entry.state.status === "checked_wrong" && draft === null ? "wrong" : "idle";
-  return { placed, tray: shuffledTiles(item).filter((index) => !placed.includes(index)), box, locked };
+  const look = locked ? "correct" : entry.state.status === "checked_wrong" && draft === null ? "wrong" : "idle";
+  return { placed, tray: shuffledTiles(item).filter((index) => !placed.includes(index)), look, locked };
 }

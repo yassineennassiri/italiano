@@ -34,6 +34,20 @@ describe("shuffledTiles", () => {
       expect(shown).not.toBe(", a ,");
     }
   });
+
+  it("finds the one unsolved order even when `accept` lists every other order", () => {
+    // Every order of a b c but "c b a", which is not a rotation of the tiles.
+    const others = [["a", "c", "b"], ["b", "a", "c"], ["b", "c", "a"], ["c", "a", "b"]];
+    for (let n = 0; n < 200; n++) {
+      const strict: WordOrderItem = { id: `w.${n}`, tiles: ["a", "b", "c"], accept: others };
+      expect(shuffledTiles(strict)).toEqual([2, 1, 0]);
+    }
+  });
+
+  it("still returns every tile when each order is a solution", () => {
+    const either: WordOrderItem = { id: "v.1", tiles: ["a", "b"], accept: [["b", "a"]] };
+    expect([...shuffledTiles(either)].sort()).toEqual([0, 1]);
+  });
 });
 
 describe("checkWordOrder", () => {
@@ -66,6 +80,15 @@ describe("checkWordOrder", () => {
     const empty = checkWordOrder(item, NEW_ENTRY, [])!;
     expect(empty.correct).toBe(false);
     expect(empty.errors).toEqual([{ expected: "Bene, grazie, ma il treno era in ritardo.", given: "" }]);
+  });
+
+  it("logs an elided tile joined to the next word", () => {
+    const elided: WordOrderItem = { id: "t.4", tiles: ["Dov'è", "l'", "appartamento", "?"] };
+    expect(checkWordOrder(elided, NEW_ENTRY, [1, 2, 0, 3])!.errors).toEqual([
+      { expected: "Dov'è l'appartamento?", given: "l'appartamento Dov'è?" },
+    ]);
+    const truncated: WordOrderItem = { id: "t.5", tiles: ["Un", "po'", "di", "pane"] };
+    expect(checkWordOrder(truncated, NEW_ENTRY, [])!.errors[0].expected).toBe("Un po' di pane");
   });
 
   it("accepts an `accept` alternative", () => {
@@ -126,23 +149,23 @@ describe("wordOrderView", () => {
   const solvable: WordOrderItem = { ...item, solvable: true };
 
   it("starts with an empty, open answer box and every tile in the tray, shuffled", () => {
-    expect(wordOrderView(item, NEW_ENTRY, null)).toEqual({ placed: [], tray: [0, 3, 6, 5, 4, 1, 2], box: "idle", locked: false });
+    expect(wordOrderView(item, NEW_ENTRY, null)).toEqual({ placed: [], tray: [0, 3, 6, 5, 4, 1, 2], look: "idle", locked: false });
   });
 
   it("keeps the tray in its shuffled order as tiles are placed", () => {
-    expect(wordOrderView(item, NEW_ENTRY, [3, 0])).toEqual({ placed: [3, 0], tray: [6, 5, 4, 1, 2], box: "idle", locked: false });
+    expect(wordOrderView(item, NEW_ENTRY, [3, 0])).toEqual({ placed: [3, 0], tray: [6, 5, 4, 1, 2], look: "idle", locked: false });
   });
 
   it("shows a wrong Check's placement in a red box until the learner edits it", () => {
     const wrong = checkWordOrder(item, NEW_ENTRY, [1, 0])!.entry;
-    expect(wordOrderView(item, wrong, null)).toEqual({ placed: [1, 0], tray: [3, 6, 5, 4, 2], box: "wrong", locked: false });
-    expect(wordOrderView(item, wrong, [1])).toMatchObject({ placed: [1], box: "idle", locked: false });
+    expect(wordOrderView(item, wrong, null)).toEqual({ placed: [1, 0], tray: [3, 6, 5, 4, 2], look: "wrong", locked: false });
+    expect(wordOrderView(item, wrong, [1])).toMatchObject({ placed: [1], look: "idle", locked: false });
   });
 
   it("shows a right or solved item in a green, locked box", () => {
     const right = checkWordOrder(item, NEW_ENTRY, [0, 1, 2, 3, 4, 5, 6])!.entry;
-    expect(wordOrderView(item, right, null)).toEqual({ placed: [0, 1, 2, 3, 4, 5, 6], tray: [], box: "correct", locked: true });
+    expect(wordOrderView(item, right, null)).toEqual({ placed: [0, 1, 2, 3, 4, 5, 6], tray: [], look: "correct", locked: true });
     const solved = solveWordOrder(solvable, NEW_ENTRY)!.entry;
-    expect(wordOrderView(solvable, solved, null)).toEqual({ placed: [0, 1, 2, 3, 4, 5, 6], tray: [], box: "correct", locked: true });
+    expect(wordOrderView(solvable, solved, null)).toEqual({ placed: [0, 1, 2, 3, 4, 5, 6], tray: [], look: "correct", locked: true });
   });
 });

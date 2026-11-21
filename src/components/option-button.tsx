@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 import type { InputLook, InputView } from "@/items/input-look";
 import { FeedbackIcon } from "./item-controls";
 
-const LOOK_CLASSES: Record<InputLook, string> = {
+/** The colours of an input's look; shared with word_order tiles. */
+export const LOOK_CLASSES: Record<InputLook, string> = {
   idle: "bg-tint text-brand hover:bg-tint-strong",
   selected: "bg-brand text-white",
   correct: "bg-ok text-white",
