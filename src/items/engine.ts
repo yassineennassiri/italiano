@@ -6,47 +6,78 @@
  */
 import { z } from "zod";
 import type { Item, Lesson } from "@/content/schema";
+import { checkDropdown, type DropdownAnswer, dropdownAnswerSchema, type DropdownItem, solveDropdown } from "./dropdown";
 import type { ExerciseEntry, ExerciseOutcome } from "./entry";
-import { checkMultiSelect, type MultiSelectItem, multiSelectAnswerSchema, solveMultiSelect } from "./multi-select";
-import { pickOption, type SingleChoiceItem, singleChoiceAnswerSchema, solveSingleChoice } from "./single-choice";
+import { checkMultiSelect, type MultiSelectAnswer, type MultiSelectItem, multiSelectAnswerSchema, solveMultiSelect } from "./multi-select";
+import { pickOption, type SingleChoiceAnswer, type SingleChoiceItem, singleChoiceAnswerSchema, solveSingleChoice } from "./single-choice";
 
 /** single_choice: clicking an option checks it at once. */
 export const pickActionSchema = z.strictObject({ kind: z.literal("pick"), option: z.number().int().nonnegative() });
-/** Controlla on an item with a selection (multi_select). The cap only bounds what a POST can send. */
-export const checkActionSchema = z.strictObject({ kind: z.literal("check"), selected: z.array(z.number().int().nonnegative()).max(64) });
+/**
+ * Controlla: the learner's inputs, in the shape the item type stores as its
+ * answer (a selection, gap values). The item's engine validates it.
+ */
+export const checkActionSchema = z.strictObject({ kind: z.literal("check"), answer: z.unknown() });
 export const solveActionSchema = z.strictObject({ kind: z.literal("solve") });
 
-/** A learner action on one exercise: a Check (a pick, or Controlla on a selection) or Solve. */
+/** A learner action on one exercise: a Check (a pick, or Controlla) or Solve. */
 export const exerciseActionSchema = z.discriminatedUnion("kind", [pickActionSchema, checkActionSchema, solveActionSchema]);
 export type ExerciseAction = z.infer<typeof exerciseActionSchema>;
 
 /** Whether the action is a Check, which the conflict rule orders by time (SPEC §8). */
 export const isCheckAction = (action: Pick<ExerciseAction, "kind">): boolean => action.kind !== "solve";
 
-type Engine = {
-  answerSchema: z.ZodType;
-  apply: (item: Item, entry: ExerciseEntry, action: ExerciseAction) => ExerciseOutcome<unknown> | undefined;
+type Outcome<A> = ExerciseOutcome<A> | undefined;
+
+/** One item type's handlers; each returns undefined when the action changes nothing. */
+type Engine<I, A> = {
+  answerSchema: z.ZodType<A>;
+  /** Clicking an option checks it at once (single_choice). */
+  pick?: (item: I, entry: ExerciseEntry<A>, option: number) => Outcome<A>;
+  /** Controlla with the learner's inputs. */
+  check?: (item: I, entry: ExerciseEntry<A>, answer: A) => Outcome<A>;
+  solve: (item: I, entry: ExerciseEntry<A>) => Outcome<A>;
 };
 
-const ENGINES: Partial<Record<Item["type"], Engine>> = {
-  single_choice: {
+type AnyEngine = { answerSchema: z.ZodType; apply: (item: Item, entry: ExerciseEntry, action: ExerciseAction) => Outcome<unknown> };
+
+/** Erases an engine's types for the registry; the content and the stored answer were validated on the way in. */
+function eraseTypes<I, A>(engine: Engine<I, A>): AnyEngine {
+  return {
+    answerSchema: engine.answerSchema,
+    apply: (item, entry, action) => {
+      const typedItem = item as I;
+      const typedEntry = entry as ExerciseEntry<A>;
+      switch (action.kind) {
+        case "pick":
+          return engine.pick?.(typedItem, typedEntry, action.option);
+        case "check": {
+          const answer = engine.answerSchema.safeParse(action.answer);
+          return answer.success ? engine.check?.(typedItem, typedEntry, answer.data) : undefined;
+        }
+        case "solve":
+          return engine.solve(typedItem, typedEntry);
+      }
+    },
+  };
+}
+
+const ENGINES: Partial<Record<Item["type"], AnyEngine>> = {
+  single_choice: eraseTypes<SingleChoiceItem, SingleChoiceAnswer>({
     answerSchema: singleChoiceAnswerSchema,
-    apply: (item, entry, action) => {
-      const singleChoice = item as SingleChoiceItem;
-      const current = entry as ExerciseEntry<z.infer<typeof singleChoiceAnswerSchema>>;
-      if (action.kind === "pick") return pickOption(singleChoice, current, action.option);
-      return action.kind === "solve" ? solveSingleChoice(singleChoice, current) : undefined;
-    },
-  },
-  multi_select: {
+    pick: pickOption,
+    solve: solveSingleChoice,
+  }),
+  multi_select: eraseTypes<MultiSelectItem, MultiSelectAnswer>({
     answerSchema: multiSelectAnswerSchema,
-    apply: (item, entry, action) => {
-      const multiSelect = item as MultiSelectItem;
-      const current = entry as ExerciseEntry<z.infer<typeof multiSelectAnswerSchema>>;
-      if (action.kind === "check") return checkMultiSelect(multiSelect, current, action.selected);
-      return action.kind === "solve" ? solveMultiSelect(multiSelect, current) : undefined;
-    },
-  },
+    check: (item, entry, answer) => checkMultiSelect(item, entry, answer.selected),
+    solve: solveMultiSelect,
+  }),
+  dropdown: eraseTypes<DropdownItem, DropdownAnswer>({
+    answerSchema: dropdownAnswerSchema,
+    check: (item, entry, answer) => checkDropdown(item, entry, answer.values),
+    solve: solveDropdown,
+  }),
 };
 
 /** Whether the engine handles this item type yet. */

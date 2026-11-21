@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
-import type { OptionLook, OptionView } from "@/items/option-look";
-import { ui } from "@/ui-it";
+import type { InputLook, InputView } from "@/items/input-look";
+import { FeedbackIcon } from "./item-controls";
 
-const LOOK_CLASSES: Record<OptionLook, string> = {
+const LOOK_CLASSES: Record<InputLook, string> = {
   idle: "bg-tint text-brand hover:bg-tint-strong",
   selected: "bg-brand text-white",
   correct: "bg-ok text-white",
@@ -21,7 +21,7 @@ export function OptionButton({
   tail,
   onClick,
   children,
-}: OptionView & {
+}: InputView & {
   /** For options that toggle (multi_select): whether it is selected. */
   pressed?: boolean;
   /** Give a green option a speech-bubble tail (single_choice). */
@@ -40,37 +40,5 @@ export function OptionButton({
       <span className="flex-1">{children}</span>
       {(look === "correct" || look === "wrong") && <FeedbackIcon kind={look} />}
     </button>
-  );
-}
-
-/** Soluzione or Controlla under an item. */
-export function ItemControlButton({ disabled, onClick, children }: { disabled: boolean; onClick: () => void; children: ReactNode }) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className="rounded-full border-2 border-brand px-6 py-1.5 font-bold text-brand hover:bg-tint disabled:opacity-40"
-    >
-      {children}
-    </button>
-  );
-}
-
-/** ✓ or ✗ beside the colour, so feedback never relies on colour alone (SPEC §5.1). */
-function FeedbackIcon({ kind }: { kind: "correct" | "wrong" }) {
-  return (
-    <span className="flex shrink-0 items-center">
-      <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true" focusable="false">
-        <path
-          d={kind === "correct" ? "M5 12.5 L10 17 L19 7" : "M6 6 L18 18 M18 6 L6 18"}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-      </svg>
-      <span className="sr-only">{kind === "correct" ? ui.lesson.correct : ui.lesson.wrong}</span>
-    </span>
   );
 }

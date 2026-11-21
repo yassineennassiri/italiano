@@ -6,6 +6,7 @@
  * except the `md` prose of grammar text blocks and the culture page (English).
  */
 import { z } from "zod";
+import { GAP_MARKER } from "./gap-text";
 import { LESSON_ID_PATTERN, unitId } from "./ids";
 
 const id = z.string().min(1);
@@ -126,8 +127,6 @@ export const exchangeSchema = z.strictObject({
 });
 
 const clipSchema = z.strictObject({ from_line: id, to_line: id });
-
-const GAP_MARKER = /\{\{([^}]+)\}\}/g;
 
 /** Every `{{gN}}` marker needs a gap entry, and every gap entry a marker. */
 function checkGapMarkers(item: { text: string; gaps: { id: string }[] }, ctx: IssueSink) {

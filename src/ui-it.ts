@@ -119,6 +119,12 @@ export const ui = {
     /** Item controls (SPEC §5.1). */
     solve: "Soluzione",
     check: "Controlla",
+    /** A dropdown gap's empty choice (SPEC §5.2.1). */
+    gapPlaceholder: "…",
+    /** An item's image (left of its text, SPEC §5.2.1); item images carry no alt text of their own. */
+    itemImageAlt: "Illustrazione dell'esercizio",
+    /** The accessible name of gap N in an item. */
+    gapLabel: (number: number) => `Spazio ${number}`,
     /** Read out with the ✓ and ✗ icons. */
     correct: "Giusto",
     wrong: "Sbagliato",

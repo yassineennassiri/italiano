@@ -8,7 +8,7 @@ import { z } from "zod";
 import type { Item } from "@/content/schema";
 import { applyEvent } from "@/scoring/exercise";
 import { type ExerciseEntry, type ExerciseOutcome, isLocked } from "./entry";
-import type { OptionView } from "./option-look";
+import type { InputView } from "./input-look";
 
 /** single_choice shares its schema variant with image_choice and audio_choice (M2). */
 export type SingleChoiceItem = Pick<Extract<Item, { options: string[]; answer: number }>, "id" | "options" | "answer" | "solvable">;
@@ -30,8 +30,7 @@ export function pickOption(item: SingleChoiceItem, entry: Entry, index: number):
     entry: { state: applyEvent(entry.state, { type: "check", correct }), answer: { picks: [...picks, index] } },
     action: "check",
     correct,
-    expected: item.options[item.answer],
-    given: item.options[index],
+    errors: correct ? [] : [{ expected: item.options[item.answer], given: item.options[index] }],
   };
 }
 
@@ -42,11 +41,12 @@ export function solveSingleChoice(item: SingleChoiceItem, entry: Entry): Exercis
     entry: { state: applyEvent(entry.state, { type: "solve" }), answer: { picks: picksOf(entry) } },
     action: "solve",
     correct: null,
+    errors: [],
   };
 }
 
 /** How each option looks and whether it can be clicked. */
-export function optionLooks(item: SingleChoiceItem, entry: Entry): OptionView[] {
+export function optionLooks(item: SingleChoiceItem, entry: Entry): InputView[] {
   const picks = picksOf(entry);
   const locked = isLocked(entry);
   return item.options.map((_, index) => {

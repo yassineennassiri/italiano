@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
+import { type ReactNode, Suspense } from "react";
 import { AccentLink } from "@/components/accent-link";
 import { Breadcrumb } from "@/components/breadcrumb";
+import { DropdownItem } from "@/components/dropdown-item";
 import { MediaFrame } from "@/components/media-frame";
 import { MultiSelectItem } from "@/components/multi-select-item";
 import { NoteRow } from "@/components/note-row";
@@ -86,29 +87,38 @@ function StepMedia({ step, lesson }: { step: Step; lesson: Lesson }) {
   }
 }
 
-function ItemInteraction({ item }: { item: Item }) {
+/** An item's interaction, with its notes placed before Soluzione / Controlla (SPEC §4.2). */
+function ItemInteraction({ item, notes }: { item: Item; notes: ReactNode }) {
   switch (item.type) {
     case "single_choice":
-      return <SingleChoiceItem item={item} />;
+      return <SingleChoiceItem item={item} notes={notes} />;
     case "multi_select":
-      return <MultiSelectItem item={item} />;
+      return <MultiSelectItem item={item} notes={notes} />;
+    case "dropdown":
+      return <DropdownItem item={item} notes={notes} />;
     default:
-      return item.prompt ? <PromptBubble>{item.prompt}</PromptBubble> : null;
+      // No engine yet: just the prompt, then the notes.
+      return (
+        <>
+          {item.prompt && <PromptBubble>{item.prompt}</PromptBubble>}
+          {notes}
+        </>
+      );
   }
 }
 
-/** One item: its interaction (or just its prompt, for types without an engine yet), then its notes. */
+/** One item: its interaction (or just its prompt, for types without an engine yet) and its notes. */
 function ItemSlot({ item, errorTags }: { item: Item; errorTags: ReadonlyMap<string, ErrorTag> }) {
+  const notes = item.notes && (
+    <div className="mt-4 space-y-2 pl-2">
+      {item.notes.map((note, index) => (
+        <NoteRow key={index} note={note} errorTag={note.error_tag ? errorTags.get(note.error_tag) : undefined} />
+      ))}
+    </div>
+  );
   return (
     <section data-item-id={item.id} data-item-type={item.type}>
-      <ItemInteraction item={item} />
-      {item.notes && (
-        <div className="mt-4 space-y-2 pl-2">
-          {item.notes.map((note, index) => (
-            <NoteRow key={index} note={note} errorTag={note.error_tag ? errorTags.get(note.error_tag) : undefined} />
-          ))}
-        </div>
-      )}
+      <ItemInteraction item={item} notes={notes} />
     </section>
   );
 }
