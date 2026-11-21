@@ -118,6 +118,7 @@ export const ui = {
     next: "Avanti",
     /** Item controls (SPEC §5.1). */
     solve: "Soluzione",
+    check: "Controlla",
     /** Read out with the ✓ and ✗ icons. */
     correct: "Giusto",
     wrong: "Sbagliato",

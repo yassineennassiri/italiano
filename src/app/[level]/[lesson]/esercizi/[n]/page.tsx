@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { AccentLink } from "@/components/accent-link";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { MediaFrame } from "@/components/media-frame";
+import { MultiSelectItem } from "@/components/multi-select-item";
 import { NoteRow } from "@/components/note-row";
 import { PromptBubble } from "@/components/prompt-bubble";
 import { ScenePoster } from "@/components/scene-poster";
@@ -85,15 +86,22 @@ function StepMedia({ step, lesson }: { step: Step; lesson: Lesson }) {
   }
 }
 
+function ItemInteraction({ item }: { item: Item }) {
+  switch (item.type) {
+    case "single_choice":
+      return <SingleChoiceItem item={item} />;
+    case "multi_select":
+      return <MultiSelectItem item={item} />;
+    default:
+      return item.prompt ? <PromptBubble>{item.prompt}</PromptBubble> : null;
+  }
+}
+
 /** One item: its interaction (or just its prompt, for types without an engine yet), then its notes. */
 function ItemSlot({ item, errorTags }: { item: Item; errorTags: ReadonlyMap<string, ErrorTag> }) {
   return (
     <section data-item-id={item.id} data-item-type={item.type}>
-      {item.type === "single_choice" ? (
-        <SingleChoiceItem item={item} />
-      ) : (
-        item.prompt && <PromptBubble>{item.prompt}</PromptBubble>
-      )}
+      <ItemInteraction item={item} />
       {item.notes && (
         <div className="mt-4 space-y-2 pl-2">
           {item.notes.map((note, index) => (

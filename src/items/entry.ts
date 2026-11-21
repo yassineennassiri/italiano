@@ -11,6 +11,9 @@ export type ExerciseEntry<A = unknown> = {
   answer: A | null;
 };
 
+/** Right, or solved: inputs, Solve and Check are disabled. */
+export const isLocked = (entry: Pick<ExerciseEntry, "state">) => entry.state.status === "checked_correct" || entry.state.status === "solved";
+
 /** An exercise the learner hasn't touched. */
 export const NEW_ENTRY: ExerciseEntry<never> = { state: UNTOUCHED, answer: null };
 

@@ -60,6 +60,7 @@
           "prompt": "Che cosa ha Adam con sé? Ci sono tre risposte giuste.",
           "options": ["la valigia", "la bicicletta", "lo zaino", "l'ombrello"],
           "answers": [0, 2, 3],
+          "solvable": true,
           "notes": [{ "kind": "new_words", "text_en": "con sé = with him, on him" }]
         }
       ]

@@ -7,14 +7,21 @@
 import { z } from "zod";
 import type { Item, Lesson } from "@/content/schema";
 import type { ExerciseEntry, ExerciseOutcome } from "./entry";
+import { checkMultiSelect, type MultiSelectItem, multiSelectAnswerSchema, solveMultiSelect } from "./multi-select";
 import { pickOption, type SingleChoiceItem, singleChoiceAnswerSchema, solveSingleChoice } from "./single-choice";
 
+/** single_choice: clicking an option checks it at once. */
 export const pickActionSchema = z.strictObject({ kind: z.literal("pick"), option: z.number().int().nonnegative() });
+/** Controlla on an item with a selection (multi_select). The cap only bounds what a POST can send. */
+export const checkActionSchema = z.strictObject({ kind: z.literal("check"), selected: z.array(z.number().int().nonnegative()).max(64) });
 export const solveActionSchema = z.strictObject({ kind: z.literal("solve") });
 
-/** A learner action on one exercise: picking an option (a Check) or Solve. */
-export const exerciseActionSchema = z.discriminatedUnion("kind", [pickActionSchema, solveActionSchema]);
+/** A learner action on one exercise: a Check (a pick, or Controlla on a selection) or Solve. */
+export const exerciseActionSchema = z.discriminatedUnion("kind", [pickActionSchema, checkActionSchema, solveActionSchema]);
 export type ExerciseAction = z.infer<typeof exerciseActionSchema>;
+
+/** Whether the action is a Check, which the conflict rule orders by time (SPEC §8). */
+export const isCheckAction = (action: Pick<ExerciseAction, "kind">): boolean => action.kind !== "solve";
 
 type Engine = {
   answerSchema: z.ZodType;
@@ -27,7 +34,17 @@ const ENGINES: Partial<Record<Item["type"], Engine>> = {
     apply: (item, entry, action) => {
       const singleChoice = item as SingleChoiceItem;
       const current = entry as ExerciseEntry<z.infer<typeof singleChoiceAnswerSchema>>;
-      return action.kind === "pick" ? pickOption(singleChoice, current, action.option) : solveSingleChoice(singleChoice, current);
+      if (action.kind === "pick") return pickOption(singleChoice, current, action.option);
+      return action.kind === "solve" ? solveSingleChoice(singleChoice, current) : undefined;
+    },
+  },
+  multi_select: {
+    answerSchema: multiSelectAnswerSchema,
+    apply: (item, entry, action) => {
+      const multiSelect = item as MultiSelectItem;
+      const current = entry as ExerciseEntry<z.infer<typeof multiSelectAnswerSchema>>;
+      if (action.kind === "check") return checkMultiSelect(multiSelect, current, action.selected);
+      return action.kind === "solve" ? solveMultiSelect(multiSelect, current) : undefined;
     },
   },
 };
