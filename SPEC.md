@@ -2,7 +2,7 @@
 
 A personal Italian course web app that copies the **structure and flow** of DW's *Nicos Weg* German course, filled with original Italian content.
 
-> **How to use this document.** This spec has been through a grilling session; section 16 logs every decision. Read it together with the course plan (`docs/course-plan.md`), the glossary (`CONTEXT.md`) and the ADRs (`docs/adr/`). Section 14 is the first milestone, tracked as GitHub issues. Screenshots of the original are in `./screenshots/` and are referenced by number, e.g. `[04]` = `screenshots/04-a1-lesson-introduction.png` (full index in Appendix A).
+> **How to use this document.** This spec has been through two grilling sessions; section 16 logs the M1 decisions and section 17 the M2 decisions. Read it together with the course plan (`docs/course-plan.md`), the glossary (`CONTEXT.md`) and the ADRs (`docs/adr/`). Section 14 describes the milestones; each one is tracked as GitHub issues. Screenshots of the original are in `./screenshots/` and are referenced by number, e.g. `[04]` = `screenshots/04-a1-lesson-introduction.png` (full index in Appendix A).
 
 | | |
 |---|---|
@@ -57,6 +57,8 @@ Home (levels)
         ├── Script                       /copione
         └── Finish                       /fine
 Review hub (my errors, due vocab)         /ripasso
+Settings                                  /impostazioni
+Feedback notes                            /feedback
 ```
 
 URLs use stable slugs from the content files. Deep links and the browser Back button work. The last visited step is restored when I reopen a lesson.
@@ -64,12 +66,12 @@ URLs use stable slugs from the content files. Deep links and the browser Back bu
 ### 3.1 Global chrome
 All chrome text is Italian (6.3); the labels below are the real UI strings.
 
-- **Top bar**: logo (an SVG of the Lanterna, Genoa's lighthouse, plus wordmark) on the left, app title in the centre, hamburger on the right (Home, levels; Review hub and Settings from M2). Ref `[03]`.
+- **Top bar**: logo (an SVG of the Lanterna, Genoa's lighthouse, plus wordmark) on the left, app title in the centre, hamburger on the right (Home, levels; from M2 also Ripasso, Impostazioni and Feedback). Ref `[03]`.
 - **Lesson bar**: a full-width coloured bar under the top bar on every lesson page. It shows the lesson title in the centre and a chevron on the right that opens the **lesson menu**. Ref `[04]`, `[23]`.
 - The top bar and lesson bar are **sticky**: they stay pinned while the page scrolls (`[06]`, `[34]`).
-- **Lesson menu** (drop-down panel on the right, `[23]`): Informazioni · Esercizi · Grammatica · Vocabolario · Cultura · Copione · Altri strumenti (Review hub; vocab trainer later) · Azzera gli esercizi · Panoramica del corso. Hide entries the lesson doesn't have (e.g. Cultura).
+- **Lesson menu** (drop-down panel on the right, `[23]`): Informazioni · Esercizi · Grammatica · Vocabolario · Cultura · Copione · Altri strumenti (Review hub; vocab trainer later) · Segnala un problema (M2, 10.6) · Azzera gli esercizi · Panoramica del corso. Hide entries the lesson doesn't have (e.g. Cultura).
 - **Breadcrumb**: `Level / Course / Lesson / Step title` above the content, **only on the intro and exercise step pages** (`[04]`, `[07]`). Results, grammar, vocabulary, culture, script and finish pages have only the lesson bar.
-- **Footer**: minimal (app name, content version (a short hash of the content JSON files, so both computers can tell they run the same content), sync status: *Salvato* / *In attesa* / *Offline: non salvato*). DW's footer is not copied.
+- **Footer**: minimal (app name, content version (a short hash of the content JSON files, so both computers can tell they run the same content), sync status: *Salvato* / *In attesa* / *Offline: non salvato*, which becomes *Offline: salvato su questo computer* once the IndexedDB queue holds the write, §8). DW's footer is not copied.
 
 ### 3.2 Home
 A simple page listing the three levels as large cards (level badge, title, short description, % completed), plus a *Continua da dove eri* button that goes to the last lesson/step. It's loosely modelled on `[02]`. Until a level has content, its card is disabled and labelled *In arrivo* (in M1, B1 and B2). The placement test card is a later feature.
@@ -85,7 +87,7 @@ A simple page listing the three levels as large cards (level badge, title, short
   - A *Bozza* badge when the lesson's `status` is `draft` (draft lessons are fully playable; that's how they get reviewed).
   - Top-right **status circle**: empty = not started, half-filled = in progress, filled with a tick = completed. A tooltip shows the state plus the best % ("Completata · 87%").
   - Cards alternate between light background tints, as on DW.
-- Below the grid, as on DW: **Altre lezioni** (link to the Review hub), **Test finale** (disabled, *In arrivo*) and **Feedback** (a textarea saved to the DB for my own notes about the content; M2).
+- Below the grid, as on DW: **Altre lezioni** (link to the Review hub), **Test finale** (disabled, *In arrivo*) and **Feedback** (a textarea saved to the DB for my own notes about the content, `scope = level`; M2, 10.6).
 
 ---
 
@@ -127,7 +129,7 @@ Small rows with a round icon, placed under an item, or inside a speaking item be
 - **Parole nuove:** a word introduced here, with a short English gloss (`[15]`, `[37]`).
 - **Attenzione!:** our addition for my recurring error patterns (e.g. "*l'* before a vowel, never *il*"). It links to the error tag's explanation.
 
-**Vocab links (M2):** words highlighted in prompts, scripts and reading texts (DW underlines them with a dotted line). Hovering or tapping one shows a popover with the word and its article, the English meaning and an audio button. These words come from the lesson's vocabulary list.
+**Vocab links (M2):** words highlighted with a dotted underline, as on DW. They are allowed in prompts, scene and script lines, step `reading` texts, and gap-item `text` outside the gaps; never in options, tiles or gap answers, where they would give the answer away. The popover shows the term with its article and plural, the gender dot, the English meaning and a 🔊 button. It opens on hover (desktop), on click or tap, and on Enter when the link has keyboard focus; Esc closes it. A link may only point at an entry in **the same lesson's** vocabulary list.
 
 ### 4.4 Results screen (`[18]`, `[41]`)
 - Heading *Risultati della lezione*.
@@ -206,7 +208,7 @@ The `type` value is the JSON discriminator.
 
 #### 3. `word_order`: tile sentence builder (`[16]`, `[17]`, `[29]`)
 - Left: an optional prompt bubble (the other speaker's line, or a sentence start like "Nicos Eltern sind wütend, …"). Right: an empty dotted **answer box** with shuffled **tiles** (light pill buttons) below. Tiles can be words, chunks or punctuation.
-- Clicking a tile moves it to the end of the answer, where it turns dark. Clicking a placed tile sends it back. Drag-reorder inside the answer is an M2 nice-to-have.
+- Clicking a tile moves it to the end of the answer, where it turns dark. Clicking a placed tile sends it back. There is no drag-reorder (dropped in the M2 grilling: click-to-place works and is keyboard-friendly).
 - **Lines** variant (`layout: "lines"`, M2): the tiles are whole script lines stacked vertically, for the course plan's "put the lines in order".
 - Check compares the sequence with the solution (alternatives via `accept`). The answer box border turns **green or red** (`[17]`).
 - The shuffle is deterministic (seeded by item id), so the layout is stable across reloads. Never show tiles already in the solved order.
@@ -222,7 +224,7 @@ The `type` value is the JSON discriminator.
 
 #### 6. `image_choice`: pick the description for an image (`[28]`)
 - A prompt bubble ("Che cosa succede?") above an image on the left, and 2 option buttons on the right. It behaves like `single_choice`; it's a separate type only for its layout.
-- Supports an optional intro paragraph above all items (in `[28]` it introduces the new words).
+- Supports an optional intro paragraph above all items (in `[28]` it introduces the new words). It is the step's `reading` field, so the schema needs no new field.
 
 #### 7. `reading`: reading comprehension (`[33]`, `[34]`)
 - The step's `reading` text is rendered as a document (heading, subheads, paragraphs, vocab links). Brochures, emails, contract clauses and meeting minutes suit the story.
@@ -230,6 +232,7 @@ The `type` value is the JSON discriminator.
 
 #### 8. `audio_choice`: listen, then choose (`[14]`, `[36]`, `[37]`, `[39]`)
 - The prompt bubble shows a transcript line with "…" where the missing line goes, plus a 🔊 button when the item provides audio. Options are on the right, and it behaves like `single_choice`.
+- What 🔊 plays is an optional `clip: { from_line, to_line }` of scene lines, as in `audio_gap`. Before MP3s exist, `speechSynthesis` speaks those lines; afterwards the MP3 timeline plays the same span. An item with neither a clip nor `prompt_audio` shows no 🔊.
 - Alternatively the step carries a **clip player** as its top media (`media.kind: "clip"`, `[39]`) with its own duration, and the item prompts are plain text.
 - **Reason** variant (`[36]`, `[37]`): the prompt is a sentence start ("Adam è contento, …") and the options are clause completions ("perché …").
 
@@ -247,12 +250,12 @@ The `type` value is the JSON discriminator.
 - After each exchange, a *Com'è andata?* bubble sits on the left, with two stacked buttons **Bene** / **Non tanto bene** on the right (`[10]`). **Each exchange is its own exercise** with its own id and state.
 - A note can sit between an exchange and its rating (`exchanges[].notes`, `[10]`, `[12]`).
 - Variants: **dialogue** (`[10]`), **read_along** (`[12]`: both sides given, I read mine aloud), **personal** (`[13]`, `[40]`: a question on the left and a hint/example on the right; I answer freely).
-- **Optional recording (later):** a 🎙 button records my answer with MediaRecorder for playback next to the model audio. Recordings are stored only in the browser (IndexedDB), never uploaded.
-- **Non tanto bene** writes an error_log row (source `speak_rate`, the item's tags) and, from M2, creates a review card.
+- **Optional recording (M3):** a 🎙 button records my answer with MediaRecorder for playback next to the model audio. Recordings are stored only in the browser (IndexedDB), never uploaded.
+- **Non tanto bene** writes an error_log row (source `speak_rate`, the item's tags) and, from M2, creates or resets an item review card for that exchange (10.5).
 
 #### 12. `parla`: closing speaking task (our addition, always the last step)
 - A bigger open task tied to the scene, written in Italian with an Italian example answer. Example: *Un collega ti chiama: raccontagli com'è andato l'arrivo.*
-- It shows a checklist of target structures in Italian (*Usa l' davanti a vocale almeno due volte*), an optional recording button (later), and the **Bene / Non tanto bene** self-rating. The rating is one exercise.
+- It shows a checklist of target structures in Italian (*Usa l' davanti a vocale almeno due volte*), an optional recording button (M3), and the **Bene / Non tanto bene** self-rating. The rating is one exercise.
 - An optional free-text box, *Su cosa hai esitato?*. Its content goes to the error log (`source = parla_note`).
 - **Future:** speech-to-text plus AI correction (section 15).
 
@@ -370,6 +373,12 @@ Per-computer setup: `git clone` → `npm i` → copy `.env.example` to `.env.loc
 **Sync resilience.** Progress writes are optimistic: the UI updates first, the write follows.
 - **M1:** a failed write is kept in memory and retried every 30 s until it succeeds or the tab closes. The footer shows *Salvato* / *In attesa* / *Offline: non salvato*.
 - **M2:** the same queue persists to IndexedDB, so pending writes survive a reload.
+  - A write is stored in IndexedDB *before* it is sent and deleted once the server acknowledges it.
+  - On load, pending writes are **laid over the server state** with the conflict rule below, so the UI shows them at once; then they are replayed in order. Replays are safe because every write carries an `eventId` (the `exercise_attempt` id).
+  - Only one tab flushes, coordinated with the Web Locks API.
+  - While a stored write waits, the footer says *Offline: salvato su questo computer*.
+  - Without IndexedDB (private window, blocked storage) the app falls back silently to the M1 in-memory queue and its *Offline: non salvato* label.
+  - Review writes (10.5) and feedback notes (10.6) go through the same queue.
 - Conflict rule per item: the earliest `first_check_correct` wins, and the latest state wins for everything else. "Earliest" is the time the learner acted on their own computer, sent with each write, so a Check made offline and synced late still counts as first.
 
 ---
@@ -467,7 +476,8 @@ type Item = ItemBase & (
   | { type: "word_bank"; text: string; bank: string[]; gaps: Gap[] }
   | { type: "audio_gap"; clip: { from_line: string; to_line: string }; text: string; gaps: Gap[] }
   | { type: "word_order"; tiles: string[] /* correct order; the app shuffles */; accept?: string[][]; layout?: "words" | "lines" }
-  | { type: "single_choice" | "image_choice" | "audio_choice"; options: string[]; answer: number }
+  | { type: "single_choice" | "image_choice"; options: string[]; answer: number }
+  | { type: "audio_choice"; options: string[]; answer: number; clip?: { from_line: string; to_line: string } }   // clip: M2
   | { type: "multi_select"; options: string[]; answers: number[] }
   | { type: "speak_rate"; variant: "dialogue" | "read_along" | "personal"; exchanges: Exchange[] }
   | { type: "parla"; task: string; example: string; checklist: string[] }
@@ -500,9 +510,9 @@ type CulturePage = { title: string; image: string; md: string };   // English pr
 ```
 
 - `{{g1}}` marks a gap inside `text`; `\n` is a line break; `**SPEAKER:**` prefixes are allowed in dialogue texts.
-- Vocab links (M2): any `[[word|v-id]]` in prompts, readings or script lines renders as a highlighted vocab link.
+- Vocab links (M2): any `[[word|v-id]]` in prompts, readings, script lines or gap-item `text` (outside gap markers) renders as a highlighted vocab link (4.3). The content hash ignores this markup (10.3).
 - `audio` / `*_audio` fields are filled in by the audio script (§11), never by hand. Omit them while drafting.
-- Validation rules: every `answer` must be one of `options` for dropdowns, every gap marker must have a gap entry, `answers` indexes must be in range, exchange ids are unique within their item, `rule` arrow indexes point at existing segments, every lesson id in `course.json` has a file and vice versa, and the last step must contain a `parla` item.
+- Validation rules: every `answer` must be one of `options` for dropdowns, every gap marker must have a gap entry, `answers` indexes must be in range, exchange ids are unique within their item, `rule` arrow indexes point at existing segments, `clip` line ids exist in the scene and run forward, every vocab link's `v-id` is in the same lesson's `vocab` and no link sits in options, tiles or gap answers (M2), every lesson id in `course.json` has a file and vice versa, and the last step must contain a `parla` item.
 
 ### 9.2 Example lesson: Ripasso A2, Unit 1 "Arrivo a Genova", Lesson 1
 
@@ -732,7 +742,7 @@ There's a single user, but every table keeps a `user_id` so a second profile sta
 |---|---|---|
 | id | uuid PK | one row, with a fixed UUID created by `npm run db:seed`; there is no login |
 | display_name | text | |
-| settings | jsonb | instruction language, audio speed, recording on/off, subtitles |
+| settings | jsonb | synced settings (M2): `inject_review` (Ripasso personale on/off, default on), default subtitles (`off` · `it` · `it_en`), default scene speed (0.75 · 1). Recording on/off comes with recordings (M3). The Italian `speechSynthesis` voice is chosen per computer and kept in `localStorage`, because each machine has different voices. |
 | created_at | timestamptz | |
 
 ### 10.2 `lesson_progress`
@@ -743,6 +753,7 @@ There's a single user, but every table keeps a `user_id` so a second profile sta
 | content_version | int | |
 | status | text | `not_started` · `in_progress` · `completed` |
 | last_location | text | resume point, e.g. `esercizi/3` |
+| review_items | text[], nullable | M2: the item ids frozen for this lesson's Ripasso personale step (10.5); null = not chosen yet, empty = no step |
 | last_percent | int | |
 | best_percent | int | |
 | started_at, completed_at, updated_at | timestamptz | |
@@ -751,9 +762,9 @@ There's a single user, but every table keeps a `user_id` so a second profile sta
 ### 10.3 `item_state` (current state) and `exercise_attempt` (history)
 **`item_state`**: `user_id`, `item_id`, `lesson_id`, `status` (`untouched` · `checked_correct` · `checked_wrong` · `solved` · `rated_good` · `rated_not_great`), `first_check_correct` bool, `points` smallint (0/1), `answer` jsonb (current inputs, to restore the UI), `content_hash` text, `updated_at`. PK (user_id, item_id). Reset deletes these rows for the lesson.
 - `item_id` is the id of one **exercise**: an item id, or for speaking items an exchange id (`a2.u01.l01.s05.i01.e2`).
-- `content_hash` is a hash of that exercise's content when the row was written. Notes are left out, since they explain an item without changing it. On load, a row whose hash no longer matches the current content is ignored, and the exercise shows as untouched. Every other exercise in the lesson keeps its state.
+- `content_hash` is a hash of that exercise's content when the row was written. Notes are left out, since they explain an item without changing it, and so is vocab-link markup: `[[word|v-id]]` hashes as `word`, so adding links never resets progress (ADR-0006). On load, a row whose hash no longer matches the current content is ignored, and the exercise shows as untouched. Every other exercise in the lesson keeps its state.
 
-**`exercise_attempt`** (append-only, never reset): `id`, `user_id`, `item_id`, `lesson_id`, `content_version`, `action` (`check` · `solve` · `rate` · `reset`), `answer` jsonb, `result` jsonb (per-gap correct/incorrect), `correct` bool, `created_at`.
+**`exercise_attempt`** (append-only, never reset): `id`, `user_id`, `item_id`, `lesson_id`, `content_version`, `action` (`check` · `solve` · `rate` · `reset` · `review` (M2: an answer given in the Review hub or a Ripasso personale step)), `answer` jsonb, `result` jsonb (per-gap correct/incorrect), `correct` bool, `created_at`.
 
 ### 10.4 `error_log`
 | column | type | notes |
@@ -766,7 +777,7 @@ There's a single user, but every table keeps a `user_id` so a second profile sta
 | expected | text | `l'ombrello` |
 | given | text | `il ombrello` |
 | note | text | |
-| resolved | bool | set after 3 successful reviews in a row |
+| resolved | bool | set when the review card behind the row gets 3 non-*again* grades in a row (10.5); never cleared |
 | created_at | timestamptz | |
 
 The initial tags (in `content/error-tags.json`, each with an English explanation and a link to its grammar page; `spelling.accent` and `speaking` have no teaching unit for now, so no link) come from the course plan's "weak points" table: `article.elision`, `article.lo`, `article.plural_gli`, `partitive.masc_plural`, `gender.anglicism`, `prep.articulated`, `agreement.plural`, `congiuntivo.volere_che`, `lexis.invented_word`, `lexis.english_fallback`, `register.lei`, `verb.conjugation`, `spelling.accent`, `speaking`.
@@ -783,18 +794,56 @@ The `manual` source lets me paste corrections from voice sessions with my Italia
 | due_at | timestamptz | |
 | interval_days, ease, reps, lapses | numeric / int | SM-2 to start; `ts-fsrs` is a drop-in upgrade |
 | last_result | text | `again` · `hard` · `good` · `easy` |
+| streak | int | non-*again* grades in a row; 3 marks the card's error_log rows resolved (10.4) |
+| created_at, updated_at | timestamptz | |
 | UNIQUE | (user_id, kind, ref_id) | |
 
-Rules:
-- Finishing a lesson creates `vocab` cards for its vocab list.
-- A wrong first Check or a **Non tanto bene** rating creates (or resets) an `item` card for that item, due tomorrow.
-- Accent-only misses are logged but don't create cards.
-- **Review hub** (`/ripasso`): "Due today" (vocab + items + errors, mixed, in the same item UI), "My top error tags" (counts over the last 30 days; clicking a tag starts a drill of items with that tag from completed lessons), and "Add a correction" (manual entries).
-- **Ripasso personale step:** the app inserts an extra step before *Parla!* with 2–3 due item cards whose tags match the lesson. This implements the course plan's "plus 2–3 items drawn from your own error log". It is **on by default** once the Review hub exists (M2); `settings.inject_review` turns it off. Its scoring rules are decided in the M2 grilling.
-- The details of this section (SM-2 parameters, how error cards look, tag drills) are settled in a separate grilling before M2.
+For `item` cards, `ref_id` is an **exercise** id: an item id, or an exchange id for speaking items.
+
+**`review_log`** (append-only, never reset): `id` (the write's `eventId`), `user_id`, `card_id`, `grade`, `interval_before`, `interval_after`, `ease_before`, `ease_after`, `source` (`hub` · `drill` · `ripasso_personale`), `created_at`. Every review writes one row, so the scheduler can later be swapped for FSRS fitted to this history (ADR-0004).
+
+**Scheduler (SM-2, ADR-0004).** One pure function with Vitest cases.
+- A new card starts with ease 2.5; ease never drops below 1.3.
+- *again*: interval 1 (due tomorrow), ease −0.2, lapses +1, reps back to 0.
+- *hard*: interval × 1.2, ease −0.15.
+- *good*: 1 day, then 6 days, then interval × ease.
+- *easy*: the *good* interval × 1.3, ease +0.15.
+- Intervals are capped at 180 days and get ±5 % fuzz (seeded by card id and reps, so tests are deterministic).
+
+**Grading.** Wherever the app can check an answer, it grades automatically; there are no extra buttons.
+
+| What happened in the review | Grade |
+|---|---|
+| First Check fully correct | *good* |
+| Accent-only miss (5.1) | *hard* |
+| Wrong, or Soluzione | *again* |
+| Speaking exchange: *Bene* / *Non tanto bene* | *good* / *again* |
+| Vocab card: the learner presses *Ancora · Difficile · Bene · Facile* | *again* · *hard* · *good* · *easy* |
+
+A review **never touches the lesson's `item_state`** or its %: it writes `review_log`, an `exercise_attempt` row with action `review`, and the card's new schedule. A wrong review answer writes no new error_log row; the card's lapse already records it. If an item's content changed since the card was made, the review shows the current content.
+
+**Card kinds.**
+- **`vocab`**: finishing a lesson creates one per vocab entry, first due the next day. The card is a flip card. The front shows the English meaning, with no gender dot. I say the Italian aloud and flip. The back shows the term with article and plural, the forms line and 🔊. Then I press one of the four grade buttons. The vocab trainer (M4) adds typed and listening modes on the same cards.
+- **`item`**: re-asks one exercise in the normal item UI. It is created or reset by a wrong first Check, a *Non tanto bene* rating, or **Soluzione before any Check**. Reset means grading the existing card *again*. Accent-only misses never create or reset a card.
+- **`error`**: built from an error_log row that has both `given` and `expected`, so `manual` now and `ai` later. Rows from exercises and speaking feed item cards instead, and `parla_note` rows are only logged. The card shows my wrong version struck through in red, with the tag's English explanation behind an *Info* toggle. I type the corrected sentence, which is checked with the normal compare rules (5.1).
+- **Backfill:** when review cards ship, lessons already completed get their vocab cards, and unresolved error_log rows from `exercise` and `speak_rate` get item cards, all due the next day.
+
+**Review hub (`/ripasso`)**: one page with three panels. It is reachable from the hamburger, the lesson menu's *Altri strumenti* and the overview's *Altre lezioni*.
+1. **Da ripassare oggi**: counts of due cards by kind and an *Inizia il ripasso* button. A **review session** is up to 20 due cards, mixed and shuffled, shown one at a time. It ends on a summary, with *Altri 20* if more are due.
+2. **I miei errori più frequenti**: the top 5 error tags by **unresolved** error_log rows in the last 30 days, with counts and English explanations, so a tag drops off as I fix it. Clicking a tag starts a **tag drill**: up to 10 items with that tag from completed lessons. A drill is graded like a review and updates the card of any item that already has one (`source = drill`). It doesn't create cards.
+3. **Aggiungi una correzione**: *Cosa hai detto* (`given`), *Versione corretta* (`expected`), a multi-select of tags from `error-tags.json` and an optional note. Saving writes an error_log row (`source = manual`) and its error card, due tomorrow.
+
+**Ripasso personale step (ADR-0005).** The app inserts an extra step before *Parla!*, titled *Ripasso personale*, with an instruction saying the items come from my mistakes. This implements the course plan's "plus 2–3 items drawn from your own error log". It is **on by default** from M2; `settings.inject_review` turns it off.
+- **Which cards:** up to 3 due `item` cards from *other* lessons whose item tags overlap this lesson's tags (the union of its items' `error_tags`), most overdue first. If none match, any due item cards. With no due item cards, there is no step.
+- **When chosen:** the first time I open the lesson. The ids are stored in `lesson_progress.review_items`, so the step count stays stable across reloads and both computers. Azzera and finishing the lesson clear the choice; the next visit chooses again.
+- **Scoring:** its exercises count in the footer's *X di Y* but are **not scorable**. They earn no points and stay out of the lesson %, the Results S/M and *Correggi i miei errori*. Each answer grades its card (`source = ripasso_personale`).
 
 ### 10.6 `feedback_note`
-`id`, `user_id`, `scope` (`level` · `lesson` · `item`), `ref_id`, `text`, `created_at`, `done` bool. These are my notes about content to fix.
+`id`, `user_id`, `scope` (`level` · `lesson` · `item`), `ref_id`, `text`, `created_at`, `done` bool. These are my notes about content to fix (M2).
+- **Level overview** Feedback card: a textarea, `scope = level`, `ref_id` = the level id.
+- **Lesson menu → *Segnala un problema***: a dialog with a textarea. `scope = lesson`, and `ref_id` is the lesson id plus the current page, e.g. `a2.u01.l02/esercizi/4`. There are no per-item buttons; `item` stays in the schema for later.
+- **`/feedback`**: open notes grouped by lesson, each with a *Fatto* toggle that sets `done`.
+- **`npm run feedback:list`**: prints open notes as Markdown, so a content-fixing agent can read them. It is read-only, against `DATABASE_URL`.
 
 ---
 
@@ -870,7 +919,9 @@ M1 is tracked as GitHub issues, which supersede this list. It is kept as a check
 
 ---
 
-## 14. First milestone: vertical slice
+## 14. Milestones
+
+### 14.1 First milestone: vertical slice (done)
 **Goal:** play one complete lesson (`a2.u01.l01` from §9.2) from the level overview to the Finish screen on computer A, then open computer B and see the same progress.
 
 **In scope**
@@ -889,9 +940,30 @@ M1 is tracked as GitHub issues, which supersede this list. It is kept as a check
 
 **Done when:** I finish the lesson and see the correct %, then close the browser, run the app on my other computer, and the level overview shows the lesson as completed with the same %. Reopening a step there shows my locked green/red answers.
 
-**Next milestones (suggested)**
-- M2 (starts with its own grilling): the remaining exercise types and layouts; lessons 2–3 of unit A2.1; Review hub v1 + Ripasso personale; IndexedDB queue; vocab links, Feedback, Settings.
-- M3: the asset pipeline (TTS script, style guide, real illustrations); Ripasso A2 units 2–10.
+### 14.2 Second milestone: the rest of unit A2.1 and spaced review
+Decided in the M2 grilling (section 17) and tracked as GitHub issues #36–#55, which supersede the list below where they differ.
+
+**Goal:** play all three lessons of A2.1, with every exercise type working, and review my own mistakes in the Review hub and in a Ripasso personale step.
+
+**In scope, in build order**
+1. **M1 follow-ups:** the unverified Azzera focus return, plus anything the two-computer check (#19) finds.
+2. **Lesson 2 draft:** *La casa della signora Pina*. Pina shows Adam the flat in the caruggi. Grammar: indefinite articles *un / uno / una / un'* and tricky gender (*il problema*, *la mano*, *-e* nouns such as *la chiave*, *il bicchiere*). Vocab: rooms and household objects. Culture: Genoese stairs and *ardesia* slate roofs. An agent writes it as `draft` with placeholder media, following the §5.2 recipe and using the new types. Items of types not built yet show a plain placeholder until their issue lands.
+3. **The remaining types and layouts:** `image_choice`, step `reading`, `audio_choice` (with `clip`), `word_bank`, `audio_gap`, `clip` step media, and `word_order` lines.
+4. **The IndexedDB queue** (§8), before the review system adds its writes.
+5. **Review cards:** `review_card`, `review_log`, the SM-2 scheduler, card creation and the backfill (10.5).
+6. **Review hub v1:** review sessions, vocab and error cards, top error tags with tag drills, *Aggiungi una correzione*.
+7. **Ripasso personale step.**
+8. **Vocab links** (4.3), including links added to lesson 1.
+9. **Settings** (`/impostazioni`, 10.1) and **Feedback** (10.6).
+10. **Lesson 2 review** (me): play it, comment, flip it to `ready`.
+11. **Lesson 3 draft:** *Il vicino di casa*. Adam meets Luca, a young neighbour who uses *tu* at once, in contrast to Pina's *Lei*. Grammar: *tu* vs *Lei*, introducing yourself (*mi chiamo*, *sono di*, *lavoro come*). It is the lesson that teaches `register.lei`. Culture: when Italians switch from *Lei* to *tu*. It is drafted after the lesson 2 review, so that feedback improves it. Then I review it too.
+
+**Out of scope for M2:** recordings (M3), `word_order` drag-reorder (dropped), the TTS script and real illustrations (M3), the vocab trainer (M4), per-item feedback buttons.
+
+**Done when:** all three A2.1 lessons are `ready` and playable to the Finish screen; a wrong answer in one lesson comes back the next day in the Review hub and as a Ripasso personale item in another lesson; and a reload while offline keeps my unsent answers.
+
+### 14.3 Later milestones (suggested)
+- M3: the asset pipeline (TTS script, style guide, real illustrations), recordings, Ripasso A2 units 2–10.
 - M4: B1 units 1–4; vocab trainer; placement test.
 
 ---
@@ -945,7 +1017,34 @@ The decisions below are already applied in the sections they reference.
 **Scope**
 24. Moved to M2: vocab-link popovers, the Feedback textarea, the Settings page, `word_order` drag-reorder (14).
 25. Ripasso personale is on by default from M2 (10.5).
-26. M2+ details (Review hub, recordings, TTS provider, image style guide) get their own grilling after M1.
+26. M2+ details (Review hub, recordings, TTS provider, image style guide) get their own grilling after M1. *Amended:* the Review hub was grilled for M2 (section 17); recordings, the TTS provider and the image style guide are grilled with M3.
+
+---
+
+## 17. Decision log (M2 grilling, 2026-11-21)
+The decisions below are already applied in the sections they reference.
+
+**Scope and order**
+1. M2 keeps all six §14 themes. Recordings move to M3; `word_order` drag-reorder is dropped; a small first issue gathers M1 follow-ups (14.2).
+2. Content first: lesson 2 is drafted before the new types, which are then built against it. Unbuilt types show a placeholder in the meantime. The IndexedDB queue comes right after the types, before the review system adds writes (14.2).
+3. Lesson 2 is *La casa della signora Pina* (indefinite articles, tricky gender); lesson 3 is *Il vicino di casa* (*tu* vs *Lei*, introducing yourself, teaches `register.lei`) (14.2).
+4. Each lesson gets a drafting issue (agent) and a review issue (me, flips it to `ready`). Lesson 3 is drafted after lesson 2's review (14.2).
+5. `audio_choice` gets an optional `clip` of scene lines, so 🔊 works with `speechSynthesis` before MP3s exist (5.2.8, 9.1).
+
+**Spaced review**
+6. Classic SM-2 as a pure function, with an append-only `review_log` so FSRS can replace it later (10.5, ADR-0004).
+7. Reviews are graded automatically where the app can check (correct → *good*, accent-only → *hard*, wrong or Soluzione → *again*); speaking uses *Bene* / *Non tanto bene*; only vocab cards have four buttons. Reviews never touch lesson state or the % (10.5, ADR-0004).
+8. Vocab cards are flip cards (English front, Italian back) with four grade buttons (10.5).
+9. Error cards come only from error_log rows with both `given` and `expected` (`manual`, later `ai`): wrong version struck through, type the correction (10.5).
+10. Review hub v1: sessions of up to 20 mixed cards, top 5 unresolved tags over 30 days with tag drills of up to 10 items, and *Aggiungi una correzione* (10.5).
+11. Ripasso personale: up to 3 due item cards from other lessons with overlapping tags (any due item cards if none match); frozen on the first visit in `lesson_progress.review_items`; counted in *X di Y* but not scorable (10.5, ADR-0005).
+12. Item cards are created or reset by a wrong first Check, *Non tanto bene*, or Soluzione before any Check; never by accent-only misses. An error_log row is resolved after 3 non-*again* grades in a row on its card, and top tags count only unresolved rows (10.4, 10.5).
+
+**Sync, links, settings, feedback**
+13. The IndexedDB queue stores writes before sending, overlays them on the server state at load, flushes from one tab (Web Locks), says *Offline: salvato su questo computer*, and falls back to the in-memory queue without IndexedDB (§8).
+14. Vocab links point only into the same lesson's vocab, never sit in options, tiles or answers, and are ignored by the content hash, so adding them to lesson 1 keeps its progress (4.3, 10.3, ADR-0006).
+15. Settings: Ripasso personale on/off, default subtitles and default speed are synced; the `speechSynthesis` voice is per computer. "Instruction language" is gone for good (10.1, ADR-0003).
+16. Feedback: the level overview textarea, *Segnala un problema* in the lesson menu (records the current page), a `/feedback` list with *Fatto*, and `npm run feedback:list` for agents (10.6).
 
 ---
 
