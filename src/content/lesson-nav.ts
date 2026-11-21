@@ -87,11 +87,42 @@ export function reviewPages(lesson: PagedLesson): ReviewPage[] {
   return pages.filter((page) => page !== false);
 }
 
+/** Every page of the review sequence as a URL, in order: grammatica/1 … grammatica/G, vocabolario, cultura. */
+function reviewHrefs(lesson: LessonRef & PagedLesson): string[] {
+  return reviewPages(lesson).flatMap((page) =>
+    page === "grammatica"
+      ? lesson.grammar.map((_, index) => lessonPageHref(lesson, page, index + 1))
+      : [lessonPageHref(lesson, page)],
+  );
+}
+
 /** Where Continua on the Results screen goes: the first review page, or the Finish screen when there is none. */
 export function reviewStartHref(lesson: LessonRef & PagedLesson): string {
-  const [first] = reviewPages(lesson);
-  if (first === undefined) return lessonPageHref(lesson, "fine");
-  return first === "grammatica" ? lessonPageHref(lesson, first, 1) : lessonPageHref(lesson, first);
+  return reviewHrefs(lesson)[0] ?? lessonPageHref(lesson, "fine");
+}
+
+/** A review page's place in the sequence (SPEC §4). */
+export type ReviewNav = {
+  /** The ‹ arrow's target; absent on the first review page. */
+  previousHref?: string;
+  /** The › arrow's and the bottom button's target: the next review page, or the Finish screen after the last. */
+  nextHref: string;
+  /** Whether this is the last review page: no ›, and the bottom button is *Finisci la lezione!*. */
+  finishes: boolean;
+};
+
+/** The ‹ › and bottom-button targets of a review page; `number` is the grammar page's (1-based). */
+export function reviewNav(lesson: LessonRef & PagedLesson, page: ReviewPage, number?: number): ReviewNav {
+  const hrefs = reviewHrefs(lesson);
+  const index = hrefs.indexOf(lessonPageHref(lesson, page, page === "grammatica" ? number : undefined));
+  if (index === -1) throw new Error(`${lesson.id} has no review page ${page}${number === undefined ? "" : `/${number}`}`);
+  const previousHref = hrefs[index - 1];
+  const finishes = index === hrefs.length - 1;
+  return {
+    ...(previousHref === undefined ? {} : { previousHref }),
+    nextHref: finishes ? lessonPageHref(lesson, "fine") : hrefs[index + 1],
+    finishes,
+  };
 }
 
 export type StepPage<S> = {

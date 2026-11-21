@@ -6,7 +6,7 @@
 
 import type { LevelId } from "@/content/ids";
 import type { LessonPage, ReviewPage } from "@/content/lesson-nav";
-import type { Note } from "@/content/schema";
+import type { Note, VocabEntry } from "@/content/schema";
 import type { SubtitleMode } from "@/audio/subtitles";
 import type { Rating } from "@/items/self-rating";
 import type { ScoreBand } from "@/progress/results";
@@ -210,10 +210,24 @@ export const ui = {
       `${completed} di ${total} ${total === 1 ? "esercizio completato" : "esercizi completati"}. ` +
       `${points} ${points === 1 ? "punto" : "punti"}.`,
 
-    /** Headings of the pages later issues fill in. */
+    /** The review sequence (SPEC §4): each page's header strip, its ‹ › arrows and its bottom button. */
     grammar: "Grammatica",
     vocabulary: "Vocabolario",
     culture: "Cultura e società",
+    reviewNav: "Pagine di riepilogo",
+    previousPage: "Pagina precedente",
+    nextPage: "Pagina successiva",
+    finishLesson: "Finisci la lezione!",
+    /** A grammar example's illustration (SPEC §4.5). */
+    exampleImageAlt: "Illustrazione dell'esempio",
+    /** A rule image read out as its rows: "lo straniero → gli stranieri". */
+    ruleImage: (rows: readonly string[]) => rows.join(" → "),
+    /** The gender dot on the vocabulary page (SPEC §4.6). */
+    gender: { m: "maschile", f: "femminile" } satisfies Record<NonNullable<VocabEntry["gender"]>, string>,
+    /** The gender dot read out after the term: " (maschile)". */
+    genderLabel: (gender: NonNullable<VocabEntry["gender"]>) => ` (${ui.lesson.gender[gender]})`,
+    /** A noun with its plural (SPEC §4.6): "la valigia, le valigie". */
+    nounWithPlural: (singular: string, plural: string) => `${singular}, ${plural}`,
   },
 
   /** The status circle's tooltip, e.g. "Completata · 87%". */
