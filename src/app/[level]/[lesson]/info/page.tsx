@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { AccentLink } from "@/components/accent-link";
 import { Breadcrumb } from "@/components/breadcrumb";
-import { ScenePoster } from "@/components/scene-poster";
+import { ScenePlayer } from "@/components/scene-player";
 import { lessonPageHref } from "@/content/lesson-nav";
 import { ui } from "@/ui-it";
 import { type LessonRouteParams, lessonFromParams } from "../lesson-params";
@@ -21,7 +21,7 @@ async function Intro({ params }: { params: Promise<LessonRouteParams> }) {
     <>
       <Breadcrumb lesson={lesson} />
       <div className="mx-auto max-w-5xl px-4 py-6">
-        <ScenePoster scene={lesson.scene} lessonTitle={lesson.title} />
+        <ScenePlayer scene={lesson.scene} lessonTitle={lesson.title} />
         <div className="mx-auto mt-8 max-w-3xl">
           <h1 className="text-3xl font-bold text-brand">{lesson.topic}</h1>
           <p className="mt-4 text-lg">{lesson.summary}</p>

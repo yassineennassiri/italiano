@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import type { Exchange, Item } from "@/content/schema";
 import { PromptBubble } from "./prompt-bubble";
 import { SelfRating } from "./self-rating";
+import { SpeakButton } from "./speak-button";
 import { useExercise } from "./step-progress";
 
 type SpeakRate = Extract<Item, { type: "speak_rate" }>;
@@ -14,14 +15,17 @@ function ExchangeRow({ item, exchange, notes }: { item: SpeakRate; exchange: Exc
   return (
     <li data-exchange-id={exchange.id}>
       <div className="grid gap-4 md:grid-cols-2 md:items-start">
-        {/* The other character's line. #14 adds its 🔊 button beside the text. */}
+        {/* The other character's line, with its 🔊. */}
         <div>
-          <PromptBubble>{exchange.other}</PromptBubble>
+          <PromptBubble speak={{ id: `other:${item.id}.${exchange.id}`, clip: { text: exchange.other, audio: exchange.other_audio } }}>
+            {exchange.other}
+          </PromptBubble>
         </div>
         <div>
           {/* My reply: a tinted bubble with its tail on the right, so it doesn't read as a button. */}
-          <p className="relative mr-2 rounded-lg bg-tint-strong px-4 py-3 font-semibold text-brand after:absolute after:-right-[7px] after:bottom-3 after:size-3.5 after:rotate-45 after:bg-tint-strong">
-            {exchange.me}
+          <p className="relative mr-2 flex items-start gap-2 rounded-lg bg-tint-strong px-4 py-3 font-semibold text-brand after:absolute after:-right-[7px] after:bottom-3 after:size-3.5 after:rotate-45 after:bg-tint-strong">
+            <span className="flex-1">{exchange.me}</span>
+            <SpeakButton id={`me:${item.id}.${exchange.id}`} clip={{ text: exchange.me, audio: exchange.me_audio }} className="-my-1.5 -mr-2" />
           </p>
           {exchange.hint && <p className="mt-1 px-4 text-sm text-muted italic">{exchange.hint}</p>}
         </div>

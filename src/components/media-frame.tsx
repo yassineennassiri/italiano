@@ -7,14 +7,12 @@ export function MediaFrame({
   src,
   alt,
   fit = "cover",
-  priority = false,
   children,
 }: {
   /** A content media path, e.g. `images/a2/u01/l01/poster.webp`. */
   src: string;
   alt: string;
   fit?: "cover" | "contain";
-  priority?: boolean;
   children?: ReactNode;
 }) {
   return (
@@ -25,7 +23,6 @@ export function MediaFrame({
         fill
         sizes="(min-width: 1024px) 960px, 100vw"
         className={fit === "cover" ? "object-cover" : "object-contain"}
-        priority={priority}
       />
       {children}
     </div>

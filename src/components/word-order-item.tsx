@@ -7,7 +7,7 @@ import { moveTile, type WordOrderAnswer, type WordOrderView, wordOrderView } fro
 import { ui } from "@/ui-it";
 import { FeedbackIcon, ItemControls } from "./item-controls";
 import { LOOK_CLASSES } from "./option-button";
-import { PromptBubble } from "./prompt-bubble";
+import { ItemPrompt } from "./prompt-bubble";
 import { useExercise } from "./step-progress";
 
 const BOX_CLASSES: Record<WordOrderView["look"], string> = {
@@ -76,7 +76,7 @@ export function WordOrderItem({ item, notes }: { item: Extract<Item, { type: "wo
   return (
     <>
       <div className="grid gap-4 md:grid-cols-2 md:items-start">
-        <div>{item.prompt && <PromptBubble>{item.prompt}</PromptBubble>}</div>
+        <div><ItemPrompt item={item} /></div>
         <div>
           <div
             role="group"

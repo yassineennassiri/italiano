@@ -7,6 +7,7 @@
 import type { LevelId } from "@/content/ids";
 import type { LessonPage } from "@/content/lesson-nav";
 import type { Note } from "@/content/schema";
+import type { SubtitleMode } from "@/audio/subtitles";
 import type { Rating } from "@/items/self-rating";
 import type { SyncStatus } from "@/progress/write-queue";
 import type { LessonStatus } from "@/scoring/lesson";
@@ -100,7 +101,33 @@ export const ui = {
     /** The scene length on the poster: 58 → "00:58". */
     duration: (seconds: number) =>
       `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(Math.round(seconds % 60)).padStart(2, "0")}`,
+    /** An estimated scene length, when speech stands in for the MP3s (SPEC §11.3): "~00:35". */
+    estimatedDuration: (seconds: number) => `~${ui.lesson.duration(seconds)}`,
     objectives: "In questa lezione impari a…",
+
+    /** The scene player (SPEC §11.3). */
+    player: {
+      play: "Riproduci la scena",
+      pause: "Metti in pausa",
+      previousLine: "Riga precedente",
+      nextLine: "Riga successiva",
+      /** The line-based scrubber: "riga 4 di 11". */
+      lineOf: (line: number, total: number) => `riga ${line} di ${total}`,
+      scrubber: "Vai alla riga",
+      speed: "Velocità",
+      speeds: { normal: "1×", slow: "0,75×" },
+      subtitles: "Sottotitoli",
+      subtitleModes: { off: "No", it: "IT", it_en: "IT + EN" } satisfies Record<SubtitleMode, string>,
+      panelAlt: (panel: number, total: number) => `Scena, immagine ${panel} di ${total}`,
+    },
+    /** The 🔊 buttons and the script's ▶ (SPEC §11.1). */
+    listen: "Ascolta",
+    stopListening: "Ferma l'audio",
+    noItalianVoice: "Nessuna voce italiana installata: l'audio non è disponibile. Attiva i sottotitoli.",
+    /** A script line toggles its English (SPEC §4.8). */
+    showTranslation: "Mostra la traduzione",
+    /** SPEAKER: above a script line (SPEC §4.8). */
+    speakerLabel: (speaker: string) => `${speaker}:`,
     start: "Inizia",
 
     /** Step pages (SPEC §4.2). */
