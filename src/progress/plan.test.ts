@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { exerciseHashes } from "@/content/hash";
 import { loadLesson } from "@/content/load";
 import { copyContent, editJson, LESSON_FILE } from "@/content/test-content";
-import { planExerciseWrite, restoreEntries, type StoredItemRow } from "./plan";
+import { exerciseWriteSchema, planExerciseWrite, restoreEntries, type StoredItemRow } from "./plan";
 
 const NOW = new Date("2026-11-20T10:10:00Z");
 const AT = "2026-11-20T09:59:00.000Z";
@@ -184,5 +184,57 @@ describe("planExerciseWrite", () => {
     })!;
     expect(plan.itemState).toMatchObject({ status: "checked_correct", firstCheckCorrect: false, points: 0, answer: { picks: [0] } });
     expect(plan.errors).toHaveLength(1);
+  });
+});
+
+describe("planExerciseWrite for multi_select (s01.i03)", () => {
+  const I03 = "a2.u01.l01.s01.i03";
+  const check = (selected: number[], { contentHash, at = AT }: { contentHash: string; at?: string }) =>
+    ({ eventId: "evt-3", lessonId: "a2.u01.l01", exerciseId: I03, contentHash, at, kind: "check", selected }) as const;
+
+  it("accepts a Controlla write from the client", () => {
+    expect(exerciseWriteSchema.safeParse({ ...check([0, 2], { contentHash: "h" }), eventId: crypto.randomUUID() }).success).toBe(true);
+  });
+
+  it("writes a wrong first Check with the selection, and logs what was right and what was given", () => {
+    const { input } = base();
+    const hash = input.hashes.get(I03)!;
+    const plan = planExerciseWrite({ ...input, action: check([1, 0], { contentHash: hash }) })!;
+    expect(plan.itemState).toMatchObject({ itemId: I03, status: "checked_wrong", firstCheckCorrect: false, points: 0, answer: { selected: [0, 1] } });
+    expect(plan.attempt).toMatchObject({ action: "check", correct: false, answer: { selected: [0, 1] } });
+    expect(plan.errors).toEqual([
+      expect.objectContaining({ itemId: I03, expected: "la valigia, lo zaino, l'ombrello", given: "la valigia, la bicicletta" }),
+    ]);
+  });
+
+  it("scores a right first Check, and a right retry after a wrong one scores 0 but is stored", () => {
+    const { input } = base();
+    const hash = input.hashes.get(I03)!;
+    const first = planExerciseWrite({ ...input, action: check([0, 2, 3], { contentHash: hash }) })!;
+    expect(first.itemState).toMatchObject({ status: "checked_correct", points: 1 });
+    expect(first.progress).toMatchObject({ lastPercent: 14 });
+
+    const wrongRow = row(hash, { itemId: I03, answer: { selected: [0, 1] } });
+    const retry = planExerciseWrite({
+      ...input,
+      rows: [wrongRow],
+      firstCheckAt: new Date("2026-11-20T09:00:00Z"),
+      action: check([2, 3], { contentHash: hash }),
+    })!;
+    expect(retry.itemState).toMatchObject({ status: "checked_correct", firstCheckCorrect: false, points: 0, answer: { selected: [0, 2, 3] } });
+    expect(retry.attempt).toMatchObject({ action: "check", correct: true });
+    expect(retry.errors).toEqual([]);
+  });
+
+  it("lets an earlier right Check made offline win the point, as for single_choice", () => {
+    const { input } = base();
+    const hash = input.hashes.get(I03)!;
+    const plan = planExerciseWrite({
+      ...input,
+      rows: [row(hash, { itemId: I03, answer: { selected: [1] } })],
+      firstCheckAt: new Date("2026-11-20T10:05:00Z"),
+      action: check([0, 2, 3], { contentHash: hash, at: "2026-11-20T10:00:00.000Z" }),
+    })!;
+    expect(plan.itemState).toMatchObject({ status: "checked_correct", firstCheckCorrect: true, points: 1 });
   });
 });

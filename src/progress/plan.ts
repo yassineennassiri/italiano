@@ -8,7 +8,7 @@ import { parseStepLocation } from "@/content/lesson-nav";
 import type { Item, Lesson } from "@/content/schema";
 import type { errorLog, exerciseAttempt, itemState, lessonProgress as lessonProgressTable } from "@/db/schema";
 import { type ExerciseEntry, NEW_ENTRY } from "@/items/entry";
-import { applyAction, findItem, parseAnswer, pickActionSchema, solveActionSchema } from "@/items/engine";
+import { applyAction, checkActionSchema, findItem, isCheckAction, parseAnswer, pickActionSchema, solveActionSchema } from "@/items/engine";
 import { type ExerciseState } from "@/scoring/exercise";
 import { bestPercent, lessonProgress, lessonStatus } from "@/scoring/lesson";
 
@@ -27,6 +27,7 @@ const writeFields = {
 /** One learner action as the client sends it. */
 export const exerciseWriteSchema = z.discriminatedUnion("kind", [
   pickActionSchema.extend(writeFields),
+  checkActionSchema.extend(writeFields),
   solveActionSchema.extend(writeFields),
 ]);
 export type ExerciseWrite = z.infer<typeof exerciseWriteSchema>;
@@ -87,7 +88,7 @@ export function restoreEntries(
  */
 function resolveOutcome(item: Item, before: ExerciseEntry, action: ExerciseWrite, firstCheckAt: Date | null) {
   const earlierFirstCheck =
-    action.kind === "pick" && before.state.firstCheckCorrect !== null && firstCheckAt !== null && new Date(action.at) < firstCheckAt;
+    isCheckAction(action) && before.state.firstCheckCorrect !== null && firstCheckAt !== null && new Date(action.at) < firstCheckAt;
   const outcome = applyAction(item, before, action);
   if (!earlierFirstCheck) {
     return outcome && { outcome, firstCheckWrong: outcome.action === "check" && before.state.firstCheckCorrect === null && outcome.correct === false };
