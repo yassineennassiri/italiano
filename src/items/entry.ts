@@ -30,5 +30,9 @@ export type ExerciseOutcome<A> = {
   result?: Record<string, GapVerdict>;
 };
 
-/** One wrong part of a Check: what was right and what was given, and in which gap for gapped items. */
-export type ErrorDetail = { gapId?: string; expected: string; given: string };
+/**
+ * One wrong part of a Check: what was right and what was given, and in which
+ * gap for gapped items. `errorTags` are added to the item's own for its row
+ * (an accent-only miss adds `spelling.accent`).
+ */
+export type ErrorDetail = { gapId?: string; expected: string; given: string; errorTags?: readonly string[] };

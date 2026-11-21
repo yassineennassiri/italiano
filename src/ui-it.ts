@@ -125,6 +125,12 @@ export const ui = {
     itemImageAlt: "Illustrazione dell'esercizio",
     /** The accessible name of gap N in an item. */
     gapLabel: (number: number) => `Spazio ${number}`,
+    /** Beside a red typed gap whose only mistake is an accent (SPEC §5.1). */
+    accentHint: "Controlla l'accento",
+    /** The keyboard icon that opens the à è é … palette (SPEC §5.1). */
+    characterHelper: "Caratteri italiani",
+    /** The accessible name of a palette button. */
+    insertCharacter: (character: string) => `Inserisci ${character}`,
     /** Read out with the ✓ and ✗ icons. */
     correct: "Giusto",
     wrong: "Sbagliato",

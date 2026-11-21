@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { loadLesson } from "@/content/load";
-import { checkDropdown, currentValues, type DropdownItem, gapLooks, solveDropdown } from "./dropdown";
+import { checkDropdown, type DropdownItem } from "./dropdown";
+import { currentValues, gapLooks, solveGaps } from "./gaps";
 import { NEW_ENTRY } from "./entry";
 
 /** "{{g1}} valigia, {{g2}} zaino, {{g3}} ombrello e {{g4}} computer." from the example lesson: la, lo, l', il. */
 const item = loadLesson("a2.u01.l01")!.steps[1].items[0] as DropdownItem;
 
 const ALL_RIGHT = { g1: "la", g2: "lo", g3: "l'", g4: "il" };
+const CHOSEN = { typed: false };
 
 describe("checkDropdown", () => {
   it("scores a point when the first Check gets every gap right, and locks the item", () => {
@@ -45,24 +47,32 @@ describe("checkDropdown", () => {
     });
   });
 
+  it("treats a chosen option that differs only by an accent as plainly wrong: no hint, the item's tags", () => {
+    const vowels: DropdownItem = { id: "x.i01", gaps: [{ id: "g1", options: ["e", "è"], answer: "è" }] };
+    const wrong = checkDropdown(vowels, NEW_ENTRY, { g1: "e" })!;
+    expect(wrong.result).toEqual({ g1: "wrong" });
+    expect(wrong.errors).toEqual([{ gapId: "g1", expected: "è", given: "e" }]);
+    expect(gapLooks(vowels, wrong.entry, {}, { typed: false })).toEqual({ g1: { look: "wrong", disabled: false } });
+  });
+
   it("ignores a value that isn't one of its gap's options, or a gap the item doesn't have", () => {
     expect(checkDropdown(item, NEW_ENTRY, { ...ALL_RIGHT, g1: "gli" })).toBeUndefined();
     expect(checkDropdown(item, NEW_ENTRY, { ...ALL_RIGHT, g9: "la" })).toBeUndefined();
   });
 });
 
-describe("solveDropdown", () => {
+describe("solveGaps", () => {
   it("fills in every gap for 0 points and locks the item", () => {
     const wrong = checkDropdown(item, NEW_ENTRY, { g1: "il" })!.entry;
-    const solved = solveDropdown(item, wrong)!;
+    const solved = solveGaps(item, wrong)!;
     expect(solved.action).toBe("solve");
     expect(solved.entry).toEqual({ state: { status: "solved", firstCheckCorrect: false, points: 0 }, answer: { values: ALL_RIGHT } });
     expect(checkDropdown(item, solved.entry, ALL_RIGHT)).toBeUndefined();
   });
 
   it("does nothing for an item that is not solvable, or already locked", () => {
-    expect(solveDropdown({ ...item, solvable: undefined }, NEW_ENTRY)).toBeUndefined();
-    expect(solveDropdown(item, checkDropdown(item, NEW_ENTRY, ALL_RIGHT)!.entry)).toBeUndefined();
+    expect(solveGaps({ ...item, solvable: undefined }, NEW_ENTRY)).toBeUndefined();
+    expect(solveGaps(item, checkDropdown(item, NEW_ENTRY, ALL_RIGHT)!.entry)).toBeUndefined();
   });
 });
 
@@ -80,21 +90,21 @@ describe("gapLooks", () => {
   const red = { look: "wrong", disabled: false };
 
   it("leaves every gap open before the first Check", () => {
-    expect(gapLooks(item, NEW_ENTRY, { g1: "la" })).toEqual({ g1: idle, g2: idle, g3: idle, g4: idle });
+    expect(gapLooks(item, NEW_ENTRY, { g1: "la" }, CHOSEN)).toEqual({ g1: idle, g2: idle, g3: idle, g4: idle });
   });
 
   it("after a wrong Check: right gaps green and locked, wrong and unchosen gaps red but editable", () => {
     const wrong = checkDropdown(item, NEW_ENTRY, { g1: "la", g2: "il", g3: "l'" })!.entry;
-    expect(gapLooks(item, wrong, {})).toEqual({ g1: green, g2: red, g3: green, g4: red });
+    expect(gapLooks(item, wrong, {}, CHOSEN)).toEqual({ g1: green, g2: red, g3: green, g4: red });
   });
 
   it("clears a gap's red once it is edited, even back to the value that was wrong", () => {
     const wrong = checkDropdown(item, NEW_ENTRY, { g1: "la", g2: "il", g3: "l'" })!.entry;
-    expect(gapLooks(item, wrong, { g2: "il", g4: "il" })).toEqual({ g1: green, g2: idle, g3: green, g4: idle });
+    expect(gapLooks(item, wrong, { g2: "il", g4: "il" }, CHOSEN)).toEqual({ g1: green, g2: idle, g3: green, g4: idle });
   });
 
   it("shows every gap green and disabled once right or solved", () => {
-    const solved = solveDropdown(item, NEW_ENTRY)!.entry;
-    expect(gapLooks(item, solved, {})).toEqual({ g1: green, g2: green, g3: green, g4: green });
+    const solved = solveGaps(item, NEW_ENTRY)!.entry;
+    expect(gapLooks(item, solved, {}, CHOSEN)).toEqual({ g1: green, g2: green, g3: green, g4: green });
   });
 });
