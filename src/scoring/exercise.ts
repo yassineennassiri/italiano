@@ -35,8 +35,11 @@ export type ExerciseEvent =
 
 export const UNTOUCHED: ExerciseState = { status: "untouched", firstCheckCorrect: null, points: 0 };
 
-/** Statuses whose inputs, Solve and Check are disabled. */
+/** Statuses whose inputs, Solve, Check and rating are disabled. */
 const LOCKED: readonly ExerciseStatus[] = ["checked_correct", "solved", "rated_good", "rated_not_great"];
+
+/** Right, solved, or self-rated: the exercise takes no more actions (but Correggi i miei errori can reopen some). */
+export const isLockedStatus = (status: ExerciseStatus): boolean => LOCKED.includes(status);
 
 /** Statuses that Correggi i miei errori can reopen. */
 const REOPENABLE: readonly ExerciseStatus[] = ["checked_wrong", "solved"];
@@ -44,7 +47,7 @@ const REOPENABLE: readonly ExerciseStatus[] = ["checked_wrong", "solved"];
 /** The next state after an event. Events that don't apply to the current status are ignored. */
 export function applyEvent(state: ExerciseState, event: ExerciseEvent): ExerciseState {
   if (event.type === "reopen") return REOPENABLE.includes(state.status) ? { ...state, status: "untouched" } : state;
-  if (LOCKED.includes(state.status)) return state;
+  if (isLockedStatus(state.status)) return state;
   switch (event.type) {
     case "check": {
       const firstCheckCorrect = state.firstCheckCorrect ?? event.correct;

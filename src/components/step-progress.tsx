@@ -1,8 +1,8 @@
 "use client";
 
 import { createContext, type ReactNode, use, useEffect, useSyncExternalStore } from "react";
-import type { Item } from "@/content/schema";
-import type { ExerciseAction } from "@/items/engine";
+import type { Exchange, Item } from "@/content/schema";
+import { type Exercise, type ExerciseAction, exchangeExercise, itemExercise } from "@/items/engine";
 import type { ExerciseEntry } from "@/items/entry";
 import { entriesVersion, entryOf, progressQueue, recordStepVisit, submitAction, subscribeEntries } from "@/progress/client";
 import type { SavedEntry } from "@/progress/merge";
@@ -11,7 +11,7 @@ import { ui } from "@/ui-it";
 
 type StepProgressValue = {
   entry: (exerciseId: string) => ExerciseEntry;
-  dispatch: (item: Item, action: ExerciseAction) => void;
+  dispatch: (exercise: Exercise, action: ExerciseAction) => void;
   step: LessonShape["steps"][number];
 };
 
@@ -50,7 +50,7 @@ export function StepProgress({
 
   const value: StepProgressValue = {
     entry: (exerciseId) => entryOf(exerciseId, saved[exerciseId]),
-    dispatch: (item, action) => submitAction(lessonId, item, saved[item.id], hashes[item.id], action),
+    dispatch: (exercise, action) => submitAction(lessonId, exercise, saved[exercise.id], hashes[exercise.id], action),
     step,
   };
   return <StepProgressContext value={value}>{children}</StepProgressContext>;
@@ -62,10 +62,11 @@ function useStepProgress(): StepProgressValue {
   return value;
 }
 
-/** One exercise's entry and the function that applies an action to it. */
-export function useExercise(item: Item): [ExerciseEntry, (action: ExerciseAction) => void] {
+/** One exercise's entry and the function that applies an action to it: the item, or one exchange of a speak_rate item. */
+export function useExercise(item: Item, exchange?: Exchange): [ExerciseEntry, (action: ExerciseAction) => void] {
   const { entry, dispatch } = useStepProgress();
-  return [entry(item.id), (action) => dispatch(item, action)];
+  const exercise = exchange ? exchangeExercise(item, exchange) : itemExercise(item);
+  return [entry(exercise.id), (action) => dispatch(exercise, action)];
 }
 
 /** The footer band's live counter (SPEC §6.2) for this step. */

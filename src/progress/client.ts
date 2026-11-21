@@ -6,8 +6,7 @@
  * changes the server hasn't confirmed yet. Only event handlers and effects
  * change it, never render.
  */
-import type { Item } from "@/content/schema";
-import { applyAction, type ExerciseAction } from "@/items/engine";
+import { applyAction, type Exercise, type ExerciseAction } from "@/items/engine";
 import type { ExerciseEntry } from "@/items/entry";
 import { type ActionResponse, recordExercise, recordVisit } from "./actions";
 import { currentEntry, type LocalEntry, type SavedEntry, settleLocal } from "./merge";
@@ -61,19 +60,19 @@ export const entryOf = (exerciseId: string, saved: SavedEntry | undefined): Exer
 /** Applies a learner action now and queues its write. Does nothing when the action changes nothing. */
 export function submitAction(
   lessonId: string,
-  item: Item,
+  exercise: Exercise,
   saved: SavedEntry | undefined,
   contentHash: string,
   action: ExerciseAction,
 ): void {
-  const outcome = applyAction(item, entryOf(item.id, saved), action);
+  const outcome = applyAction(exercise, entryOf(exercise.id, saved), action);
   if (!outcome) return;
-  const local = localEntries.get(item.id);
-  localEntries.set(item.id, { entry: outcome.entry, pending: (local?.pending ?? 0) + 1, savedAt: local?.savedAt ?? null });
+  const local = localEntries.get(exercise.id);
+  localEntries.set(exercise.id, { entry: outcome.entry, pending: (local?.pending ?? 0) + 1, savedAt: local?.savedAt ?? null });
   changed();
   progressQueue.enqueue({
     type: "exercise",
-    exercise: { eventId: crypto.randomUUID(), lessonId, exerciseId: item.id, contentHash, at: new Date().toISOString(), ...action },
+    exercise: { eventId: crypto.randomUUID(), lessonId, exerciseId: exercise.id, contentHash, at: new Date().toISOString(), ...action },
   });
 }
 

@@ -5,10 +5,20 @@
  */
 import { z } from "zod";
 import { parseStepLocation } from "@/content/lesson-nav";
-import type { Item, Lesson } from "@/content/schema";
+import type { Lesson } from "@/content/schema";
 import type { errorLog, exerciseAttempt, itemState, lessonProgress as lessonProgressTable } from "@/db/schema";
 import { type ExerciseEntry, NEW_ENTRY } from "@/items/entry";
-import { applyAction, checkActionSchema, findItem, isCheckAction, parseAnswer, pickActionSchema, solveActionSchema } from "@/items/engine";
+import {
+  applyAction,
+  checkActionSchema,
+  type Exercise,
+  findExercise,
+  isCheckAction,
+  parseAnswer,
+  pickActionSchema,
+  rateActionSchema,
+  solveActionSchema,
+} from "@/items/engine";
 import { type ExerciseState } from "@/scoring/exercise";
 import { bestPercent, lessonProgress, lessonStatus } from "@/scoring/lesson";
 
@@ -29,6 +39,7 @@ export const exerciseWriteSchema = z.discriminatedUnion("kind", [
   pickActionSchema.extend(writeFields),
   checkActionSchema.extend(writeFields),
   solveActionSchema.extend(writeFields),
+  rateActionSchema.extend(writeFields),
 ]);
 export type ExerciseWrite = z.infer<typeof exerciseWriteSchema>;
 
@@ -67,8 +78,8 @@ export function restoreEntries(
   const entries = new Map<string, ExerciseEntry>();
   for (const row of rows) {
     if (hashes.get(row.itemId) !== row.contentHash) continue;
-    const item = findItem(lesson, row.itemId);
-    const parsed = item && parseAnswer(item, row.answer);
+    const exercise = findExercise(lesson, row.itemId);
+    const parsed = exercise && parseAnswer(exercise, row.answer);
     if (!parsed) continue;
     const state: ExerciseState = {
       status: row.status,
@@ -86,14 +97,14 @@ export function restoreEntries(
  * before the stored first Check (on another computer, synced late) sets the
  * verdict while the stored state stays; otherwise the action applies as usual.
  */
-function resolveOutcome(item: Item, before: ExerciseEntry, action: ExerciseWrite, firstCheckAt: Date | null) {
+function resolveOutcome(exercise: Exercise, before: ExerciseEntry, action: ExerciseWrite, firstCheckAt: Date | null) {
   const earlierFirstCheck =
     isCheckAction(action) && before.state.firstCheckCorrect !== null && firstCheckAt !== null && new Date(action.at) < firstCheckAt;
-  const outcome = applyAction(item, before, action);
+  const outcome = applyAction(exercise, before, action);
   if (!earlierFirstCheck) {
     return outcome && { outcome, firstCheckWrong: outcome.action === "check" && before.state.firstCheckCorrect === null && outcome.correct === false };
   }
-  const verdict = applyAction(item, NEW_ENTRY, action);
+  const verdict = applyAction(exercise, NEW_ENTRY, action);
   if (!verdict) return undefined;
   const latest = outcome?.entry ?? before;
   const firstCheckCorrect = verdict.correct === true;
@@ -123,23 +134,24 @@ export function planExerciseWrite({
   action: ExerciseWrite;
   now: Date;
 }): ExerciseWritePlan | undefined {
-  const item = findItem(lesson, action.exerciseId);
+  const exercise = findExercise(lesson, action.exerciseId);
   const contentHash = hashes.get(action.exerciseId);
-  if (!item || !contentHash || action.contentHash !== contentHash) return undefined;
+  if (!exercise || !contentHash || action.contentHash !== contentHash) return undefined;
+  const { id: exerciseId, item } = exercise;
 
   const entries = restoreEntries(lesson, hashes, rows);
-  const resolved = resolveOutcome(item, entries.get(item.id) ?? NEW_ENTRY, action, firstCheckAt);
+  const resolved = resolveOutcome(exercise, entries.get(exerciseId) ?? NEW_ENTRY, action, firstCheckAt);
   if (!resolved) return undefined;
   const { outcome, firstCheckWrong } = resolved;
   const { entry } = outcome;
-  entries.set(item.id, entry);
+  entries.set(exerciseId, entry);
   const at = new Date(action.at);
   const counts = lessonProgress(lesson, new Map([...entries].map(([id, { state }]) => [id, state])));
 
   return {
     entry,
     itemState: {
-      itemId: item.id,
+      itemId: exerciseId,
       lessonId: lesson.id,
       status: entry.state.status,
       firstCheckCorrect: entry.state.firstCheckCorrect,
@@ -150,7 +162,7 @@ export function planExerciseWrite({
     },
     attempt: {
       id: action.eventId,
-      itemId: item.id,
+      itemId: exerciseId,
       lessonId: lesson.id,
       contentVersion: lesson.version,
       action: outcome.action,
@@ -159,18 +171,21 @@ export function planExerciseWrite({
       correct: outcome.correct,
       createdAt: at,
     },
-    errors: firstCheckWrong
-      ? outcome.errors.map(({ gapId, expected, given, errorTags }) => ({
-          source: "exercise" as const,
-          lessonId: lesson.id,
-          itemId: item.id,
-          ...(gapId !== undefined && { gapId }),
-          errorTags: [...new Set([...(item.error_tags ?? []), ...(errorTags ?? [])])],
-          expected,
-          given,
-          createdAt: at,
-        }))
-      : [],
+    // A wrong first Check logs what was wrong; a self-rating logs Non tanto bene and the hesitation note.
+    errors:
+      firstCheckWrong || outcome.action === "rate"
+        ? outcome.errors.map(({ source, gapId, expected, given, note, errorTags }) => ({
+            source: source ?? ("exercise" as const),
+            lessonId: lesson.id,
+            itemId: exerciseId,
+            ...(gapId !== undefined && { gapId }),
+            errorTags: [...new Set([...(item.error_tags ?? []), ...(errorTags ?? [])])],
+            ...(expected !== undefined && { expected }),
+            ...(given !== undefined && { given }),
+            ...(note !== undefined && { note }),
+            createdAt: at,
+          }))
+        : [],
     progress: {
       lessonId: lesson.id,
       contentVersion: lesson.version,
