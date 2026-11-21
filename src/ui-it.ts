@@ -231,6 +231,21 @@ export const ui = {
     nounWithPlural: (singular: string, plural: string) => `${singular}, ${plural}`,
   },
 
+  /** Azzera (SPEC §4.10): the lesson menu's and the level overview's buttons, and their confirmation dialog. */
+  reset: {
+    lessonButton: "Azzera gli esercizi",
+    levelButton: "Azzera",
+    lessonQuestion: "Azzerare gli esercizi di questa lezione?",
+    levelQuestion: "Azzerare tutto il livello?",
+    lessonText: (lessonTitle: string) =>
+      `Le risposte e il punteggio di «${lessonTitle}» vengono cancellati e la lezione torna da iniziare.`,
+    levelText: (levelTitle: string) =>
+      `Le risposte e il punteggio di tutte le lezioni di «${levelTitle}» vengono cancellati e le lezioni tornano da iniziare.`,
+    keptText: "Gli errori registrati restano: fanno parte della tua storia di apprendimento.",
+    cancel: "Annulla",
+    confirm: "Azzera",
+  },
+
   /** The status circle's tooltip, e.g. "Completata · 87%". */
   lessonStatus: (status: LessonStatus, bestPercent?: number) =>
     bestPercent === undefined ? lessonStatusName[status] : `${lessonStatusName[status]} · ${bestPercent}%`,

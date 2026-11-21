@@ -19,6 +19,7 @@ import {
   saveCorrection,
   saveExerciseWrite,
   saveFinish,
+  saveReset,
   saveVisit,
 } from "./store";
 
@@ -29,6 +30,7 @@ const I01 = "a2.u01.l01.s01.i01";
 const lesson = loadLesson(LESSON)!;
 const HASH = exerciseHashes(lesson).get(I01)!;
 const users: string[] = [];
+const NOW = new Date("2026-11-20T10:30:05.000Z");
 
 beforeAll(() => migrateDatabase(db));
 
@@ -164,5 +166,70 @@ describe("progress store", () => {
     const [progress] = await db.select().from(lessonProgress).where(eq(lessonProgress.userId, user));
     expect(progress).toMatchObject({ status: "completed", lastPercent: 14, bestPercent: 57 });
     expect(progress.completedAt).toBeInstanceOf(Date);
+  });
+
+  it("Azzera puts the lesson back to not started with every exercise untouched, and keeps the error log", async () => {
+    const user = await newUser();
+    await saveVisit(db, user, { lessonId: LESSON, location: "esercizi/3" });
+    await saveExerciseWrite(db, user, pick(2));
+    await saveFinish(db, user, { lessonId: LESSON });
+
+    const response = await saveReset(db, user, { scope: "lesson", lessonId: LESSON, at: "2026-11-20T10:30:00.000Z" }, NOW);
+    expect(response).toEqual({ result: "saved", resetAt: NOW.toISOString() });
+
+    expect((await loadLessonEntries(db, user, lesson)).size).toBe(0);
+    expect(await db.select().from(itemState).where(eq(itemState.userId, user))).toEqual([]);
+    const [progress] = await db.select().from(lessonProgress).where(eq(lessonProgress.userId, user));
+    expect(progress).toMatchObject({
+      status: "not_started",
+      lastLocation: null,
+      lastPercent: null,
+      bestPercent: null,
+      startedAt: null,
+      completedAt: null,
+    });
+    expect(await db.select().from(errorLog).where(eq(errorLog.userId, user))).toHaveLength(1);
+    const attempts = await db.select().from(exerciseAttempt).where(eq(exerciseAttempt.userId, user));
+    expect(attempts.map(({ action, itemId }) => [action, itemId])).toEqual([
+      ["check", I01],
+      ["reset", I01],
+    ]);
+
+    // A pick made before the reset but synced after it (the other computer) doesn't bring the old state back.
+    expect((await saveExerciseWrite(db, user, pick(1, "2026-11-20T10:29:00.000Z"))).result).toBe("ignored");
+    expect((await loadLessonEntries(db, user, lesson)).size).toBe(0);
+
+    // Untouched again: a right first Check scores.
+    await saveExerciseWrite(db, user, pick(0, "2026-11-20T10:31:00.000Z"));
+    expect((await loadLessonEntries(db, user, lesson)).get(I01)?.entry.state).toEqual({
+      status: "checked_correct",
+      firstCheckCorrect: true,
+      points: 1,
+    });
+  });
+
+  it("Azzera on the level overview resets every lesson of that level and nothing else", async () => {
+    const user = await newUser();
+    await saveExerciseWrite(db, user, pick(2));
+    const elsewhere = { userId: user, lessonId: "b1.u01.l01" };
+    await db.insert(itemState).values({ ...elsewhere, itemId: "b1.u01.l01.s01.i01", status: "checked_correct", points: 1, contentHash: "h" });
+    await db.insert(lessonProgress).values({ ...elsewhere, contentVersion: 1, status: "in_progress", bestPercent: 50 });
+
+    expect((await saveReset(db, user, { scope: "level", levelId: "a2", at: "2026-11-20T10:30:00.000Z" })).result).toBe("saved");
+
+    const rows = await db.select().from(itemState).where(eq(itemState.userId, user));
+    expect(rows.map((row) => row.itemId)).toEqual(["b1.u01.l01.s01.i01"]);
+    const progress = await db.select().from(lessonProgress).where(eq(lessonProgress.userId, user));
+    expect(Object.fromEntries(progress.map((row) => [row.lessonId, [row.status, row.bestPercent]]))).toEqual({
+      [LESSON]: ["not_started", null],
+      "b1.u01.l01": ["in_progress", 50],
+    });
+  });
+
+  it("ignores Azzera for a lesson or level the content doesn't have", async () => {
+    const user = await newUser();
+    const at = "2026-11-20T10:30:00.000Z";
+    expect(await saveReset(db, user, { scope: "lesson", lessonId: "a2.u09.l09", at })).toEqual({ result: "ignored" });
+    expect(await saveReset(db, user, { scope: "level", levelId: "c2", at })).toEqual({ result: "ignored" });
   });
 });

@@ -9,9 +9,18 @@
 import { applyAction, type Exercise, type ExerciseAction } from "@/items/engine";
 import type { ExerciseEntry } from "@/items/entry";
 import { applyEvent } from "@/scoring/exercise";
-import { recordCorrection, recordExercise, recordFinish, recordVisit } from "./actions";
-import { currentEntry, type LocalEntry, type SavedEntry, settleLocal } from "./merge";
-import type { CorrectionWrite, ExerciseWrite, FinishWrite, VisitWrite } from "./plan";
+import { recordCorrection, recordExercise, recordFinish, recordReset, recordVisit } from "./actions";
+import {
+  currentEntry,
+  inResetScope,
+  type LocalEntry,
+  type LocalReset,
+  resetScope,
+  type ResetScope,
+  type SavedEntry,
+  settleLocal,
+} from "./merge";
+import type { CorrectionWrite, ExerciseWrite, FinishWrite, ResetTarget, ResetWrite, VisitWrite } from "./plan";
 import { WriteQueue } from "./write-queue";
 
 type QueuedWrite =
@@ -19,9 +28,13 @@ type QueuedWrite =
   | { type: "visit"; visit: VisitWrite }
   /** `reopen`: the exercises this tab reopened, settled with the server's answer. */
   | { type: "correction"; correction: CorrectionWrite; reopen: string[] }
-  | { type: "finish"; finish: FinishWrite };
+  | { type: "finish"; finish: FinishWrite }
+  /** `local`: this tab's record of the reset, given the server's reset time once it lands. */
+  | { type: "reset"; reset: ResetWrite; local: LocalReset };
 
 const localEntries = new Map<string, LocalEntry>();
+/** The resets this tab asked for, oldest first. */
+const localResets: { scope: ResetScope; local: LocalReset }[] = [];
 const listeners = new Set<() => void>();
 let version = 0;
 
@@ -66,6 +79,18 @@ async function send(write: QueuedWrite): Promise<void> {
     case "finish":
       logIfRejected(await recordFinish(write.finish), write);
       return;
+    case "reset": {
+      const response = await recordReset(write.reset);
+      if (logIfRejected(response, write) || response.result === "ignored") {
+        // Nothing was reset: the saved entries count again.
+        const index = localResets.findIndex(({ local }) => local === write.local);
+        if (index !== -1) localResets.splice(index, 1);
+      } else {
+        write.local.resetAt = response.resetAt;
+      }
+      changed();
+      return;
+    }
   }
 }
 
@@ -82,9 +107,13 @@ export function subscribeEntries(listener: () => void): () => void {
 /** Changes on every local change, for `useSyncExternalStore`. */
 export const entriesVersion = () => version;
 
+/** The latest reset this tab asked for that covers the exercise. */
+const resetOf = (exerciseId: string): LocalReset | undefined =>
+  localResets.findLast(({ scope }) => inResetScope(scope, exerciseId))?.local;
+
 /** What an exercise shows: this tab's change, or the page's saved entry, whichever is current. */
 export const entryOf = (exerciseId: string, saved: SavedEntry | undefined): ExerciseEntry =>
-  currentEntry(localEntries.get(exerciseId), saved);
+  currentEntry(localEntries.get(exerciseId), saved, resetOf(exerciseId));
 
 /** Shows `entry` for the exercise until the server answers the write that follows. */
 function changeLocally(exerciseId: string, entry: ExerciseEntry): void {
@@ -124,17 +153,32 @@ export function submitCorrection(lessonId: string, reopen: readonly string[], sa
   progressQueue.enqueue({ type: "correction", correction: { lessonId, at: new Date().toISOString() }, reopen: [...reopen] });
 }
 
+/**
+ * Azzera, confirmed (SPEC §4.10): the lesson's (or level's) exercises show as
+ * untouched at once, and the write that clears them is queued after any
+ * writes still on the way.
+ */
+export function submitReset(target: ResetTarget): void {
+  const scope = resetScope(target);
+  for (const exerciseId of [...localEntries.keys()]) if (inResetScope(scope, exerciseId)) localEntries.delete(exerciseId);
+  const local: LocalReset = { resetAt: null };
+  localResets.push({ scope, local });
+  // The resume point is cleared too: the next visit is recorded again.
+  if (lastVisit && inResetScope(scope, lastVisit.lessonId)) lastVisit = undefined;
+  changed();
+  progressQueue.enqueue({ type: "reset", reset: { ...target, at: new Date().toISOString() }, local });
+}
+
 /** The Finish screen was reached: queues the write that completes the lesson. */
 export function submitFinish(lessonId: string): void {
   progressQueue.enqueue({ type: "finish", finish: { lessonId } });
 }
 
-let lastVisit = "";
+let lastVisit: VisitWrite | undefined;
 
 /** Records the step being viewed, so reopening the lesson resumes there. Repeats of the last visit are skipped. */
 export function recordStepVisit(visit: VisitWrite): void {
-  const key = `${visit.lessonId}/${visit.location}`;
-  if (key === lastVisit) return;
-  lastVisit = key;
+  if (lastVisit?.lessonId === visit.lessonId && lastVisit.location === visit.location) return;
+  lastVisit = visit;
   progressQueue.enqueue({ type: "visit", visit });
 }

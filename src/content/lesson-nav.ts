@@ -59,7 +59,8 @@ export function hasPage(lesson: PagedLesson, page: ContentPage, segment?: string
 
 /**
  * The lesson menu's entries. Grammatica, Vocabolario and Cultura are hidden
- * when the lesson has none. Azzera gli esercizi and Altri strumenti join later.
+ * when the lesson has none. The menu adds *Azzera gli esercizi* before the course
+ * overview (`LessonMenu`); Altri strumenti joins in M2.
  */
 export function lessonMenu(lesson: Lesson): MenuEntry[] {
   const entries: (MenuEntry | false)[] = [
