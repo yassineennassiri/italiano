@@ -67,7 +67,8 @@ export type StoredProgress =
   | Partial<Pick<typeof lessonProgressTable.$inferSelect, "status" | "startedAt" | "completedAt" | "bestPercent">>
   | undefined;
 
-type Row<T extends { $inferInsert: object }> = Omit<T["$inferInsert"], "userId">;
+/** A row of the table as a plan writes it; the store adds the user. */
+export type Row<T extends { $inferInsert: object }> = Omit<T["$inferInsert"], "userId">;
 
 export type ExerciseWritePlan = {
   entry: ExerciseEntry;
@@ -219,6 +220,7 @@ function progressRow(lesson: Lesson, progress: StoredProgress, counts: LessonPro
 
 const statesOf = (entries: ReadonlyMap<string, ExerciseEntry>) => new Map([...entries].map(([id, { state }]) => [id, state]));
 
+/** The rows Correggi i miei errori writes. */
 export type CorrectionPlan = {
   /** The reopened entries by exercise id, as now saved. */
   entries: Map<string, ExerciseEntry>;

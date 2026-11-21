@@ -41,7 +41,7 @@ function settle(exerciseId: string, saved: SavedEntry | undefined): void {
 }
 
 /** A rejected write is malformed: it is logged and dropped. */
-function isRejected(response: { result: string }, write: QueuedWrite): response is { result: "rejected" } {
+function logIfRejected(response: { result: string }, write: QueuedWrite): response is { result: "rejected" } {
   if (response.result !== "rejected") return false;
   console.error("The server rejected a progress write.", write);
   return true;
@@ -51,20 +51,20 @@ async function send(write: QueuedWrite): Promise<void> {
   switch (write.type) {
     case "exercise": {
       const response = await recordExercise(write.exercise);
-      settle(write.exercise.exerciseId, isRejected(response, write) ? undefined : response.saved);
+      settle(write.exercise.exerciseId, logIfRejected(response, write) ? undefined : response.saved);
       return;
     }
     case "correction": {
       const response = await recordCorrection(write.correction);
-      const saved = isRejected(response, write) ? {} : (response.saved ?? {});
+      const saved = logIfRejected(response, write) ? {} : (response.saved ?? {});
       for (const exerciseId of write.reopen) settle(exerciseId, saved[exerciseId]);
       return;
     }
     case "visit":
-      isRejected(await recordVisit(write.visit), write);
+      logIfRejected(await recordVisit(write.visit), write);
       return;
     case "finish":
-      isRejected(await recordFinish(write.finish), write);
+      logIfRejected(await recordFinish(write.finish), write);
       return;
   }
 }

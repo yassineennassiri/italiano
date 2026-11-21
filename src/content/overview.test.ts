@@ -86,22 +86,12 @@ describe("continueHref (Continua da dove eri)", () => {
     expect(continueHref([])).toBe("/a2/benvenuto-a-genova");
   });
 
-  it("goes back into the most recently played lesson, where the lesson route resumes at the last step", () => {
-    const dir = withSecondLesson();
-    const recentFirst = [
-      { lessonId: "a2.u02.l01", status: "in_progress" as const },
-      { lessonId: "a2.u01.l01", status: "in_progress" as const },
-    ];
-    expect(continueHref(recentFirst, dir)).toBe("/a2/una-casa");
-  });
-
-  it("moves on to the next lesson's intro once the last played lesson is completed", () => {
-    expect(continueHref([{ lessonId: "a2.u01.l01", status: "completed" }], withSecondLesson())).toBe("/a2/una-casa/info");
-    // The level's last lesson: back into it.
-    expect(continueHref([{ lessonId: "a2.u01.l01", status: "completed" }])).toBe("/a2/benvenuto-a-genova");
+  it("goes back into the most recently played lesson, completed or not: the lesson route resumes at the last step", () => {
+    const recentFirst = [{ lessonId: "a2.u02.l01" }, { lessonId: "a2.u01.l01" }];
+    expect(continueHref(recentFirst, withSecondLesson())).toBe("/a2/una-casa");
   });
 
   it("skips lessons the content no longer has", () => {
-    expect(continueHref([{ lessonId: "a2.u09.l09", status: "in_progress" }])).toBe("/a2/benvenuto-a-genova");
+    expect(continueHref([{ lessonId: "a2.u09.l09" }])).toBe("/a2/benvenuto-a-genova");
   });
 });

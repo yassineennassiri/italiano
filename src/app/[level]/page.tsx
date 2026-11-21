@@ -7,7 +7,7 @@ import { StatusCircle } from "@/components/status-circle";
 import type { LevelId } from "@/content/ids";
 import { loadCourse } from "@/content/load";
 import { LEVEL_COMPLETED_PARAM, type LessonCard, levelOverview, type UnitGroup } from "@/content/overview";
-import { type LessonBadge, levelProgress } from "@/progress/level-progress";
+import { type LessonCircle, levelProgress } from "@/progress/level-progress";
 import { readProgressSummaries } from "@/progress/read";
 import { ui } from "@/ui-it";
 
@@ -50,14 +50,14 @@ async function LevelOverviewView({ params, searchParams }: Pick<PageProps<"/[lev
       )}
 
       <div className="mt-3 flex items-center justify-end gap-2 px-2">
-        <span className="text-sm text-muted">{ui.results.percent(progress.percent)}</span>
+        <span className="text-sm text-muted">{ui.percent(progress.percent)}</span>
         <StatusCircle status={progress.status} label={ui.level.levelStatus(progress.status, progress.percent)} />
       </div>
 
       <ul className="mt-4 grid grid-cols-1 gap-x-0 gap-y-8 md:grid-cols-3">
         {overview.units.map((unit, index) => (
           <li key={unit.id}>
-            <UnitColumn unit={unit} tinted={index % 2 === 0} badges={progress.lessons} />
+            <UnitColumn unit={unit} tinted={index % 2 === 0} circles={progress.lessons} />
           </li>
         ))}
       </ul>
@@ -91,7 +91,7 @@ function Hero({ levelId, title }: { levelId: LevelId; title: string }) {
   );
 }
 
-function UnitColumn({ unit, tinted, badges }: { unit: UnitGroup; tinted: boolean; badges: ReadonlyMap<string, LessonBadge> }) {
+function UnitColumn({ unit, tinted, circles }: { unit: UnitGroup; tinted: boolean; circles: ReadonlyMap<string, LessonCircle> }) {
   return (
     <section aria-labelledby={`${unit.id}-heading`}>
       <h2 id={`${unit.id}-heading`} className="border-b border-line px-6 pb-3 text-lg text-panel">
@@ -105,7 +105,7 @@ function UnitColumn({ unit, tinted, badges }: { unit: UnitGroup; tinted: boolean
         <ul>
           {unit.lessons.map((lesson, index) => (
             <li key={lesson.id}>
-              <LessonCardView lesson={lesson} tinted={tinted === (index % 2 === 0)} badge={badges.get(lesson.id)} />
+              <LessonCardView lesson={lesson} tinted={tinted === (index % 2 === 0)} circle={circles.get(lesson.id)} />
             </li>
           ))}
         </ul>
@@ -114,7 +114,7 @@ function UnitColumn({ unit, tinted, badges }: { unit: UnitGroup; tinted: boolean
   );
 }
 
-function LessonCardView({ lesson, tinted, badge }: { lesson: LessonCard; tinted: boolean; badge?: LessonBadge }) {
+function LessonCardView({ lesson, tinted, circle }: { lesson: LessonCard; tinted: boolean; circle?: LessonCircle }) {
   return (
     <Link
       href={lesson.href}
@@ -130,7 +130,7 @@ function LessonCardView({ lesson, tinted, badge }: { lesson: LessonCard; tinted:
         <span>{lesson.topic}</span>
         {lesson.grammarLabel && <span>{lesson.grammarLabel}</span>}
       </span>
-      <StatusCircle status={badge?.status ?? "not_started"} bestPercent={badge?.bestPercent} />
+      <StatusCircle status={circle?.status ?? "not_started"} bestPercent={circle?.bestPercent} />
     </Link>
   );
 }

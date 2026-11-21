@@ -135,6 +135,11 @@ describe("progress store", () => {
     const attempts = await db.select().from(exerciseAttempt).where(eq(exerciseAttempt.userId, user));
     expect(attempts.filter((attempt) => attempt.action === "reset").map((attempt) => attempt.itemId)).toEqual([I01]);
 
+    // A retry after a lost response changes nothing, but answers with the entries as saved.
+    const retry = await saveCorrection(db, user, { lessonId: LESSON, at: "2026-11-20T10:02:00.000Z" });
+    expect(retry.result).toBe("ignored");
+    expect(retry.saved?.[I01]?.entry).toEqual({ state: reopened, answer: null });
+
     // A right retry after the correction scores 0.
     await saveExerciseWrite(db, user, pick(0, "2026-11-20T10:03:00.000Z"));
     expect((await loadLessonEntries(db, user, lesson)).get(I01)?.entry.state).toEqual({

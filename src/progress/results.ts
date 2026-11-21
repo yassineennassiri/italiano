@@ -9,6 +9,7 @@ import { type LessonProgress, type LessonShape, lessonExercises, lessonProgress 
 /** The band that picks the encouraging line: ≥80%, 50–79%, <50%. */
 export type ScoreBand = "great" | "good" | "retry";
 
+/** The score band of a lesson %. */
 export function scoreBand(percent: number): ScoreBand {
   if (percent >= 80) return "great";
   return percent >= 50 ? "good" : "retry";

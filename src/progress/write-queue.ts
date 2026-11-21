@@ -38,6 +38,30 @@ export class WriteQueue<W> {
     if (this.retryTimer === undefined) void this.flush();
   }
 
+  /**
+   * Resolves once every queued write has landed ("saved"), or as soon as one
+   * fails ("offline"): a failed write waits for its retry, so the caller
+   * shouldn't. For moving on to a page that reads what was just written.
+   */
+  settled(): Promise<Exclude<SyncStatus, "pending">> {
+    const now = this.idleStatus();
+    if (now) return Promise.resolve(now);
+    return new Promise((resolve) => {
+      const unsubscribe = this.subscribe(() => {
+        const status = this.idleStatus();
+        if (!status) return;
+        unsubscribe();
+        resolve(status);
+      });
+    });
+  }
+
+  /** "saved" with nothing queued, "offline" while a failed write waits, undefined while writes are in flight. */
+  private idleStatus(): Exclude<SyncStatus, "pending"> | undefined {
+    if (this.retryTimer !== undefined) return "offline";
+    return this.writes.length === 0 ? "saved" : undefined;
+  }
+
   /** The database couldn't be read: show Offline until a write gets through. */
   reportUnreachable(): void {
     if (this.writes.length === 0) this.setStatus("offline");
@@ -59,8 +83,9 @@ export class WriteQueue<W> {
         try {
           await this.send(this.writes[0]);
         } catch {
-          this.setStatus("offline");
+          // The timer first: listeners told of Offline see the write waiting for its retry.
           this.retryTimer = setTimeout(() => void this.flush(), RETRY_MS);
+          this.setStatus("offline");
           return;
         }
         this.writes.shift();

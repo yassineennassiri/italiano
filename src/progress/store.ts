@@ -20,6 +20,7 @@ import {
   planExerciseWrite,
   planFinish,
   restoreEntries,
+  type Row,
   type StoredItemRow,
   type VisitWrite,
 } from "./plan";
@@ -55,17 +56,14 @@ const storedProgress = (db: Db, userId: string, lessonId: string) =>
     .from(lessonProgress)
     .where(and(eq(lessonProgress.userId, userId), eq(lessonProgress.lessonId, lessonId)));
 
-type ItemStateRow = Omit<typeof itemState.$inferInsert, "userId">;
-type ProgressRow = Omit<typeof lessonProgress.$inferInsert, "userId">;
-
 // The update sets also rewrite the key columns, to the values they already have.
-const upsertItemState = (db: Db, userId: string, row: ItemStateRow) =>
+const upsertItemState = (db: Db, userId: string, row: Row<typeof itemState>) =>
   db
     .insert(itemState)
     .values({ ...row, userId })
     .onConflictDoUpdate({ target: [itemState.userId, itemState.itemId], set: row });
 
-const upsertProgress = (db: Db, userId: string, row: ProgressRow) =>
+const upsertProgress = (db: Db, userId: string, row: Row<typeof lessonProgress>) =>
   db
     .insert(lessonProgress)
     .values({ ...row, userId })
@@ -159,17 +157,27 @@ export async function saveExerciseWrite(db: Db, userId: string, write: ExerciseW
   return { result: "saved", saved: { entry: plan.entry, savedAt: now.toISOString() } };
 }
 
+/** A lesson-wide write's reads: the lesson, its stored rows and progress. Undefined for a lesson the content doesn't have. */
+async function readLessonState(db: Db, userId: string, lessonId: string) {
+  const lesson = loadLesson(lessonId);
+  if (!lesson) return undefined;
+  const [rows, [progress]] = await db.batch([lessonRows(db, userId, lesson.id), storedProgress(db, userId, lesson.id)]);
+  return { lesson, hashes: exerciseHashes(lesson), rows, progress };
+}
+
 /**
  * Correggi i miei errori (SPEC §4.4): reopens the lesson's wrong and solved
  * scorable items as stored now. "ignored" when there is nothing to reopen, so
- * a retried request changes nothing.
+ * a retried request changes nothing. Either way it answers with the lesson's
+ * entries as now saved, so a retry after a lost response still settles the
+ * client's reopened entries.
  */
 export async function saveCorrection(db: Db, userId: string, write: CorrectionWrite, now = new Date()): Promise<CorrectionResponse> {
-  const lesson = loadLesson(write.lessonId);
-  if (!lesson) return { result: "ignored" };
-  const [rows, [progress]] = await db.batch([lessonRows(db, userId, lesson.id), storedProgress(db, userId, lesson.id)]);
-  const plan = planCorrection({ lesson, hashes: exerciseHashes(lesson), rows, progress, at: write.at, now });
-  if (!plan) return { result: "ignored", saved: {} };
+  const state = await readLessonState(db, userId, write.lessonId);
+  if (!state) return { result: "ignored" };
+  const before = Object.fromEntries(savedEntries(state.lesson, state.rows));
+  const plan = planCorrection({ ...state, at: write.at, now });
+  if (!plan) return { result: "ignored", saved: before };
 
   await db.batch([
     db.insert(exerciseAttempt).values(plan.attempts.map((row) => ({ ...row, userId }))),
@@ -177,15 +185,15 @@ export async function saveCorrection(db: Db, userId: string, write: CorrectionWr
     upsertProgress(db, userId, plan.progress),
   ]);
   const savedAt = now.toISOString();
-  return { result: "saved", saved: Object.fromEntries([...plan.entries].map(([id, entry]) => [id, { entry, savedAt }])) };
+  const reopened = Object.fromEntries([...plan.entries].map(([id, entry]) => [id, { entry, savedAt }]));
+  return { result: "saved", saved: { ...before, ...reopened } };
 }
 
 /** Reaching the Finish screen completes the lesson (SPEC §4.9). */
 export async function saveFinish(db: Db, userId: string, write: FinishWrite, now = new Date()): Promise<WriteResponse> {
-  const lesson = loadLesson(write.lessonId);
-  if (!lesson) return { result: "ignored" };
-  const [rows, [progress]] = await db.batch([lessonRows(db, userId, lesson.id), storedProgress(db, userId, lesson.id)]);
-  await upsertProgress(db, userId, planFinish({ lesson, hashes: exerciseHashes(lesson), rows, progress, now }));
+  const state = await readLessonState(db, userId, write.lessonId);
+  if (!state) return { result: "ignored" };
+  await upsertProgress(db, userId, planFinish({ ...state, now }));
   return { result: "saved" };
 }
 

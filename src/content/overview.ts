@@ -1,12 +1,12 @@
 /**
  * What the Home page and the level overview show, built from the content
- * files (SPEC §3.2, §3.3). Progress is not part of it; pages add that later.
+ * files (SPEC §3.2, §3.3), and where the course moves on to (Finish's Avanti,
+ * Continua da dove eri). Progress itself comes from `src/progress`.
  * Server-only: it reads content from disk.
  */
 import { loadCourse, loadLesson } from "./load";
 import type { LevelId } from "./ids";
 import { lessonPageHref, lessonPath } from "./lesson-nav";
-import type { LessonStatus } from "@/scoring/lesson";
 
 export type LessonCard = {
   id: string;
@@ -73,22 +73,13 @@ export function finishTarget(lessonId: string, contentDir?: string): { href: str
 
 /**
  * Where *Continua da dove eri* goes (SPEC §3.2): back into the most recently
- * played lesson (its route resumes at the last step), or on to the next
- * lesson's intro once that one is completed. With nothing played, the first
- * written lesson.
+ * played lesson that still exists, whose route resumes at the last step. With
+ * nothing played, the first written lesson.
  */
-export function continueHref(
-  recentFirst: readonly { lessonId: string; status: LessonStatus }[],
-  contentDir?: string,
-): string {
-  for (const { lessonId, status } of recentFirst) {
+export function continueHref(recentFirst: readonly { lessonId: string }[], contentDir?: string): string {
+  for (const { lessonId } of recentFirst) {
     const lesson = loadLesson(lessonId, contentDir);
-    if (!lesson) continue;
-    if (status === "completed") {
-      const next = finishTarget(lessonId, contentDir);
-      if (!next.levelCompleted) return next.href;
-    }
-    return lessonPath(lesson);
+    if (lesson) return lessonPath(lesson);
   }
   const firstId = loadCourse(contentDir).levels.flatMap((level) => level.units.flatMap((unit) => unit.lessons))[0];
   return lessonPath(loadLesson(firstId, contentDir)!);

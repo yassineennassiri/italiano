@@ -65,6 +65,9 @@ export const ui = {
 
   comingSoon: "In arrivo",
 
+  /** A percentage: the lesson % on the slate panel, the level % on the overview. */
+  percent: (percent: number) => `${percent}%`,
+
   draft: "Bozza",
   /** The round level badge: "A2", "B1", "B2". */
   levelBadge: (levelId: LevelId) => levelId.toUpperCase(),
@@ -102,7 +105,6 @@ export const ui = {
     } satisfies Record<ScoreBand, string>,
     /** S/M on the slate panel: completed steps of all steps. */
     steps: (completed: number, total: number) => `Risultati della lezione: ${completed}/${total}`,
-    percent: (percent: number) => `${percent}%`,
     nextPages: (pages: readonly ReviewPage[]) =>
       `Nelle prossime pagine trovi un riepilogo di: ${pages.map((page) => reviewPageName[page]).join(", ")}.`,
     correct: "Correggi i miei errori",
