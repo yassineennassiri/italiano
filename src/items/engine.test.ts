@@ -58,3 +58,21 @@ describe("the engine for text_gap", () => {
     expect(applyAction(item, NEW_ENTRY, { kind: "check", answer: { values: { g1: "i".repeat(201) } } })).toBeUndefined();
   });
 });
+
+describe("the engine for word_order", () => {
+  const I = "a2.u01.l01.s04.i01";
+
+  it("checks the placed tiles sent with Controlla", () => {
+    const item = findItem(lesson, I)!;
+    expect(item.type).toBe("word_order");
+    const outcome = applyAction(item, NEW_ENTRY, { kind: "check", answer: { placed: [0, 1, 2, 3, 4, 5, 6] } })!;
+    expect(outcome.entry.state).toEqual({ status: "checked_correct", firstCheckCorrect: true, points: 1 });
+  });
+
+  it("ignores a Controlla whose inputs are not a placement, and restores a stored one", () => {
+    const item = findItem(lesson, I)!;
+    expect(applyAction(item, NEW_ENTRY, { kind: "check", answer: { selected: [0] } })).toBeUndefined();
+    expect(parseAnswer(item, { placed: [2, 0] })).toEqual({ answer: { placed: [2, 0] } });
+    expect(parseAnswer(item, { values: {} })).toBeUndefined();
+  });
+});

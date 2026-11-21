@@ -11,6 +11,7 @@ import type { ExerciseEntry, ExerciseOutcome } from "./entry";
 import { checkGapValues, type GappedItem, type GapsAnswer, gapsAnswerSchema, solveGaps } from "./gaps";
 import { checkMultiSelect, type MultiSelectAnswer, type MultiSelectItem, multiSelectAnswerSchema, solveMultiSelect } from "./multi-select";
 import { pickOption, type SingleChoiceAnswer, type SingleChoiceItem, singleChoiceAnswerSchema, solveSingleChoice } from "./single-choice";
+import { checkWordOrder, solveWordOrder, type WordOrderAnswer, wordOrderAnswerSchema, type WordOrderItem } from "./word-order";
 
 /** single_choice: clicking an option checks it at once. */
 export const pickActionSchema = z.strictObject({ kind: z.literal("pick"), option: z.number().int().nonnegative() });
@@ -83,6 +84,11 @@ const ENGINES: Partial<Record<Item["type"], AnyEngine>> = {
     answerSchema: gapsAnswerSchema,
     check: (item, entry, answer) => checkGapValues(item, entry, answer.values, { typed: true }),
     solve: solveGaps,
+  }),
+  word_order: eraseTypes<WordOrderItem, WordOrderAnswer>({
+    answerSchema: wordOrderAnswerSchema,
+    check: (item, entry, answer) => checkWordOrder(item, entry, answer.placed),
+    solve: solveWordOrder,
   }),
 };
 

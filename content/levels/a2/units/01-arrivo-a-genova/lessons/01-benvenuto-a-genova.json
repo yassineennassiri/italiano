@@ -124,6 +124,7 @@
           "id": "a2.u01.l01.s04.i02", "type": "word_order",
           "prompt": "Dov'è l'appartamento?",
           "tiles": ["L'appartamento", "è", "vicino,", "nel", "centro storico", "."],
+          "solvable": true,
           "error_tags": ["article.elision", "prep.articulated"]
         }
       ]

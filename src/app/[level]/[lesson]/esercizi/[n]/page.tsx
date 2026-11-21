@@ -13,6 +13,7 @@ import { SingleChoiceItem } from "@/components/single-choice-item";
 import { StepCounterText, StepProgress } from "@/components/step-progress";
 import { StepInstruction } from "@/components/step-instruction";
 import { TextGapItem } from "@/components/text-gap-item";
+import { WordOrderItem } from "@/components/word-order-item";
 import { exerciseHashes } from "@/content/hash";
 import { type ErrorTag, loadErrorTags, loadLessonBySlug } from "@/content/load";
 import { stepLocation, stepPage } from "@/content/lesson-nav";
@@ -99,6 +100,8 @@ function ItemInteraction({ item, notes }: { item: Item; notes: ReactNode }) {
       return <DropdownItem item={item} notes={notes} />;
     case "text_gap":
       return <TextGapItem item={item} notes={notes} />;
+    case "word_order":
+      return <WordOrderItem item={item} notes={notes} />;
     default:
       // No engine yet: just the prompt, then the notes.
       return (
