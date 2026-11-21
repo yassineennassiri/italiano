@@ -6,8 +6,8 @@
  */
 import { db } from "@/db";
 import { PROFILE_ID } from "@/db/schema";
-import { exerciseWriteSchema, visitWriteSchema } from "./plan";
-import { saveExerciseWrite, saveVisit, type WriteResponse } from "./store";
+import { correctionWriteSchema, exerciseWriteSchema, finishWriteSchema, visitWriteSchema } from "./plan";
+import { type CorrectionResponse, saveCorrection, saveExerciseWrite, saveFinish, saveVisit, type WriteResponse } from "./store";
 
 /** "rejected" is malformed input: the queue drops it rather than retrying it forever. */
 export type ActionResponse = WriteResponse | { result: "rejected" };
@@ -24,4 +24,18 @@ export async function recordVisit(input: unknown): Promise<ActionResponse> {
   const parsed = visitWriteSchema.safeParse(input);
   if (!parsed.success) return { result: "rejected" };
   return saveVisit(db(), PROFILE_ID, parsed.data);
+}
+
+/** Correggi i miei errori: reopens the lesson's wrong and solved scorable items, and returns them as now saved. */
+export async function recordCorrection(input: unknown): Promise<CorrectionResponse | { result: "rejected" }> {
+  const parsed = correctionWriteSchema.safeParse(input);
+  if (!parsed.success) return { result: "rejected" };
+  return saveCorrection(db(), PROFILE_ID, parsed.data);
+}
+
+/** The Finish screen was reached: the lesson is completed. */
+export async function recordFinish(input: unknown): Promise<ActionResponse> {
+  const parsed = finishWriteSchema.safeParse(input);
+  if (!parsed.success) return { result: "rejected" };
+  return saveFinish(db(), PROFILE_ID, parsed.data);
 }

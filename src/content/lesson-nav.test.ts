@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { loadLesson } from "./load";
-import { hasPage, lessonMenu, resumeHref, stepPage } from "./lesson-nav";
+import { hasPage, lessonMenu, resumeHref, reviewPages, reviewStartHref, stepPage } from "./lesson-nav";
 import { copyContent, editJson, LESSON_FILE } from "./test-content";
 
 const lesson = () => loadLesson("a2.u01.l01")!;
@@ -76,5 +76,28 @@ describe("resumeHref", () => {
     for (const location of [null, "esercizi/9", "esercizi/x", "cultura", "../../evil"]) {
       expect(resumeHref(lesson(), location)).toBe("/a2/benvenuto-a-genova/info");
     }
+  });
+});
+
+describe("reviewPages", () => {
+  it("lists the review pages the example lesson has, and Continua opens the first", () => {
+    expect(reviewPages(lesson())).toEqual(["grammatica", "vocabolario", "cultura"]);
+    expect(reviewStartHref(lesson())).toBe("/a2/benvenuto-a-genova/grammatica/1");
+  });
+
+  it("leaves out the pages a lesson lacks; with none, Continua goes to the Finish screen", () => {
+    const dir = copyContent();
+    editJson(dir, LESSON_FILE, (data) => {
+      data.grammar = [];
+      delete data.culture;
+    });
+    const noGrammar = loadLesson("a2.u01.l01", dir)!;
+    expect(reviewPages(noGrammar)).toEqual(["vocabolario"]);
+    expect(reviewStartHref(noGrammar)).toBe("/a2/benvenuto-a-genova/vocabolario");
+
+    editJson(dir, LESSON_FILE, (data) => {
+      data.vocab = [];
+    });
+    expect(reviewStartHref(loadLesson("a2.u01.l01", dir)!)).toBe("/a2/benvenuto-a-genova/fine");
   });
 });

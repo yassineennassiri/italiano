@@ -74,6 +74,26 @@ export function lessonMenu(lesson: Lesson): MenuEntry[] {
   return entries.filter((entry) => entry !== false);
 }
 
+/** The pages of the review sequence (SPEC §4), as the Results screen lists them. */
+export type ReviewPage = "grammatica" | "vocabolario" | "cultura";
+
+/** The review pages this lesson has, in sequence order. */
+export function reviewPages(lesson: PagedLesson): ReviewPage[] {
+  const pages: (ReviewPage | false)[] = [
+    hasPage(lesson, "grammatica", "1") && "grammatica",
+    hasPage(lesson, "vocabolario") && "vocabolario",
+    hasPage(lesson, "cultura") && "cultura",
+  ];
+  return pages.filter((page) => page !== false);
+}
+
+/** Where Continua on the Results screen goes: the first review page, or the Finish screen when there is none. */
+export function reviewStartHref(lesson: LessonRef & PagedLesson): string {
+  const [first] = reviewPages(lesson);
+  if (first === undefined) return lessonPageHref(lesson, "fine");
+  return first === "grammatica" ? lessonPageHref(lesson, first, 1) : lessonPageHref(lesson, first);
+}
+
 export type StepPage<S> = {
   step: S;
   /** 1-based, as in the URL and the "N / M" counter. */

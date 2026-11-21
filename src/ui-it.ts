@@ -5,10 +5,11 @@
  */
 
 import type { LevelId } from "@/content/ids";
-import type { LessonPage } from "@/content/lesson-nav";
+import type { LessonPage, ReviewPage } from "@/content/lesson-nav";
 import type { Note } from "@/content/schema";
 import type { SubtitleMode } from "@/audio/subtitles";
 import type { Rating } from "@/items/self-rating";
+import type { ScoreBand } from "@/progress/results";
 import type { SyncStatus } from "@/progress/write-queue";
 import type { LessonStatus } from "@/scoring/lesson";
 
@@ -21,6 +22,13 @@ const lessonStatusName: Record<LessonStatus, string> = {
   not_started: "Non iniziata",
   in_progress: "In corso",
   completed: "Completata",
+};
+
+/** The review pages as the Results screen lists them. */
+const reviewPageName: Record<ReviewPage, string> = {
+  grammatica: "grammatica",
+  vocabolario: "vocabolario",
+  cultura: "cultura e società",
 };
 
 /** A level (masculine) in each status. */
@@ -71,13 +79,35 @@ export const ui = {
     heading: "Scegli il livello",
     intro: "La storia di Adam, ingegnere appena arrivato a Genova: dal ripasso dell'A2 fino al B2.",
     continue: "Continua da dove eri",
+    /** A level card's level %: "3% completato". */
+    levelPercent: (percent: number) => `${percent}% completato`,
   },
 
   level: {
     pageTitle: (levelTitle: string) => `${levelTitle} · ${appName}`,
-    /** The level status circle's tooltip, e.g. "Livello: Non iniziato". */
-    levelStatus: (status: LessonStatus) => `Livello: ${levelStatusName[status]}`,
+    /** The level status circle's tooltip, with the level %: "Livello: In corso · 3%". */
+    levelStatus: (status: LessonStatus, percent: number) => `Livello: ${levelStatusName[status]} · ${percent}%`,
+    /** The banner after the level's last lesson (SPEC §4.9). */
+    completed: "Livello completato",
     finalTest: "Test finale",
+  },
+
+  /** The Results screen (SPEC §4.4) and the Finish screen (§4.9). */
+  results: {
+    heading: "Risultati della lezione",
+    band: {
+      great: "Ottimo lavoro!",
+      good: "Buon lavoro, continua così!",
+      retry: "Riprova gli esercizi, ce la puoi fare.",
+    } satisfies Record<ScoreBand, string>,
+    /** S/M on the slate panel: completed steps of all steps. */
+    steps: (completed: number, total: number) => `Risultati della lezione: ${completed}/${total}`,
+    percent: (percent: number) => `${percent}%`,
+    nextPages: (pages: readonly ReviewPage[]) =>
+      `Nelle prossime pagine trovi un riepilogo di: ${pages.map((page) => reviewPageName[page]).join(", ")}.`,
+    correct: "Correggi i miei errori",
+    continue: "Continua",
+    nextLesson: "Avanti con la prossima lezione!",
   },
 
   lesson: {
@@ -179,7 +209,6 @@ export const ui = {
       `${points} ${points === 1 ? "punto" : "punti"}.`,
 
     /** Headings of the pages later issues fill in. */
-    results: "Risultati della lezione",
     grammar: "Grammatica",
     vocabulary: "Vocabolario",
     culture: "Cultura e società",

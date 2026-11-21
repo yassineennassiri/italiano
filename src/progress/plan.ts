@@ -19,8 +19,8 @@ import {
   rateActionSchema,
   solveActionSchema,
 } from "@/items/engine";
-import { type ExerciseState } from "@/scoring/exercise";
-import { bestPercent, lessonProgress, lessonStatus } from "@/scoring/lesson";
+import { applyEvent, type ExerciseState, isReopenable } from "@/scoring/exercise";
+import { bestPercent, lessonExercises, type LessonProgress, lessonProgress, type LessonStatus, lessonStatus, lessonStatuses } from "@/scoring/lesson";
 
 const writeFields = {
   /** Also the attempt's id, so a retried write is applied once. */
@@ -50,13 +50,21 @@ export const visitWriteSchema = z.strictObject({
 });
 export type VisitWrite = z.infer<typeof visitWriteSchema>;
 
+/** Correggi i miei errori on the Results screen. */
+export const correctionWriteSchema = z.strictObject({ lessonId: z.string().min(1), at: z.iso.datetime() });
+export type CorrectionWrite = z.infer<typeof correctionWriteSchema>;
+
+/** Reaching the Finish screen, which completes the lesson. */
+export const finishWriteSchema = z.strictObject({ lessonId: z.string().min(1) });
+export type FinishWrite = z.infer<typeof finishWriteSchema>;
+
 export type StoredItemRow = Pick<
   typeof itemState.$inferSelect,
   "itemId" | "status" | "firstCheckCorrect" | "points" | "answer" | "contentHash"
 >;
 
 export type StoredProgress =
-  | Partial<Pick<typeof lessonProgressTable.$inferSelect, "status" | "startedAt" | "bestPercent">>
+  | Partial<Pick<typeof lessonProgressTable.$inferSelect, "status" | "startedAt" | "completedAt" | "bestPercent">>
   | undefined;
 
 type Row<T extends { $inferInsert: object }> = Omit<T["$inferInsert"], "userId">;
@@ -146,7 +154,7 @@ export function planExerciseWrite({
   const { entry } = outcome;
   entries.set(exerciseId, entry);
   const at = new Date(action.at);
-  const counts = lessonProgress(lesson, new Map([...entries].map(([id, { state }]) => [id, state])));
+  const counts = lessonProgress(lesson, statesOf(entries));
 
   return {
     entry,
@@ -186,14 +194,120 @@ export function planExerciseWrite({
             createdAt: at,
           }))
         : [],
-    progress: {
+    progress: progressRow(lesson, progress, counts, now),
+  };
+}
+
+/** The lesson status after a change: it never moves back (only Azzera resets it). */
+function laterStatus(stored: LessonStatus | undefined, next: LessonStatus): LessonStatus {
+  const rank = (status: LessonStatus | undefined) => (status === undefined ? -1 : lessonStatuses.indexOf(status));
+  return rank(stored) > rank(next) ? stored! : next;
+}
+
+/** The lesson_progress row after a change to its exercises; `best_percent` never drops. */
+function progressRow(lesson: Lesson, progress: StoredProgress, counts: LessonProgress, now: Date): Row<typeof lessonProgressTable> {
+  return {
+    lessonId: lesson.id,
+    contentVersion: lesson.version,
+    status: laterStatus(progress?.status, lessonStatus(counts, false)),
+    lastPercent: counts.percent,
+    bestPercent: bestPercent(progress?.bestPercent ?? null, counts.percent),
+    startedAt: progress?.startedAt ?? now,
+    updatedAt: now,
+  };
+}
+
+const statesOf = (entries: ReadonlyMap<string, ExerciseEntry>) => new Map([...entries].map(([id, { state }]) => [id, state]));
+
+export type CorrectionPlan = {
+  /** The reopened entries by exercise id, as now saved. */
+  entries: Map<string, ExerciseEntry>;
+  itemStates: Row<typeof itemState>[];
+  attempts: Row<typeof exerciseAttempt>[];
+  progress: Row<typeof lessonProgressTable>;
+};
+
+/**
+ * Correggi i miei errori (SPEC §4.4): reopens every wrong or solved scorable
+ * item, emptying its inputs but keeping `first_check_correct`, so a fixed item
+ * still scores 0. Speaking exchanges and Parla! are never reset; their errors
+ * are already in the error log. Undefined when there is nothing to reopen.
+ */
+export function planCorrection({
+  lesson,
+  hashes,
+  rows,
+  progress,
+  at,
+  now,
+}: {
+  lesson: Lesson;
+  hashes: ReadonlyMap<string, string>;
+  rows: readonly StoredItemRow[];
+  progress: StoredProgress;
+  /** When the learner asked, on their computer. */
+  at: string;
+  now: Date;
+}): CorrectionPlan | undefined {
+  const entries = restoreEntries(lesson, hashes, rows);
+  const reopened = new Map<string, ExerciseEntry>();
+  for (const { id, scorable } of lessonExercises(lesson)) {
+    const entry = entries.get(id);
+    if (!scorable || !entry || !isReopenable(entry.state)) continue;
+    reopened.set(id, { state: applyEvent(entry.state, { type: "reopen" }), answer: null });
+  }
+  if (reopened.size === 0) return undefined;
+  for (const [id, entry] of reopened) entries.set(id, entry);
+
+  const reopenedRows = [...reopened].map(([itemId, entry]) => ({ itemId, entry, contentHash: hashes.get(itemId)! }));
+  return {
+    entries: reopened,
+    itemStates: reopenedRows.map(({ itemId, entry, contentHash }) => ({
+      itemId,
+      lessonId: lesson.id,
+      status: entry.state.status,
+      firstCheckCorrect: entry.state.firstCheckCorrect,
+      points: entry.state.points,
+      answer: null,
+      contentHash,
+      updatedAt: now,
+    })),
+    attempts: reopenedRows.map(({ itemId }) => ({
+      itemId,
       lessonId: lesson.id,
       contentVersion: lesson.version,
-      status: progress?.status === "completed" ? "completed" : lessonStatus(counts, false),
-      lastPercent: counts.percent,
-      bestPercent: bestPercent(progress?.bestPercent ?? null, counts.percent),
-      startedAt: progress?.startedAt ?? now,
-      updatedAt: now,
-    },
+      action: "reset" as const,
+      answer: null,
+      result: null,
+      correct: null,
+      createdAt: new Date(at),
+    })),
+    progress: progressRow(lesson, progress, lessonProgress(lesson, statesOf(entries)), now),
+  };
+}
+
+/**
+ * Reaching the Finish screen (SPEC §4.9): the lesson is completed, with the
+ * current % as `last_percent`. `best_percent` never drops, and the first
+ * completion time is kept.
+ */
+export function planFinish({
+  lesson,
+  hashes,
+  rows,
+  progress,
+  now,
+}: {
+  lesson: Lesson;
+  hashes: ReadonlyMap<string, string>;
+  rows: readonly StoredItemRow[];
+  progress: StoredProgress;
+  now: Date;
+}): Row<typeof lessonProgressTable> {
+  const counts = lessonProgress(lesson, statesOf(restoreEntries(lesson, hashes, rows)));
+  return {
+    ...progressRow(lesson, progress, counts, now),
+    status: "completed",
+    completedAt: progress?.completedAt ?? now,
   };
 }

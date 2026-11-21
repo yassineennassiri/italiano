@@ -5,7 +5,8 @@
  */
 import { loadCourse, loadLesson } from "./load";
 import type { LevelId } from "./ids";
-import { lessonPath } from "./lesson-nav";
+import { lessonPageHref, lessonPath } from "./lesson-nav";
+import type { LessonStatus } from "@/scoring/lesson";
 
 export type LessonCard = {
   id: string;
@@ -49,6 +50,48 @@ export function homeLevels(contentDir?: string): LevelCard[] {
     available: level.units.some((unit) => unit.lessons.length > 0),
     href: `/${level.id}`,
   }));
+}
+
+/** The level overview's query that shows the *Livello completato* banner. */
+export const LEVEL_COMPLETED_PARAM = "completato";
+
+/**
+ * Where Avanti on the Finish screen goes (SPEC §4.9): the next lesson's intro
+ * in course order, or after the level's last written lesson, the level
+ * overview with the *Livello completato* banner.
+ */
+export function finishTarget(lessonId: string, contentDir?: string): { href: string; levelCompleted: boolean } {
+  const level = loadCourse(contentDir).levels.find((candidate) => candidate.units.some((unit) => unit.lessons.includes(lessonId)));
+  if (!level) throw new Error(`course.json doesn't list ${lessonId}`);
+  const lessons = level.units.flatMap((unit) => unit.lessons);
+  const nextId = lessons[lessons.indexOf(lessonId) + 1];
+  const next = nextId === undefined ? undefined : loadLesson(nextId, contentDir);
+  return next
+    ? { href: lessonPageHref(next, "info"), levelCompleted: false }
+    : { href: `/${level.id}?${LEVEL_COMPLETED_PARAM}=1`, levelCompleted: true };
+}
+
+/**
+ * Where *Continua da dove eri* goes (SPEC §3.2): back into the most recently
+ * played lesson (its route resumes at the last step), or on to the next
+ * lesson's intro once that one is completed. With nothing played, the first
+ * written lesson.
+ */
+export function continueHref(
+  recentFirst: readonly { lessonId: string; status: LessonStatus }[],
+  contentDir?: string,
+): string {
+  for (const { lessonId, status } of recentFirst) {
+    const lesson = loadLesson(lessonId, contentDir);
+    if (!lesson) continue;
+    if (status === "completed") {
+      const next = finishTarget(lessonId, contentDir);
+      if (!next.levelCompleted) return next.href;
+    }
+    return lessonPath(lesson);
+  }
+  const firstId = loadCourse(contentDir).levels.flatMap((level) => level.units.flatMap((unit) => unit.lessons))[0];
+  return lessonPath(loadLesson(firstId, contentDir)!);
 }
 
 /** The level overview, or undefined for a level the course doesn't have. */

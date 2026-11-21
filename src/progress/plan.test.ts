@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { exerciseHashes } from "@/content/hash";
 import { loadLesson } from "@/content/load";
 import { copyContent, editJson, LESSON_FILE } from "@/content/test-content";
-import { exerciseWriteSchema, planExerciseWrite, restoreEntries, type StoredItemRow } from "./plan";
+import { exerciseWriteSchema, planCorrection, planExerciseWrite, planFinish, restoreEntries, type StoredItemRow } from "./plan";
 
 const NOW = new Date("2026-11-20T10:10:00Z");
 const AT = "2026-11-20T09:59:00.000Z";
@@ -339,5 +339,118 @@ describe("planExerciseWrite for self-ratings (s05 exchanges, s06 Parla!)", () =>
     const eventId = "6f1c2a4e-0b7d-4c3e-9a51-2d8e7f4b1c90";
     expect(exerciseWriteSchema.safeParse({ ...rate(PARLA, input.hashes, "good", "gli"), eventId }).success).toBe(true);
     expect(exerciseWriteSchema.safeParse({ ...rate(E1, input.hashes, "good"), eventId, rating: "great" }).success).toBe(false);
+  });
+});
+
+describe("planCorrection (Correggi i miei errori)", () => {
+  const S01I01 = "a2.u01.l01.s01.i01";
+  const S02I01 = "a2.u01.l01.s02.i01";
+  const S03I01 = "a2.u01.l01.s03.i01";
+  const E1 = "a2.u01.l01.s05.i01.e1";
+  const PARLA = "a2.u01.l01.s06.i01";
+
+  function stored() {
+    const lesson = loadLesson("a2.u01.l01")!;
+    const hashes = exerciseHashes(lesson);
+    const at = (itemId: string, fields: Omit<StoredItemRow, "itemId" | "contentHash">): StoredItemRow => ({
+      itemId,
+      contentHash: hashes.get(itemId)!,
+      ...fields,
+    });
+    const rows: StoredItemRow[] = [
+      at(S01I01, { status: "checked_correct", firstCheckCorrect: true, points: 1, answer: { picks: [0] } }),
+      at(S02I01, { status: "checked_wrong", firstCheckCorrect: false, points: 0, answer: { values: { g1: "il" } } }),
+      at(S03I01, { status: "solved", firstCheckCorrect: false, points: 0, answer: { values: { g1: "i" } } }),
+      at(E1, { status: "rated_not_great", firstCheckCorrect: null, points: 0, answer: { rating: "not_great" } }),
+      at(PARLA, { status: "rated_not_great", firstCheckCorrect: null, points: 0, answer: { rating: "not_great" } }),
+    ];
+    return { lesson, hashes, rows };
+  }
+
+  it("reopens only the wrong and solved scorable items, keeping first_check_correct, and records a reset attempt for each", () => {
+    const { lesson, hashes, rows } = stored();
+    const plan = planCorrection({ lesson, hashes, rows, progress: { status: "in_progress", bestPercent: 14 }, at: AT, now: NOW })!;
+
+    expect(plan.itemStates).toEqual([
+      expect.objectContaining({ itemId: S02I01, status: "untouched", firstCheckCorrect: false, points: 0, answer: null, updatedAt: NOW }),
+      expect.objectContaining({ itemId: S03I01, status: "untouched", firstCheckCorrect: false, points: 0, answer: null, updatedAt: NOW }),
+    ]);
+    expect(plan.attempts.map(({ itemId, action, correct }) => ({ itemId, action, correct }))).toEqual([
+      { itemId: S02I01, action: "reset", correct: null },
+      { itemId: S03I01, action: "reset", correct: null },
+    ]);
+    expect([...plan.entries.keys()]).toEqual([S02I01, S03I01]);
+  });
+
+  it("never resets speaking exchanges or Parla!", () => {
+    const { lesson, hashes, rows } = stored();
+    const plan = planCorrection({ lesson, hashes, rows, progress: undefined, at: AT, now: NOW })!;
+    const touched = [...plan.itemStates.map((row) => row.itemId), ...plan.attempts.map((row) => row.itemId)];
+    expect(touched).not.toContain(E1);
+    expect(touched).not.toContain(PARLA);
+  });
+
+  it("keeps the lesson's status, % and best %: a fixed item still scores 0", () => {
+    const { lesson, hashes, rows } = stored();
+    const plan = planCorrection({ lesson, hashes, rows, progress: { status: "completed", bestPercent: 57 }, at: AT, now: NOW })!;
+    expect(plan.progress).toMatchObject({ status: "completed", lastPercent: 14, bestPercent: 57 });
+  });
+
+  it("plans nothing when no scorable item is wrong or solved", () => {
+    const { lesson, hashes, rows } = stored();
+    expect(planCorrection({ lesson, hashes, rows: rows.slice(0, 1), progress: undefined, at: AT, now: NOW })).toBeUndefined();
+  });
+});
+
+describe("planFinish (reaching the Finish screen)", () => {
+  const lesson = loadLesson("a2.u01.l01")!;
+  const hashes = exerciseHashes(lesson);
+  const I01 = "a2.u01.l01.s01.i01";
+  const rightI01: StoredItemRow = {
+    itemId: I01,
+    status: "checked_correct",
+    firstCheckCorrect: true,
+    points: 1,
+    answer: { picks: [0] },
+    contentHash: hashes.get(I01)!,
+  };
+
+  it("moves the lesson not_started → in_progress → completed, and later actions keep it completed", () => {
+    const first = planExerciseWrite({
+      lesson,
+      hashes,
+      rows: [],
+      progress: { status: "not_started" },
+      firstCheckAt: null,
+      action: { eventId: "evt-1", lessonId: lesson.id, exerciseId: I01, contentHash: hashes.get(I01)!, at: AT, kind: "pick", option: 0 },
+      now: NOW,
+    })!;
+    expect(first.progress.status).toBe("in_progress");
+
+    const finish = planFinish({ lesson, hashes, rows: [rightI01], progress: first.progress, now: NOW });
+    expect(finish).toMatchObject({ status: "completed", completedAt: NOW, lastPercent: 14, bestPercent: 14 });
+
+    const after = planExerciseWrite({
+      lesson,
+      hashes,
+      rows: [rightI01],
+      progress: finish,
+      firstCheckAt: null,
+      action: { eventId: "evt-2", lessonId: lesson.id, exerciseId: "a2.u01.l01.s01.i02", contentHash: hashes.get("a2.u01.l01.s01.i02")!, at: AT, kind: "pick", option: 0 },
+      now: NOW,
+    })!;
+    expect(after.progress).toMatchObject({ status: "completed", lastPercent: 29, bestPercent: 29 });
+  });
+
+  it("never lowers best_percent, and keeps the first completion time", () => {
+    const earlier = new Date("2026-11-01T08:00:00Z");
+    const finish = planFinish({
+      lesson,
+      hashes,
+      rows: [rightI01],
+      progress: { status: "completed", bestPercent: 86, completedAt: earlier, startedAt: earlier },
+      now: NOW,
+    });
+    expect(finish).toMatchObject({ status: "completed", lastPercent: 14, bestPercent: 86, completedAt: earlier, startedAt: earlier });
   });
 });

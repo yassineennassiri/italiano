@@ -17,6 +17,20 @@ export type LessonShape = {
   }[];
 };
 
+/** Only what scoring reads of a lesson, small enough to hand to a client component. */
+export function lessonShape(lesson: LessonShape): LessonShape {
+  return {
+    steps: lesson.steps.map((step) => ({
+      id: step.id,
+      items: step.items.map((item) =>
+        item.type === "speak_rate"
+          ? { id: item.id, type: item.type, exchanges: item.exchanges.map(({ id }) => ({ id })) }
+          : { id: item.id, type: item.type },
+      ),
+    })),
+  };
+}
+
 /** One unit of the footer's "X of Y" counter. */
 export type Exercise = {
   /** The item id, or for a speaking exchange the item id + "." + exchange id. */
@@ -105,6 +119,20 @@ export function levelPercent(level: LevelShape, completedLessonIds: ReadonlySet<
   const planned = level.units.reduce((sum, unit) => sum + unit.planned_lessons, 0);
   const completed = level.units.flatMap((unit) => unit.lessons).filter((id) => completedLessonIds.has(id)).length;
   return roundedPercent(completed, planned);
+}
+
+/**
+ * The level's status circle: not started until one of its lessons is,
+ * completed only when every planned lesson is written and completed, in
+ * progress in between.
+ */
+export function levelStatus(level: LevelShape, lessonStatuses: ReadonlyMap<string, LessonStatus>): LessonStatus {
+  const lessons = level.units.flatMap((unit) => unit.lessons);
+  const planned = level.units.reduce((sum, unit) => sum + unit.planned_lessons, 0);
+  const completed = lessons.filter((id) => lessonStatuses.get(id) === "completed").length;
+  if (planned > 0 && completed >= planned) return "completed";
+  const started = lessons.some((id) => (lessonStatuses.get(id) ?? "not_started") !== "not_started");
+  return started ? "in_progress" : "not_started";
 }
 
 /** round-half-up(100 × part ÷ whole) in integer arithmetic, so 12.5 is never 12.4999…; 0 when whole is 0. */

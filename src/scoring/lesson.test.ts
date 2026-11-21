@@ -2,7 +2,16 @@ import { describe, expect, it } from "vitest";
 import { loadCourse, loadLesson } from "@/content/load";
 import { checkGaps } from "./compare";
 import { applyEvents, type ExerciseEvent, type ExerciseState } from "./exercise";
-import { bestPercent, lessonExercises, lessonProgress, lessonStatus, levelPercent, type LessonShape } from "./lesson";
+import {
+  bestPercent,
+  lessonExercises,
+  lessonProgress,
+  type LessonShape,
+  type LessonStatus,
+  lessonStatus,
+  levelPercent,
+  levelStatus,
+} from "./lesson";
 
 const example = loadLesson("a2.u01.l01")!;
 
@@ -162,5 +171,30 @@ describe("bestPercent", () => {
     expect(bestPercent(null, 40)).toBe(40);
     expect(bestPercent(80, 40)).toBe(80);
     expect(bestPercent(40, 80)).toBe(80);
+  });
+});
+
+describe("levelStatus", () => {
+  const level = {
+    units: [
+      { planned_lessons: 2, lessons: ["a2.u01.l01", "a2.u01.l02"] },
+      { planned_lessons: 1, lessons: [] },
+    ],
+  };
+  const statuses = (entries: Record<string, LessonStatus>) => new Map(Object.entries(entries));
+
+  it("is not_started until one of its lessons is started, and ignores other levels", () => {
+    expect(levelStatus(level, statuses({}))).toBe("not_started");
+    expect(levelStatus(level, statuses({ "a2.u01.l01": "not_started", "b1.u01.l01": "completed" }))).toBe("not_started");
+  });
+
+  it("is in_progress while some planned lessons are not completed, even when every written one is", () => {
+    expect(levelStatus(level, statuses({ "a2.u01.l01": "in_progress" }))).toBe("in_progress");
+    expect(levelStatus(level, statuses({ "a2.u01.l01": "completed", "a2.u01.l02": "completed" }))).toBe("in_progress");
+  });
+
+  it("is completed when every planned lesson is written and completed", () => {
+    const written = { units: [{ planned_lessons: 2, lessons: ["a2.u01.l01", "a2.u01.l02"] }] };
+    expect(levelStatus(written, statuses({ "a2.u01.l01": "completed", "a2.u01.l02": "completed" }))).toBe("completed");
   });
 });
