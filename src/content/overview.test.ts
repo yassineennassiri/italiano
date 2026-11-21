@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { homeLevels, levelOverview } from "./overview";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import { continueHref, finishTarget, homeLevels, levelOverview } from "./overview";
 import { copyContent, editJson, LESSON_FILE } from "./test-content";
 
 describe("homeLevels", () => {
@@ -50,5 +52,46 @@ describe("levelOverview", () => {
 
   it("has no overview for a level the course doesn't have", () => {
     expect(levelOverview("c1")).toBeUndefined();
+  });
+});
+
+/** A content copy with a second lesson: unit 2's first lesson, a copy of the example under another id and slug. */
+function withSecondLesson(): string {
+  const dir = copyContent();
+  const lesson = JSON.parse(readFileSync(path.join(dir, LESSON_FILE), "utf8"));
+  Object.assign(lesson, { id: "a2.u02.l01", slug: "una-casa" });
+  const file = path.join(dir, "levels/a2/units/02-una-casa-nei-caruggi/lessons/01-una-casa.json");
+  mkdirSync(path.dirname(file), { recursive: true });
+  // Every content id inside the lesson starts with the lesson id.
+  writeFileSync(file, JSON.stringify(lesson).replaceAll("a2.u01.l01", "a2.u02.l01"));
+  editJson(dir, "course.json", (course) => {
+    course.levels[0].units[1].lessons = ["a2.u02.l01"];
+  });
+  return dir;
+}
+
+describe("finishTarget", () => {
+  it("goes to the next lesson's intro, across units", () => {
+    expect(finishTarget("a2.u01.l01", withSecondLesson())).toEqual({ href: "/a2/una-casa/info", levelCompleted: false });
+  });
+
+  it("goes to the level overview with Livello completato after the level's last lesson", () => {
+    expect(finishTarget("a2.u01.l01")).toEqual({ href: "/a2?completato=1", levelCompleted: true });
+    expect(finishTarget("a2.u02.l01", withSecondLesson())).toEqual({ href: "/a2?completato=1", levelCompleted: true });
+  });
+});
+
+describe("continueHref (Continua da dove eri)", () => {
+  it("opens the first lesson when nothing has been played", () => {
+    expect(continueHref([])).toBe("/a2/benvenuto-a-genova");
+  });
+
+  it("goes back into the most recently played lesson, completed or not: the lesson route resumes at the last step", () => {
+    const recentFirst = [{ lessonId: "a2.u02.l01" }, { lessonId: "a2.u01.l01" }];
+    expect(continueHref(recentFirst, withSecondLesson())).toBe("/a2/una-casa");
+  });
+
+  it("skips lessons the content no longer has", () => {
+    expect(continueHref([{ lessonId: "a2.u09.l09" }])).toBe("/a2/benvenuto-a-genova");
   });
 });

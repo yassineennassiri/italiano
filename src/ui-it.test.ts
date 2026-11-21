@@ -13,3 +13,28 @@ describe("ui.lesson.footerCounter (SPEC §6.2)", () => {
     expect(ui.lesson.footerCounter({ completed: 1, total: 1, points: 1 })).toBe("1 di 1 esercizio completato. 1 punto.");
   });
 });
+
+describe("ui.results (SPEC §4.4)", () => {
+  it("lists only the review pages the lesson has, with their Italian names", () => {
+    expect(ui.results.nextPages(["grammatica", "vocabolario", "cultura"])).toBe(
+      "Nelle prossime pagine trovi un riepilogo di: grammatica, vocabolario, cultura e società.",
+    );
+    expect(ui.results.nextPages(["vocabolario"])).toBe("Nelle prossime pagine trovi un riepilogo di: vocabolario.");
+  });
+
+  it("has one encouraging line per score band, and S/M on the slate panel", () => {
+    expect(ui.results.band).toEqual({
+      great: "Ottimo lavoro!",
+      good: "Buon lavoro, continua così!",
+      retry: "Riprova gli esercizi, ce la puoi fare.",
+    });
+    expect(ui.results.steps(4, 6)).toBe("Risultati della lezione: 4/6");
+  });
+});
+
+describe("ui.level.levelStatus", () => {
+  it("names the level's state and its %", () => {
+    expect(ui.level.levelStatus("in_progress", 3)).toBe("Livello: In corso · 3%");
+    expect(ui.level.levelStatus("not_started", 0)).toBe("Livello: Non iniziato · 0%");
+  });
+});

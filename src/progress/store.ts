@@ -2,9 +2,9 @@
  * Reading and writing progress in Neon (SPEC §10.2–10.4). Takes the client as
  * a parameter: the server actions pass `db()`, the database tests the `dev`
  * branch. The HTTP driver has no interactive transactions, so each write is
- * read-plan-write: one batch of reads, `planExerciseWrite`, one batch of writes.
+ * read-plan-write: one batch of reads, a pure plan (`plan.ts`), one batch of writes.
  */
-import { and, eq, min } from "drizzle-orm";
+import { and, desc, eq, min } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
 import { exerciseHashes } from "@/content/hash";
 import { loadLesson } from "@/content/load";
@@ -12,10 +12,24 @@ import type { Lesson } from "@/content/schema";
 import type { Db } from "@/db/connect";
 import { errorLog, exerciseAttempt, itemState, lessonProgress } from "@/db/schema";
 import type { SavedEntry } from "./merge";
-import { type ExerciseWrite, planExerciseWrite, restoreEntries, type StoredItemRow, type VisitWrite } from "./plan";
+import {
+  type CorrectionWrite,
+  type ExerciseWrite,
+  type FinishWrite,
+  planCorrection,
+  planExerciseWrite,
+  planFinish,
+  restoreEntries,
+  type Row,
+  type StoredItemRow,
+  type VisitWrite,
+} from "./plan";
 
 /** What a write did, and the exercise's entry as now saved (none when nothing fitting is stored). */
 export type WriteResponse = { result: "saved" | "ignored"; saved?: SavedEntry };
+
+/** What Correggi i miei errori did, and the reopened entries as now saved, by exercise id. */
+export type CorrectionResponse = { result: "saved" | "ignored"; saved?: Record<string, SavedEntry> };
 
 const storedRowColumns = {
   itemId: itemState.itemId,
@@ -29,6 +43,31 @@ const storedRowColumns = {
 
 const lessonRows = (db: Db, userId: string, lessonId: string) =>
   db.select(storedRowColumns).from(itemState).where(and(eq(itemState.userId, userId), eq(itemState.lessonId, lessonId)));
+
+/** The lesson_progress fields a plan reads. */
+const storedProgress = (db: Db, userId: string, lessonId: string) =>
+  db
+    .select({
+      status: lessonProgress.status,
+      startedAt: lessonProgress.startedAt,
+      completedAt: lessonProgress.completedAt,
+      bestPercent: lessonProgress.bestPercent,
+    })
+    .from(lessonProgress)
+    .where(and(eq(lessonProgress.userId, userId), eq(lessonProgress.lessonId, lessonId)));
+
+// The update sets also rewrite the key columns, to the values they already have.
+const upsertItemState = (db: Db, userId: string, row: Row<typeof itemState>) =>
+  db
+    .insert(itemState)
+    .values({ ...row, userId })
+    .onConflictDoUpdate({ target: [itemState.userId, itemState.itemId], set: row });
+
+const upsertProgress = (db: Db, userId: string, row: Row<typeof lessonProgress>) =>
+  db
+    .insert(lessonProgress)
+    .values({ ...row, userId })
+    .onConflictDoUpdate({ target: [lessonProgress.userId, lessonProgress.lessonId], set: row });
 
 /** The stored entries that still fit the lesson's content, each with when it was saved. */
 function savedEntries(lesson: Lesson, rows: readonly (StoredItemRow & { updatedAt: Date })[]): Map<string, SavedEntry> {
@@ -51,6 +90,27 @@ export async function loadLastLocation(db: Db, userId: string, lessonId: string)
   return row?.lastLocation ?? null;
 }
 
+/** One lesson's progress, for the level overview and Home (SPEC §3.2, §3.3). */
+export type ProgressSummary = Pick<
+  typeof lessonProgress.$inferSelect,
+  "lessonId" | "status" | "bestPercent" | "lastLocation" | "updatedAt"
+>;
+
+/** Every lesson the learner has opened, most recently changed first. */
+export async function loadProgressSummaries(db: Db, userId: string): Promise<ProgressSummary[]> {
+  return db
+    .select({
+      lessonId: lessonProgress.lessonId,
+      status: lessonProgress.status,
+      bestPercent: lessonProgress.bestPercent,
+      lastLocation: lessonProgress.lastLocation,
+      updatedAt: lessonProgress.updatedAt,
+    })
+    .from(lessonProgress)
+    .where(eq(lessonProgress.userId, userId))
+    .orderBy(desc(lessonProgress.updatedAt));
+}
+
 /**
  * Applies one learner action. "ignored" when it changes nothing, names no
  * exercise, is for since-changed content, or was already applied (a retry after
@@ -61,14 +121,10 @@ export async function loadLastLocation(db: Db, userId: string, lessonId: string)
 export async function saveExerciseWrite(db: Db, userId: string, write: ExerciseWrite, now = new Date()): Promise<WriteResponse> {
   const lesson = loadLesson(write.lessonId);
   if (!lesson) return { result: "ignored" };
-  const progressWhere = and(eq(lessonProgress.userId, userId), eq(lessonProgress.lessonId, lesson.id));
 
   const [rows, [progress], [seen], [firstCheck]] = await db.batch([
     lessonRows(db, userId, lesson.id),
-    db
-      .select({ status: lessonProgress.status, startedAt: lessonProgress.startedAt, bestPercent: lessonProgress.bestPercent })
-      .from(lessonProgress)
-      .where(progressWhere),
+    storedProgress(db, userId, lesson.id),
     db.select({ id: exerciseAttempt.id }).from(exerciseAttempt).where(eq(exerciseAttempt.id, write.eventId)),
     db
       .select({ at: min(exerciseAttempt.createdAt) })
@@ -91,21 +147,54 @@ export async function saveExerciseWrite(db: Db, userId: string, write: ExerciseW
   });
   if (!plan) return ignored();
 
-  // The update sets also rewrite the key columns, to the values they already have.
   const writes: BatchItem<"pg">[] = [
     db.insert(exerciseAttempt).values({ ...plan.attempt, userId }),
-    db
-      .insert(itemState)
-      .values({ ...plan.itemState, userId })
-      .onConflictDoUpdate({ target: [itemState.userId, itemState.itemId], set: plan.itemState }),
-    db
-      .insert(lessonProgress)
-      .values({ ...plan.progress, userId })
-      .onConflictDoUpdate({ target: [lessonProgress.userId, lessonProgress.lessonId], set: plan.progress }),
+    upsertItemState(db, userId, plan.itemState),
+    upsertProgress(db, userId, plan.progress),
   ];
   if (plan.errors.length > 0) writes.push(db.insert(errorLog).values(plan.errors.map((row) => ({ ...row, userId }))));
   await db.batch(writes as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
   return { result: "saved", saved: { entry: plan.entry, savedAt: now.toISOString() } };
+}
+
+/** A lesson-wide write's reads: the lesson, its stored rows and progress. Undefined for a lesson the content doesn't have. */
+async function readLessonState(db: Db, userId: string, lessonId: string) {
+  const lesson = loadLesson(lessonId);
+  if (!lesson) return undefined;
+  const [rows, [progress]] = await db.batch([lessonRows(db, userId, lesson.id), storedProgress(db, userId, lesson.id)]);
+  return { lesson, hashes: exerciseHashes(lesson), rows, progress };
+}
+
+/**
+ * Correggi i miei errori (SPEC §4.4): reopens the lesson's wrong and solved
+ * scorable items as stored now. "ignored" when there is nothing to reopen, so
+ * a retried request changes nothing. Either way it answers with the lesson's
+ * entries as now saved, so a retry after a lost response still settles the
+ * client's reopened entries.
+ */
+export async function saveCorrection(db: Db, userId: string, write: CorrectionWrite, now = new Date()): Promise<CorrectionResponse> {
+  const state = await readLessonState(db, userId, write.lessonId);
+  if (!state) return { result: "ignored" };
+  const before = Object.fromEntries(savedEntries(state.lesson, state.rows));
+  const plan = planCorrection({ ...state, at: write.at, now });
+  if (!plan) return { result: "ignored", saved: before };
+
+  await db.batch([
+    db.insert(exerciseAttempt).values(plan.attempts.map((row) => ({ ...row, userId }))),
+    ...plan.itemStates.map((row) => upsertItemState(db, userId, row)),
+    upsertProgress(db, userId, plan.progress),
+  ]);
+  const savedAt = now.toISOString();
+  const reopened = Object.fromEntries([...plan.entries].map(([id, entry]) => [id, { entry, savedAt }]));
+  return { result: "saved", saved: { ...before, ...reopened } };
+}
+
+/** Reaching the Finish screen completes the lesson (SPEC §4.9). */
+export async function saveFinish(db: Db, userId: string, write: FinishWrite, now = new Date()): Promise<WriteResponse> {
+  const state = await readLessonState(db, userId, write.lessonId);
+  if (!state) return { result: "ignored" };
+  await upsertProgress(db, userId, planFinish({ ...state, now }));
+  return { result: "saved" };
 }
 
 /** Records the step the learner is on, so reopening the lesson resumes there. */

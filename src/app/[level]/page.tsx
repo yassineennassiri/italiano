@@ -6,7 +6,9 @@ import { LanternaLogo } from "@/components/lanterna-logo";
 import { StatusCircle } from "@/components/status-circle";
 import type { LevelId } from "@/content/ids";
 import { loadCourse } from "@/content/load";
-import { type LessonCard, levelOverview, type UnitGroup } from "@/content/overview";
+import { LEVEL_COMPLETED_PARAM, type LessonCard, levelOverview, type UnitGroup } from "@/content/overview";
+import { type LessonCircle, levelProgress } from "@/progress/level-progress";
+import { readProgressSummaries } from "@/progress/read";
 import { ui } from "@/ui-it";
 
 export function generateStaticParams() {
@@ -18,34 +20,44 @@ export async function generateMetadata({ params }: PageProps<"/[level]">): Promi
   return overview ? { title: ui.level.pageTitle(overview.title) } : {};
 }
 
-/** The level overview (SPEC §3.3): hero, unit groups and lesson cards. Progress comes later. */
-export default function LevelPage({ params }: PageProps<"/[level]">) {
+/** The level overview (SPEC §3.3): hero, level status, unit groups and lesson cards with their status circles. */
+export default function LevelPage({ params, searchParams }: PageProps<"/[level]">) {
   // The params read sits behind Suspense, so the shared App Shell stays URL-independent.
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
       <Suspense fallback={<div className="h-44 sm:h-auto sm:aspect-[16/7] rounded-lg bg-tint" />}>
-        <LevelOverviewView params={params} />
+        <LevelOverviewView params={params} searchParams={searchParams} />
       </Suspense>
     </div>
   );
 }
 
-async function LevelOverviewView({ params }: Pick<PageProps<"/[level]">, "params">) {
+async function LevelOverviewView({ params, searchParams }: Pick<PageProps<"/[level]">, "params" | "searchParams">) {
   const overview = levelOverview((await params).level);
   if (!overview) notFound();
+  const progress = levelProgress(overview.id, await readProgressSummaries())!;
+  // Avanti on the Finish screen of the level's last lesson (SPEC §4.9).
+  const levelCompleted = (await searchParams)[LEVEL_COMPLETED_PARAM] !== undefined;
 
   return (
     <>
       <Hero levelId={overview.id} title={overview.title} />
 
-      <div className="mt-3 flex justify-end px-2">
-        <StatusCircle status="not_started" label={ui.level.levelStatus("not_started")} />
+      {levelCompleted && (
+        <p role="status" className="mt-4 rounded-lg bg-accent px-6 py-4 text-center text-xl font-bold text-foreground">
+          {ui.level.completed}
+        </p>
+      )}
+
+      <div className="mt-3 flex items-center justify-end gap-2 px-2">
+        <span className="text-sm text-muted">{ui.percent(progress.percent)}</span>
+        <StatusCircle status={progress.status} label={ui.level.levelStatus(progress.status, progress.percent)} />
       </div>
 
       <ul className="mt-4 grid grid-cols-1 gap-x-0 gap-y-8 md:grid-cols-3">
         {overview.units.map((unit, index) => (
           <li key={unit.id}>
-            <UnitColumn unit={unit} tinted={index % 2 === 0} />
+            <UnitColumn unit={unit} tinted={index % 2 === 0} circles={progress.lessons} />
           </li>
         ))}
       </ul>
@@ -79,7 +91,7 @@ function Hero({ levelId, title }: { levelId: LevelId; title: string }) {
   );
 }
 
-function UnitColumn({ unit, tinted }: { unit: UnitGroup; tinted: boolean }) {
+function UnitColumn({ unit, tinted, circles }: { unit: UnitGroup; tinted: boolean; circles: ReadonlyMap<string, LessonCircle> }) {
   return (
     <section aria-labelledby={`${unit.id}-heading`}>
       <h2 id={`${unit.id}-heading`} className="border-b border-line px-6 pb-3 text-lg text-panel">
@@ -93,7 +105,7 @@ function UnitColumn({ unit, tinted }: { unit: UnitGroup; tinted: boolean }) {
         <ul>
           {unit.lessons.map((lesson, index) => (
             <li key={lesson.id}>
-              <LessonCardView lesson={lesson} tinted={tinted === (index % 2 === 0)} />
+              <LessonCardView lesson={lesson} tinted={tinted === (index % 2 === 0)} circle={circles.get(lesson.id)} />
             </li>
           ))}
         </ul>
@@ -102,7 +114,7 @@ function UnitColumn({ unit, tinted }: { unit: UnitGroup; tinted: boolean }) {
   );
 }
 
-function LessonCardView({ lesson, tinted }: { lesson: LessonCard; tinted: boolean }) {
+function LessonCardView({ lesson, tinted, circle }: { lesson: LessonCard; tinted: boolean; circle?: LessonCircle }) {
   return (
     <Link
       href={lesson.href}
@@ -118,7 +130,7 @@ function LessonCardView({ lesson, tinted }: { lesson: LessonCard; tinted: boolea
         <span>{lesson.topic}</span>
         {lesson.grammarLabel && <span>{lesson.grammarLabel}</span>}
       </span>
-      <StatusCircle status="not_started" />
+      <StatusCircle status={circle?.status ?? "not_started"} bestPercent={circle?.bestPercent} />
     </Link>
   );
 }

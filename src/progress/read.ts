@@ -9,7 +9,18 @@ import type { Lesson } from "@/content/schema";
 import { db } from "@/db";
 import { PROFILE_ID } from "@/db/schema";
 import type { SavedEntry } from "./merge";
-import { loadLastLocation, loadLessonEntries } from "./store";
+import { loadLastLocation, loadLessonEntries, loadProgressSummaries, type ProgressSummary } from "./store";
+
+/** Every lesson's progress, most recently changed first; empty when the database is unreachable. */
+export async function readProgressSummaries(): Promise<ProgressSummary[]> {
+  await connection();
+  try {
+    return await loadProgressSummaries(db(), PROFILE_ID);
+  } catch (error) {
+    console.error("Could not load progress; every lesson shows as not started.", error);
+    return [];
+  }
+}
 
 /** The lesson's saved entries by exercise id; `loaded` is false when the database couldn't be read. */
 export async function readLessonEntries(lesson: Lesson): Promise<{ saved: Record<string, SavedEntry>; loaded: boolean }> {

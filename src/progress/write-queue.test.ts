@@ -91,3 +91,31 @@ describe("WriteQueue", () => {
     expect(seen).toEqual(["pending", "saved"]);
   });
 });
+
+describe("WriteQueue.settled", () => {
+  it("resolves at once when nothing is queued", async () => {
+    const queue = new WriteQueue(fakeServer().send);
+    await expect(queue.settled()).resolves.toBe("saved");
+  });
+
+  it("resolves once the queued writes have landed", async () => {
+    const server = fakeServer();
+    const queue = new WriteQueue(server.send);
+    queue.enqueue("a");
+    queue.enqueue("b");
+    const settled = queue.settled();
+    await vi.runAllTimersAsync();
+    await expect(settled).resolves.toBe("saved");
+    expect(server.received).toEqual(["a", "b"]);
+  });
+
+  it("resolves as offline when a write fails, rather than waiting for the retry", async () => {
+    const server = fakeServer();
+    const queue = new WriteQueue(server.send);
+    server.cut();
+    queue.enqueue("a");
+    const settled = queue.settled();
+    await vi.advanceTimersByTimeAsync(0);
+    await expect(settled).resolves.toBe("offline");
+  });
+});

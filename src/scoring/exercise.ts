@@ -44,9 +44,15 @@ export const isLockedStatus = (status: ExerciseStatus): boolean => LOCKED.includ
 /** Statuses that Correggi i miei errori can reopen. */
 const REOPENABLE: readonly ExerciseStatus[] = ["checked_wrong", "solved"];
 
+/**
+ * Wrong or solved: Correggi i miei errori reopens it. Reopening keeps the
+ * spent first Check; only Azzera (CONTEXT.md "Reset") clears an exercise.
+ */
+export const isReopenable = (state: Pick<ExerciseState, "status">): boolean => REOPENABLE.includes(state.status);
+
 /** The next state after an event. Events that don't apply to the current status are ignored. */
 export function applyEvent(state: ExerciseState, event: ExerciseEvent): ExerciseState {
-  if (event.type === "reopen") return REOPENABLE.includes(state.status) ? { ...state, status: "untouched" } : state;
+  if (event.type === "reopen") return isReopenable(state) ? { ...state, status: "untouched" } : state;
   if (isLockedStatus(state.status)) return state;
   switch (event.type) {
     case "check": {

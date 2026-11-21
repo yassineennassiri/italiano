@@ -12,7 +12,15 @@ import { databaseUrl, loadLocalEnv } from "@/db/env";
 import { migrateDatabase } from "@/db/migrate";
 import { errorLog, exerciseAttempt, itemState, lessonProgress, profile } from "@/db/schema";
 import type { ExerciseWrite } from "./plan";
-import { loadLastLocation, loadLessonEntries, saveExerciseWrite, saveVisit } from "./store";
+import {
+  loadLastLocation,
+  loadLessonEntries,
+  loadProgressSummaries,
+  saveCorrection,
+  saveExerciseWrite,
+  saveFinish,
+  saveVisit,
+} from "./store";
 
 loadLocalEnv();
 const db = connect(databaseUrl("dev"));
@@ -100,5 +108,61 @@ describe("progress store", () => {
     await saveVisit(db, user, { lessonId: LESSON, location: "esercizi/2" });
     await saveVisit(db, user, { lessonId: LESSON, location: "esercizi/4" });
     expect(await loadLastLocation(db, user, LESSON)).toBe("esercizi/4");
+  });
+
+  it("Correggi i miei errori reopens a wrong item but never a speaking exchange, and keeps its spent first Check", async () => {
+    const user = await newUser();
+    const E1 = "a2.u01.l01.s05.i01.e1";
+    await saveExerciseWrite(db, user, pick(2));
+    await saveExerciseWrite(db, user, {
+      eventId: randomUUID(),
+      lessonId: LESSON,
+      exerciseId: E1,
+      contentHash: exerciseHashes(lesson).get(E1)!,
+      at: "2026-11-20T10:01:00.000Z",
+      kind: "rate",
+      rating: "not_great",
+    });
+
+    const response = await saveCorrection(db, user, { lessonId: LESSON, at: "2026-11-20T10:02:00.000Z" });
+    expect(response.result).toBe("saved");
+    const reopened = { status: "untouched", firstCheckCorrect: false, points: 0 };
+    expect(response.saved?.[I01]?.entry).toEqual({ state: reopened, answer: null });
+
+    const entries = await loadLessonEntries(db, user, lesson);
+    expect(entries.get(I01)?.entry.state).toEqual(reopened);
+    expect(entries.get(E1)?.entry.state.status).toBe("rated_not_great");
+    const attempts = await db.select().from(exerciseAttempt).where(eq(exerciseAttempt.userId, user));
+    expect(attempts.filter((attempt) => attempt.action === "reset").map((attempt) => attempt.itemId)).toEqual([I01]);
+
+    // A retry after a lost response changes nothing, but answers with the entries as saved.
+    const retry = await saveCorrection(db, user, { lessonId: LESSON, at: "2026-11-20T10:02:00.000Z" });
+    expect(retry.result).toBe("ignored");
+    expect(retry.saved?.[I01]?.entry).toEqual({ state: reopened, answer: null });
+
+    // A right retry after the correction scores 0.
+    await saveExerciseWrite(db, user, pick(0, "2026-11-20T10:03:00.000Z"));
+    expect((await loadLessonEntries(db, user, lesson)).get(I01)?.entry.state).toEqual({
+      status: "checked_correct",
+      firstCheckCorrect: false,
+      points: 0,
+    });
+  });
+
+  it("moves the lesson not_started → in_progress → completed, and best_percent never drops", async () => {
+    const user = await newUser();
+    await saveVisit(db, user, { lessonId: LESSON, location: "esercizi/1" });
+    expect(await loadProgressSummaries(db, user)).toEqual([
+      expect.objectContaining({ lessonId: LESSON, status: "not_started", bestPercent: null, lastLocation: "esercizi/1" }),
+    ]);
+
+    await saveExerciseWrite(db, user, pick(0));
+    expect((await loadProgressSummaries(db, user))[0]).toMatchObject({ status: "in_progress", bestPercent: 14 });
+
+    await db.update(lessonProgress).set({ bestPercent: 57 }).where(eq(lessonProgress.userId, user));
+    expect((await saveFinish(db, user, { lessonId: LESSON })).result).toBe("saved");
+    const [progress] = await db.select().from(lessonProgress).where(eq(lessonProgress.userId, user));
+    expect(progress).toMatchObject({ status: "completed", lastPercent: 14, bestPercent: 57 });
+    expect(progress.completedAt).toBeInstanceOf(Date);
   });
 });
