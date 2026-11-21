@@ -105,6 +105,7 @@
             { "id": "g5", "answer": "gli" }
           ],
           "error_tags": ["article.plural_gli"],
+          "solvable": true,
           "notes": [{ "kind": "info", "text_en": "Both lo and masculine l' become gli in the plural: gli zaini, gli appartamenti." }]
         }
       ]

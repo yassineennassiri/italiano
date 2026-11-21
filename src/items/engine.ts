@@ -6,8 +6,9 @@
  */
 import { z } from "zod";
 import type { Item, Lesson } from "@/content/schema";
-import { checkDropdown, type DropdownAnswer, dropdownAnswerSchema, type DropdownItem, solveDropdown } from "./dropdown";
+import { checkDropdown, type DropdownItem } from "./dropdown";
 import type { ExerciseEntry, ExerciseOutcome } from "./entry";
+import { checkGapValues, type GappedItem, type GapsAnswer, gapsAnswerSchema, solveGaps } from "./gaps";
 import { checkMultiSelect, type MultiSelectAnswer, type MultiSelectItem, multiSelectAnswerSchema, solveMultiSelect } from "./multi-select";
 import { pickOption, type SingleChoiceAnswer, type SingleChoiceItem, singleChoiceAnswerSchema, solveSingleChoice } from "./single-choice";
 
@@ -73,10 +74,15 @@ const ENGINES: Partial<Record<Item["type"], AnyEngine>> = {
     check: (item, entry, answer) => checkMultiSelect(item, entry, answer.selected),
     solve: solveMultiSelect,
   }),
-  dropdown: eraseTypes<DropdownItem, DropdownAnswer>({
-    answerSchema: dropdownAnswerSchema,
+  dropdown: eraseTypes<DropdownItem, GapsAnswer>({
+    answerSchema: gapsAnswerSchema,
     check: (item, entry, answer) => checkDropdown(item, entry, answer.values),
-    solve: solveDropdown,
+    solve: solveGaps,
+  }),
+  text_gap: eraseTypes<GappedItem, GapsAnswer>({
+    answerSchema: gapsAnswerSchema,
+    check: (item, entry, answer) => checkGapValues(item, entry, answer.values),
+    solve: solveGaps,
   }),
 };
 

@@ -43,3 +43,18 @@ describe("the engine for dropdown", () => {
     expect(applyAction(item, NEW_ENTRY, { kind: "check", answer: "la" })).toBeUndefined();
   });
 });
+
+describe("the engine for text_gap", () => {
+  const I = "a2.u01.l01.s03.i01";
+
+  it("checks the typed values sent with Controlla", () => {
+    const item = findItem(lesson, I)!;
+    const outcome = applyAction(item, NEW_ENTRY, { kind: "check", answer: { values: { g1: "i", g2: "gli", g3: "gli", g4: "le", g5: "gli" } } })!;
+    expect(outcome.entry.state).toEqual({ status: "checked_correct", firstCheckCorrect: true, points: 1 });
+  });
+
+  it("ignores a Controlla with a value too long to be an answer", () => {
+    const item = findItem(lesson, I)!;
+    expect(applyAction(item, NEW_ENTRY, { kind: "check", answer: { values: { g1: "i".repeat(201) } } })).toBeUndefined();
+  });
+});

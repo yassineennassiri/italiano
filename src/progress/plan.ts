@@ -160,12 +160,12 @@ export function planExerciseWrite({
       createdAt: at,
     },
     errors: firstCheckWrong
-      ? outcome.errors.map(({ gapId, expected, given }) => ({
+      ? outcome.errors.map(({ gapId, expected, given, tags }) => ({
           source: "exercise" as const,
           lessonId: lesson.id,
           itemId: item.id,
           ...(gapId !== undefined && { gapId }),
-          errorTags: item.error_tags ?? [],
+          errorTags: [...(tags ?? item.error_tags ?? [])],
           expected,
           given,
           createdAt: at,

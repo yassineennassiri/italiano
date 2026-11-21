@@ -255,3 +255,25 @@ describe("planExerciseWrite for dropdown (s02.i01)", () => {
     ]);
   });
 });
+
+describe("planExerciseWrite for text_gap (s03.i01)", () => {
+  const ID = "a2.u01.l01.s03.i01";
+
+  it("logs an accent-only miss as spelling.accent, and other wrong gaps with the item's tags", () => {
+    const dir = copyContent();
+    editJson(dir, LESSON_FILE, (lesson) => {
+      lesson.steps[2].items[0].gaps[0].answer = "è";
+    });
+    const lesson = loadLesson("a2.u01.l01", dir)!;
+    const hashes = exerciseHashes(lesson);
+    const values = { g1: "e", g2: "lo", g3: "gli", g4: "le", g5: "gli" };
+    const action = { eventId: "evt-5", lessonId: "a2.u01.l01", exerciseId: ID, contentHash: hashes.get(ID)!, at: AT, kind: "check", answer: { values } } as const;
+    const plan = planExerciseWrite({ lesson, hashes, rows: [], progress: undefined, firstCheckAt: null, now: NOW, action })!;
+    expect(plan.itemState).toMatchObject({ status: "checked_wrong", points: 0 });
+    expect(plan.errors).toEqual([
+      expect.objectContaining({ gapId: "g1", errorTags: ["spelling.accent"], expected: "è", given: "e" }),
+      expect.objectContaining({ gapId: "g2", errorTags: ["article.plural_gli"], expected: "gli", given: "lo" }),
+    ]);
+    expect(plan.attempt.result).toEqual({ g1: "accent_only", g2: "wrong", g3: "correct", g4: "correct", g5: "correct" });
+  });
+});

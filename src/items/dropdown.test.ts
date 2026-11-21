@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { loadLesson } from "@/content/load";
-import { checkDropdown, currentValues, type DropdownItem, gapLooks, solveDropdown } from "./dropdown";
+import { checkDropdown, type DropdownItem } from "./dropdown";
+import { currentValues, gapLooks, solveGaps as solveDropdown } from "./gaps";
 import { NEW_ENTRY } from "./entry";
 
 /** "{{g1}} valigia, {{g2}} zaino, {{g3}} ombrello e {{g4}} computer." from the example lesson: la, lo, l', il. */
