@@ -53,7 +53,7 @@ export class MemoryStore<W> implements WriteStore<W> {
 
 /** What the tabs sharing a durable store tell each other. */
 export type TabMessage<R> =
-  /** A tab stored a write: the flushing tab sends it. */
+  /** A tab stored a write, or opened with stored writes: the flushing tab sends them, or says it is waiting. */
   | { type: "added" }
   /** The flushing tab got the server's answer to a write. */
   | { type: "landed"; id: string; response: R }
@@ -70,6 +70,7 @@ export type Tabs<R> = {
   listen: (receive: (message: TabMessage<R>) => void) => () => void;
 };
 
+/** What a queue needs: how to send a write, what to do with the answer, and where writes wait. */
 export type WriteQueueOptions<W, R> = {
   /** Resolves with the server's answer once the write is stored there; throws when it should be retried. */
   send: (write: W) => Promise<R>;
@@ -79,23 +80,24 @@ export type WriteQueueOptions<W, R> = {
   restore?: (write: W) => void;
   /** The durable store, or undefined without IndexedDB. Writes wait in memory until it opens. */
   store?: Promise<WriteStore<W> | undefined>;
-  /** The other tabs, for sharing a durable store; undefined without Web Locks or BroadcastChannel. */
+  /** The other tabs, for sharing a durable store. Without it, a durable store is this tab's alone. */
   tabs?: Tabs<R>;
 };
 
 /** Writes waiting to be sent, in order, with the footer status that goes with them. */
 export class WriteQueue<W, R = void> {
-  /** The writes this tab queued or restored that haven't landed yet. */
-  private readonly known = new Map<string, W>();
+  /** The writes this tab queued or restored that haven't landed yet, oldest first. */
+  private readonly unlanded = new Map<string, W>();
   private readonly listeners = new Set<() => void>();
-  private readonly store: Promise<WriteStore<W>>;
+  /** Becomes a memory store if IndexedDB fails after opening. */
+  private store: Promise<WriteStore<W>>;
   private durable = false;
   /** True in the one tab that flushes the store. */
   private leader = false;
   private tabs: Tabs<R> | undefined;
   private flushing = false;
   /** A write was stored during a flush: look again before stopping. */
-  private again = false;
+  private rescan = false;
   private retryTimer: ReturnType<typeof setTimeout> | undefined;
   /** A failed write waits for its retry, in this tab or in the flushing tab. */
   private waiting = false;
@@ -103,7 +105,8 @@ export class WriteQueue<W, R = void> {
   private unreachable = false;
   private current: SyncStatus = "saved";
   private closed = false;
-  private stop: (() => void)[] = [];
+  /** Stop listening to the other tabs, and release the lock. */
+  private cleanups: (() => void)[] = [];
 
   constructor(private readonly options: WriteQueueOptions<W, R>) {
     const store = options.store ?? Promise.resolve(undefined);
@@ -127,21 +130,9 @@ export class WriteQueue<W, R = void> {
   /** Stores a write, then sends it, unless a failed write is already waiting for its retry. */
   enqueue(write: W): void {
     const id = crypto.randomUUID();
-    this.known.set(id, write);
+    this.unlanded.set(id, write);
     this.update();
-    void this.store
-      .then((store) => store.add({ id, write }))
-      .then(
-        () => {
-          if (this.leader) this.kick();
-          else this.tabs?.post({ type: "added" });
-        },
-        (error: unknown) => {
-          console.error("A progress write could not be stored, so it is not sent.", write, error);
-          this.known.delete(id);
-          this.update();
-        },
-      );
+    void this.store.then((store) => this.add(store, { id, write }));
   }
 
   /**
@@ -164,7 +155,7 @@ export class WriteQueue<W, R = void> {
 
   /** The database couldn't be read: show Offline until a write gets through. */
   reportUnreachable(): void {
-    if (this.known.size > 0) return;
+    if (this.unlanded.size > 0) return;
     this.unreachable = true;
     this.update();
   }
@@ -174,12 +165,12 @@ export class WriteQueue<W, R = void> {
     if (this.leader && this.retryTimer !== undefined) void this.flush();
   }
 
-  /** The tab is closing: stop flushing and hand the lock to another tab. For tests; a closed tab releases it anyway. */
+  /** The tab is closing: stop flushing and hand the lock to another tab. A closed tab releases it anyway; tests close explicitly. */
   close(): void {
     this.closed = true;
     this.leader = false;
     clearTimeout(this.retryTimer);
-    for (const stop of this.stop) stop();
+    for (const cleanup of this.cleanups.splice(0)) cleanup();
   }
 
   /** Restores the stored writes, then flushes them, or waits for the lock when other tabs share the store. */
@@ -188,8 +179,8 @@ export class WriteQueue<W, R = void> {
     this.durable = store.durable;
     const stored = await store.list().catch(() => []);
     for (const { id, write } of stored) {
-      if (this.closed || this.known.has(id)) continue;
-      this.known.set(id, write);
+      if (this.closed || this.unlanded.has(id)) continue;
+      this.unlanded.set(id, write);
       this.options.restore?.(write);
     }
     this.update();
@@ -197,11 +188,13 @@ export class WriteQueue<W, R = void> {
     if (!store.durable || !tabs) return this.lead();
     if (this.closed) return;
     this.tabs = tabs;
-    this.stop.push(tabs.listen((message) => this.receive(message)));
+    this.cleanups.push(tabs.listen((message) => this.receive(message)));
+    // The flushing tab may already be waiting for a retry: it answers so.
+    if (this.unlanded.size > 0) tabs.post({ type: "added" });
     tabs.lock(
       () =>
         new Promise<void>((release) => {
-          this.stop.push(release);
+          this.cleanups.push(release);
           if (this.closed) release();
           else this.lead();
         }),
@@ -209,6 +202,7 @@ export class WriteQueue<W, R = void> {
   }
 
   private lead(): void {
+    if (this.closed) return;
     this.leader = true;
     // Whoever flushed before is gone: nothing waits for its retry any more.
     this.tabs?.post({ type: "waiting", waiting: false });
@@ -234,6 +228,37 @@ export class WriteQueue<W, R = void> {
     }
   }
 
+  /** Stores a write, then has it sent: by this tab when it flushes, otherwise by the flushing tab. */
+  private async add(store: WriteStore<W>, queued: Queued<W>): Promise<void> {
+    try {
+      await store.add(queued);
+    } catch (error) {
+      // The write is in `unlanded`, so the memory store gets it.
+      this.storeFailed(error);
+    }
+    if (this.leader) this.kick();
+    else this.tabs?.post({ type: "added" });
+  }
+
+  /**
+   * IndexedDB failed after opening (storage full, or closed for a newer
+   * version of the app): from now on this tab keeps its writes in memory and
+   * flushes them itself (M1), starting with the ones it hasn't seen land.
+   */
+  private storeFailed(error: unknown): void {
+    if (!this.durable) return;
+    console.error("IndexedDB failed: this tab keeps its progress writes in memory from now on.", error);
+    const memory = new MemoryStore<W>();
+    for (const [id, write] of this.unlanded) void memory.add({ id, write });
+    this.store = Promise.resolve(memory);
+    this.durable = false;
+    for (const cleanup of this.cleanups.splice(0)) cleanup();
+    this.tabs = undefined;
+    this.waiting = false;
+    this.leader = true;
+    this.update();
+  }
+
   /** Flushes, unless a retry is scheduled: new writes wait for it rather than hammering a dead network. */
   private kick(): void {
     if (this.retryTimer === undefined) void this.flush();
@@ -241,18 +266,26 @@ export class WriteQueue<W, R = void> {
 
   private async flush(): Promise<void> {
     if (this.flushing) {
-      this.again = true;
+      this.rescan = true;
       return;
     }
     this.flushing = true;
     clearTimeout(this.retryTimer);
     this.retryTimer = undefined;
     this.setWaiting(false);
-    const store = await this.store;
     try {
       do {
-        this.again = false;
-        for (let [head] = await store.list(); head && !this.closed; [head] = await store.list()) {
+        this.rescan = false;
+        while (!this.closed) {
+          const store = await this.store;
+          let head: Queued<W> | undefined;
+          try {
+            [head] = await store.list();
+          } catch (error) {
+            this.storeFailed(error);
+            continue;
+          }
+          if (!head) break;
           let response: R;
           try {
             response = await this.options.send(head.write);
@@ -263,11 +296,18 @@ export class WriteQueue<W, R = void> {
             this.setWaiting(true);
             return;
           }
-          await store.remove(head.id);
+          const removed = await store.remove(head.id).then(
+            () => true,
+            (error: unknown) => {
+              console.error("A sent progress write could not be removed from IndexedDB.", error);
+              return false;
+            },
+          );
           this.tabs?.post({ type: "landed", id: head.id, response });
           this.land(head.id, response);
+          if (!removed) this.storeFailed(undefined);
         }
-      } while (this.again && !this.closed);
+      } while (this.rescan && !this.closed);
     } finally {
       this.flushing = false;
     }
@@ -275,9 +315,9 @@ export class WriteQueue<W, R = void> {
 
   /** The server answered a write: settle it if this tab knows it. */
   private land(id: string, response: R): void {
-    const write = this.known.get(id);
+    const write = this.unlanded.get(id);
     if (write === undefined) return;
-    this.known.delete(id);
+    this.unlanded.delete(id);
     this.unreachable = false;
     this.options.landed?.(write, response);
     this.update();
@@ -291,10 +331,13 @@ export class WriteQueue<W, R = void> {
     this.update();
   }
 
-  /** "saved" with nothing of this tab's queued, the Offline status while a failed write waits, undefined while writes are in flight. */
+  /**
+   * The Offline status while a failed write waits (in IndexedDB, whichever tab
+   * made it), "saved" with nothing of this tab's queued, undefined while writes are in flight.
+   */
   private idleStatus(): Exclude<SyncStatus, "pending"> | undefined {
-    if (this.known.size === 0) return "saved";
     if (this.waiting) return this.durable ? "stored" : "offline";
+    if (this.unlanded.size === 0) return "saved";
     return undefined;
   }
 

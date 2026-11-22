@@ -34,10 +34,15 @@ type Rejected = { result: "rejected" };
 /** The server's answer to a progress write; "rejected" is malformed input, dropped rather than retried. */
 export type ProgressResponse = WriteResponse | CorrectionResponse | ResetResponse | Rejected;
 
+/** The entries and resets this tab shows over the page's saved entries, and the subscribers told of each change. */
 export class LocalProgress {
   private readonly entries = new Map<string, LocalEntry>();
   /** The resets this tab shows, oldest first. */
   private readonly resets: { scope: ResetScope; local: LocalReset }[] = [];
+  /** How many restored resets lead `resets`: they are older than this tab's own. */
+  private restoredResets = 0;
+  /** Exercises the learner changed in this tab: an older, restored write doesn't cover them. */
+  private readonly changedHere = new Set<string>();
   /** The reset each reset write shows: the queue hands back the write object it was given. */
   private readonly resetOf = new WeakMap<ProgressWrite, LocalReset>();
   private readonly listeners = new Set<() => void>();
@@ -60,20 +65,36 @@ export class LocalProgress {
     return currentEntry(this.entries.get(exerciseId), saved, reset);
   }
 
-  /** Shows a write's change until the server answers it: a new write, or one restored after a reload. */
+  /** Shows a new write's change until the server answers it. */
   show(write: ProgressWrite): void {
+    this.apply(write, false);
+  }
+
+  /**
+   * Shows a write restored from IndexedDB after a reload, until the server
+   * answers it. It is older than anything the learner did in this tab, which
+   * it doesn't cover: the restore finishes a moment after the page loads.
+   */
+  restore(write: ProgressWrite): void {
+    this.apply(write, true);
+  }
+
+  private apply(write: ProgressWrite, restored: boolean): void {
     switch (write.type) {
       case "exercise":
-        this.changeLocally(write.exercise.exerciseId, write.entry);
+        this.changeLocally(write.exercise.exerciseId, write.entry, restored);
         break;
       case "correction":
-        for (const [exerciseId, entry] of Object.entries(write.reopened)) this.changeLocally(exerciseId, entry);
+        for (const [exerciseId, entry] of Object.entries(write.reopened)) this.changeLocally(exerciseId, entry, restored);
         break;
       case "reset": {
         const scope = resetScope(write.reset);
-        for (const exerciseId of [...this.entries.keys()]) if (inResetScope(scope, exerciseId)) this.entries.delete(exerciseId);
+        for (const exerciseId of [...this.entries.keys()]) {
+          if (inResetScope(scope, exerciseId) && !(restored && this.changedHere.has(exerciseId))) this.entries.delete(exerciseId);
+        }
         const local: LocalReset = { resetAt: null };
-        this.resets.push({ scope, local });
+        if (restored) this.resets.splice(this.restoredResets++, 0, { scope, local });
+        else this.resets.push({ scope, local });
         this.resetOf.set(write, local);
         break;
       }
@@ -121,9 +142,11 @@ export class LocalProgress {
   }
 
   /** Shows `entry` for the exercise until the server answers the write that goes with it. */
-  private changeLocally(exerciseId: string, entry: ExerciseEntry): void {
+  private changeLocally(exerciseId: string, entry: ExerciseEntry, restored: boolean): void {
     const local = this.entries.get(exerciseId);
-    this.entries.set(exerciseId, { entry, pending: (local?.pending ?? 0) + 1, savedAt: local?.savedAt ?? null });
+    const newer = restored && this.changedHere.has(exerciseId) ? local?.entry : undefined;
+    if (!restored) this.changedHere.add(exerciseId);
+    this.entries.set(exerciseId, { entry: newer ?? entry, pending: (local?.pending ?? 0) + 1, savedAt: local?.savedAt ?? null });
   }
 
   /** Settles the local entry with the server's saved entry: none when nothing fitting is stored, or the write was rejected. */

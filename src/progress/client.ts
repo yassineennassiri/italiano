@@ -59,17 +59,22 @@ function browserTabs(): Tabs<ProgressResponse> | undefined {
   };
 }
 
-const inBrowser = typeof window !== "undefined";
+const tabs = typeof window === "undefined" ? undefined : browserTabs();
 
+/**
+ * Every progress write of this tab. IndexedDB only where Web Locks and
+ * BroadcastChannel let one tab flush it; elsewhere, and on the server, writes
+ * wait in memory (M1).
+ */
 export const progressQueue = new WriteQueue<ProgressWrite, ProgressResponse>({
   send,
   landed: (write, response) => progress.landed(write, response),
-  restore: (write) => progress.show(write),
-  store: inBrowser ? openIndexedDbStore(browserIndexedDb()) : undefined,
-  tabs: inBrowser ? browserTabs() : undefined,
+  restore: (write) => progress.restore(write),
+  store: tabs ? openIndexedDbStore(browserIndexedDb()) : undefined,
+  tabs,
 });
 
-if (inBrowser) window.addEventListener("online", () => progressQueue.online());
+if (typeof window !== "undefined") window.addEventListener("online", () => progressQueue.online());
 
 /** Shows a write's change now and queues it. */
 function submit(write: ProgressWrite): void {

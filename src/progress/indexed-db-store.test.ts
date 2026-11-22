@@ -58,3 +58,16 @@ describe("openIndexedDbStore", () => {
     await expect(openIndexedDbStore(failing)).resolves.toBeUndefined();
   });
 });
+
+describe("openIndexedDbStore while an older tab holds the database", () => {
+  it("is undefined rather than waiting for the other tab", async () => {
+    const blocked = {
+      open: () => {
+        const request = {} as { onblocked?: () => void };
+        setTimeout(() => request.onblocked?.());
+        return request;
+      },
+    } as unknown as globalThis.IDBFactory;
+    await expect(openIndexedDbStore(blocked)).resolves.toBeUndefined();
+  });
+});

@@ -66,7 +66,18 @@ export function openIndexedDbStore<W>(factory: IDBFactory | undefined): Promise<
       const store = request.result.createObjectStore(STORE, { keyPath: "seq", autoIncrement: true });
       store.createIndex("id", "id", { unique: true });
     };
-    request.onsuccess = () => resolve(new IndexedDbStore<W>(request.result));
-    request.onerror = () => resolve(undefined);
+    let settled = false;
+    const settle = (store: WriteStore<W> | undefined) => {
+      settled = true;
+      resolve(store);
+    };
+    request.onsuccess = () => {
+      // Opened after all, once blocking was given up on: this tab already uses memory.
+      if (settled) request.result.close();
+      else settle(new IndexedDbStore<W>(request.result));
+    };
+    request.onerror = () => settle(undefined);
+    // A tab of an older version still holds the database open: don't wait for it.
+    request.onblocked = () => settle(undefined);
   });
 }

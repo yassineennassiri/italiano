@@ -83,6 +83,29 @@ describe("LocalProgress", () => {
     expect(progress.entryOf(I01, pageSaved)).toEqual(wrong);
   });
 
+  it("keeps an answer given while the stored writes were still being read, over the older stored one", () => {
+    const progress = new LocalProgress();
+    const fresh = exerciseWrite(I01, right);
+    const stored = exerciseWrite(I01, wrong);
+    progress.show(fresh);
+    progress.restore(stored);
+    expect(progress.entryOf(I01, undefined)).toEqual(right);
+
+    // Both writes are on the way: the answer shows until the last one is answered.
+    progress.landed(stored, { result: "saved", saved: { entry: wrong, savedAt: "2026-11-22T10:00:01.000Z" } });
+    expect(progress.entryOf(I01, undefined)).toEqual(right);
+    progress.landed(fresh, { result: "saved", saved: { entry: right, savedAt: "2026-11-22T10:00:02.000Z" } });
+    expect(progress.entryOf(I01, undefined)).toEqual(right);
+  });
+
+  it("a restored Azzera doesn't hide an answer given since the reload", () => {
+    const progress = new LocalProgress();
+    progress.show(exerciseWrite(I01, right));
+    progress.restore({ type: "reset", reset: { scope: "lesson", lessonId: LESSON, at: "2026-11-22T09:30:00.000Z" } });
+    expect(progress.entryOf(I01, pageSaved)).toEqual(right);
+    expect(progress.entryOf(I02, pageSaved).state.status).toBe("untouched");
+  });
+
   it("tells subscribers about every change", () => {
     const progress = new LocalProgress();
     let calls = 0;
@@ -102,7 +125,7 @@ function visit(browser: IDBFactory, send: (write: ProgressWrite) => Promise<Prog
   const queue = new WriteQueue<ProgressWrite, ProgressResponse>({
     send,
     landed: (write, response) => progress.landed(write, response),
-    restore: (write) => progress.show(write),
+    restore: (write) => progress.restore(write),
     store: openIndexedDbStore(browser),
   });
   /** Like `submitAction`: shows the change, then queues its write. */

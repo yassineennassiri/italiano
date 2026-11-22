@@ -331,3 +331,83 @@ describe("WriteQueue with two tabs", () => {
     expect(second.status).toBe("saved");
   });
 });
+
+describe("WriteQueue when IndexedDB fails after opening", () => {
+  /** A durable store that starts failing, as when it is full or closed for a newer version of the app. */
+  class FailingStore extends DurableStore {
+    failing = false;
+    override async add(queued: Queued<string>) {
+      if (this.failing) throw new DOMException("The database connection is closing.", "InvalidStateError");
+      return super.add(queued);
+    }
+    override async list() {
+      if (this.failing) throw new DOMException("The database connection is closing.", "InvalidStateError");
+      return super.list();
+    }
+  }
+
+  it("keeps the write in memory and still sends it", async () => {
+    const store = new FailingStore();
+    const server = fakeServer();
+    const queue = new WriteQueue({ send: server.send, store: Promise.resolve(store), tabs: fakeBrowser().tabs() });
+    await vi.advanceTimersByTimeAsync(0);
+    store.failing = true;
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    queue.enqueue("a");
+    await vi.advanceTimersByTimeAsync(0);
+    expect(server.received).toEqual(["a"]);
+    expect(queue.status).toBe("saved");
+
+    // From now on its writes wait in memory: Offline: non salvato.
+    server.cut();
+    queue.enqueue("b");
+    await vi.advanceTimersByTimeAsync(0);
+    expect(queue.status).toBe("offline");
+  });
+
+  it("goes on flushing from memory when reading the store fails during a retry", async () => {
+    const store = new FailingStore();
+    const server = fakeServer();
+    server.cut();
+    const queue = new WriteQueue({ send: server.send, store: Promise.resolve(store), tabs: fakeBrowser().tabs() });
+    queue.enqueue("a");
+    await vi.advanceTimersByTimeAsync(0);
+    expect(queue.status).toBe("stored");
+
+    store.failing = true;
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    server.restore();
+    queue.online();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(server.received).toEqual(["a"]);
+    expect(queue.status).toBe("saved");
+  });
+});
+
+describe("WriteQueue status across tabs", () => {
+  it("a tab opened while the flushing tab waits for its retry says Offline: salvato su questo computer", async () => {
+    const browser = fakeBrowser();
+    const server = fakeServer();
+    server.cut();
+    const first = new WriteQueue({ send: server.send, store: Promise.resolve(browser.store), tabs: browser.tabs() });
+    first.enqueue("a");
+    await vi.advanceTimersByTimeAsync(0);
+
+    const second = new WriteQueue({ send: server.send, store: Promise.resolve(browser.store), tabs: browser.tabs() });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(second.status).toBe("stored");
+  });
+
+  it("the flushing tab says Offline: salvato su questo computer while another tab's write waits", async () => {
+    const browser = fakeBrowser();
+    const server = fakeServer();
+    server.cut();
+    const first = new WriteQueue({ send: server.send, store: Promise.resolve(browser.store), tabs: browser.tabs() });
+    const second = new WriteQueue({ send: server.send, store: Promise.resolve(browser.store), tabs: browser.tabs() });
+    await vi.advanceTimersByTimeAsync(0);
+    second.enqueue("b");
+    await vi.advanceTimersByTimeAsync(0);
+    expect(first.status).toBe("stored");
+  });
+});

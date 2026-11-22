@@ -15,7 +15,7 @@ export function SyncIndicator() {
     () => "saved" as const,
   );
   return (
-    <span role="status" aria-live="polite" className={status === "offline" ? "font-semibold text-bad" : status === "stored" ? "font-semibold" : undefined}>
+    <span role="status" aria-live="polite" className={status === "offline" ? "font-semibold text-bad" : undefined}>
       {ui.footer.sync[status]}
     </span>
   );

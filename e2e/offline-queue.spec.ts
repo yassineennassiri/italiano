@@ -20,12 +20,16 @@ async function blockWrites(context: BrowserContext): Promise<() => Promise<void>
   return () => context.unroute("**/*", handler);
 }
 
+/** Step 1's first item, a single choice: its right option. */
+const rightAnswer = (page: Page) =>
+  page.locator('section[data-item-id="a2.u01.l01.s01.i01"]').getByRole("button", { name: "La padrona di casa", exact: true });
+
 const syncStatus = (page: Page, status: keyof typeof ui.footer.sync) => expect(shownText(page, ui.footer.sync[status])).toBeVisible();
 
 test("an answer given offline survives a reload, shows in a second tab, and is sent once when back online", async ({ page, context }) => {
   await resetLesson(page, LESSON);
   await page.goto(STEP);
-  const option = page.locator('section[data-item-id="a2.u01.l01.s01.i01"]').getByRole("button", { name: "La padrona di casa", exact: true });
+  const option = rightAnswer(page);
   await hydrated(option);
   await expectCounter(page, 0, 3, 0);
 
@@ -75,7 +79,7 @@ test("without IndexedDB, an answer given offline waits in memory and the footer 
   );
   await resetLesson(page, LESSON);
   await page.goto(STEP);
-  const option = page.locator('section[data-item-id="a2.u01.l01.s01.i01"]').getByRole("button", { name: "La padrona di casa", exact: true });
+  const option = rightAnswer(page);
   await hydrated(option);
 
   const unblock = await blockWrites(context);
