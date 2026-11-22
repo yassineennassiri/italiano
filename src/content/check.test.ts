@@ -58,6 +58,19 @@ describe("checkContent", () => {
     ]);
   });
 
+  it("reports a word_bank whose bank can't fill every gap with its answer", () => {
+    const dir = copyContent();
+    const lesson2 = "levels/a2/units/01-arrivo-a-genova/lessons/02-la-casa-della-signora-pina.json";
+    editJson(dir, lesson2, (lesson) => {
+      // steps[8] is "Un messaggio a casa": the answers need un ×3, una ×2 and un' once.
+      lesson.steps[8].items[0].bank = ["un", "uno", "una", "una", "un"];
+    });
+    expect(checkContent(dir)).toEqual([
+      `${lesson2}: steps[8].items[0].bank: the answers need "un" 3 times but the bank holds it 2 times`,
+      `${lesson2}: steps[8].items[0].bank: the answers need "un'" 1 time but the bank holds it 0 times`,
+    ]);
+  });
+
   it("reports a lesson whose last step has no parla item", () => {
     const dir = copyContent();
     editJson(dir, LESSON_FILE, (lesson) => {

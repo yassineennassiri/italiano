@@ -11,6 +11,7 @@ import type { Item } from "@/content/schema";
 import { applyEvent } from "@/scoring/exercise";
 import { type ExerciseEntry, type ExerciseOutcome, isLocked } from "./entry";
 import type { InputLook } from "./input-look";
+import { seededRandom, shuffledIndexes } from "./shuffle";
 
 export type WordOrderItem = Pick<Extract<Item, { type: "word_order" }>, "id" | "tiles" | "accept" | "solvable">;
 
@@ -26,27 +27,6 @@ type Entry = ExerciseEntry<WordOrderAnswer>;
 
 /** The placement at the last Check or Solve; none before the first. */
 const checkedOf = (entry: Entry): number[] => (entry.state.status === "untouched" ? [] : (entry.answer?.placed ?? []));
-
-/** FNV-1a: a 32-bit hash of the item id, the same on every computer. */
-function seedOf(id: string): number {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < id.length; i++) {
-    hash ^= id.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  return hash >>> 0;
-}
-
-/** mulberry32: a seeded random number generator of numbers in [0, 1). */
-function seededRandom(seed: number): () => number {
-  let state = seed;
-  return () => {
-    state = (state + 0x6d2b79f5) | 0;
-    let t = Math.imul(state ^ (state >>> 15), 1 | state);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 /** The sequences Check accepts: the tiles' own order, then each `accept` alternative. */
 const solutions = (item: WordOrderItem): readonly (readonly string[])[] => [item.tiles, ...(item.accept ?? [])];
@@ -83,14 +63,10 @@ function nextOrder(order: readonly number[]): number[] | undefined {
  * solution are the tiles shown solved.
  */
 export function shuffledTiles(item: WordOrderItem): number[] {
-  const random = seededRandom(seedOf(item.id));
+  const random = seededRandom(item.id);
   const indexes = item.tiles.map((_, index) => index);
   for (let attempt = 0; attempt < MAX_SHUFFLES; attempt++) {
-    const order = [...indexes];
-    for (let i = order.length - 1; i > 0; i--) {
-      const j = Math.floor(random() * (i + 1));
-      [order[i], order[j]] = [order[j], order[i]];
-    }
+    const order = shuffledIndexes(indexes.length, random);
     if (!isSolution(item, order)) return order;
   }
   let order: number[] | undefined = indexes;

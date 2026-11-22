@@ -16,6 +16,7 @@ import { StepCounterText, StepProgress } from "@/components/step-progress";
 import { StepInstruction } from "@/components/step-instruction";
 import { StepReading } from "@/components/step-reading";
 import { TextGapItem } from "@/components/text-gap-item";
+import { WordBankItem } from "@/components/word-bank-item";
 import { WordOrderItem } from "@/components/word-order-item";
 import { clipLines } from "@/content/clip";
 import { exerciseHashes } from "@/content/hash";
@@ -125,6 +126,8 @@ function ItemInteraction({
       return <DropdownItem item={item} notes={notes} />;
     case "text_gap":
       return <TextGapItem item={item} notes={notes} />;
+    case "word_bank":
+      return <WordBankItem item={item} notes={notes} />;
     case "word_order":
       return <WordOrderItem item={item} notes={notes} />;
     case "speak_rate": {

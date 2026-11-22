@@ -77,6 +77,29 @@ describe("the engine for word_order", () => {
   });
 });
 
+describe("the engine for word_bank", () => {
+  const lesson2 = loadLesson("a2.u01.l02")!;
+  const I = "a2.u01.l02.s09.i01";
+  const RIGHT = { g1: "una", g2: "un", g3: "un", g4: "una", g5: "un'", g6: "un" };
+
+  it("checks the words sent with Controlla and solves the item", () => {
+    const item = findExercise(lesson2, I)!;
+    expect(item.item.type).toBe("word_bank");
+    expect(applyAction(item, NEW_ENTRY, { kind: "check", answer: { values: RIGHT } })!.entry.state).toEqual({
+      status: "checked_correct",
+      firstCheckCorrect: true,
+      points: 1,
+    });
+    expect(applyAction(item, NEW_ENTRY, { kind: "solve" })!.entry.answer).toEqual({ values: RIGHT });
+  });
+
+  it("ignores a Controlla with a word the bank doesn't hold, and restores stored words", () => {
+    const item = findExercise(lesson2, I)!;
+    expect(applyAction(item, NEW_ENTRY, { kind: "check", answer: { values: { ...RIGHT, g6: "uno", g2: "uno" } } })).toBeUndefined();
+    expect(parseAnswer(item, { values: { g1: "una" } })).toEqual({ answer: { values: { g1: "una" } } });
+  });
+});
+
 describe("the engine for image_choice", () => {
   const lesson2 = loadLesson("a2.u01.l02")!;
   const SPECCHIO = "a2.u01.l02.s08.i01";

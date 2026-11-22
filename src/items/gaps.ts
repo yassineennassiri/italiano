@@ -1,5 +1,5 @@
 /**
- * Items with gaps (dropdown, text_gap; later word_bank, audio_gap), checked
+ * Items with gaps (dropdown, text_gap, word_bank; later audio_gap), checked
  * together with Controlla (SPEC §5.1). All right: green, a point if it was the
  * first Check, and the item locks. Otherwise right gaps turn green and lock,
  * wrong gaps turn red and stay editable (editing one clears its red), for a

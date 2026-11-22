@@ -11,10 +11,10 @@ import { ItemImage } from "./media-frame";
 import { ItemPrompt } from "./prompt-bubble";
 import { useExercise } from "./step-progress";
 
-type GappedContent = Extract<Item, { type: "dropdown" | "text_gap" }>;
+type GappedContent = Extract<Item, { type: "dropdown" | "text_gap" | "word_bank" }>;
 
-/** The input classes for each gap look. */
-const GAP_INPUT_CLASSES: Partial<Record<GapView["look"], string>> = {
+/** The input classes for each gap look; word_bank's filled gaps share them. */
+export const GAP_INPUT_CLASSES: Partial<Record<GapView["look"], string>> = {
   idle: "border-brand bg-background text-brand",
   correct: "border-ok bg-ok text-white",
   wrong: "border-bad bg-bad text-white",
@@ -24,7 +24,7 @@ const GAP_INPUT_CLASSES: Partial<Record<GapView["look"], string>> = {
  * One gapped item's state: its values (the last Check's, with this tab's edits
  * on top), each gap's look, and the actions. Edits are cleared by Check and Solve.
  */
-export function useGappedItem(item: GappedContent & GappedItem, mode: GapMode) {
+export function useGappedItem(item: Exclude<GappedContent, { type: "word_bank" }> & GappedItem, mode: GapMode) {
   const [entry, dispatch] = useExercise(item);
   const current = entry as ExerciseEntry<GapsAnswer>;
   const [edits, setEdits] = useState<GapValues>({});

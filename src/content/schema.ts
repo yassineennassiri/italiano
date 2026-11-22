@@ -231,6 +231,18 @@ function checkAnswerIndex(answer: number, options: string[], path: PropertyKey[]
   }
 }
 
+const times = (count: number) => `${count} ${count === 1 ? "time" : "times"}`;
+
+/** A word_bank's bank must hold each answer as many times as the gaps need it, so Solve can fill them from it. */
+function checkBankHoldsAnswers(item: { bank: string[]; gaps: { answer: string }[] }, ctx: IssueSink) {
+  const needed = new Map<string, number>();
+  for (const gap of item.gaps) needed.set(gap.answer, (needed.get(gap.answer) ?? 0) + 1);
+  for (const [word, count] of needed) {
+    const held = item.bank.filter((tile) => tile === word).length;
+    if (held < count) report(ctx, ["bank"], `the answers need "${word}" ${times(count)} but the bank holds it ${times(held)}`);
+  }
+}
+
 export const itemSchema = itemVariants.superRefine((item, ctx) => {
   if ("text" in item && "gaps" in item) checkGapMarkers(item, ctx);
   switch (item.type) {
@@ -240,6 +252,9 @@ export const itemSchema = itemVariants.superRefine((item, ctx) => {
           report(ctx, ["gaps", i, "answer"], `answer "${gap.answer}" is not one of the options`);
         }
       });
+      break;
+    case "word_bank":
+      checkBankHoldsAnswers(item, ctx);
       break;
     case "image_choice":
       // The image is the question (SPEC §5.2.6).
