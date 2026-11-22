@@ -18,4 +18,4 @@ The user is a product owner and may answer from the Claude app on their phone, i
    - SPEC: a `### 14.N` section for the milestone, a new numbered `## Decision log (M<n> grilling, <date>)` section at the end of the decision logs, and changes in the sections each decision touches.
    - `CONTEXT.md` for new or sharpened terms, and ADRs only when `domain-modeling` says one is earned.
 4. When the user confirms you've reached a shared understanding, put the doc changes on a branch and open a PR (`docs/agents/workflow-notes.md`; in a cloud session use the `gh api` commands under "Cloud sessions"). Ask before merging.
-5. Then suggest `/to-tickets M<n>` to turn the milestone into issues.
+5. End with the **Next:** line from `CLAUDE.md` ("Always end with what's next"): merge the doc PR, then `/to-tickets M<n>`.

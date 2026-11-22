@@ -4,7 +4,7 @@ Things agents learned while building M1 that the code doesn't show. Read this be
 
 ## Working on issues
 
-- **One chat per issue.** From M2 on, each `/implement #N` runs in its own chat. At the start, rename the chat to `#N short title` (for example `#37 Lesson 2 draft`) and file it in the sidebar section for its milestone (`italiano · M2`). Don't go on to the next issue in the same chat. Say which issue is next, and the user opens a new chat for it.
+- **One chat per issue.** From M2 on, each `/implement #N` runs in its own chat. At the start, rename the chat to `#N short title` (for example `#37 Lesson 2 draft`) and file it in the sidebar section for its milestone (`italiano · M2`). Don't go on to the next issue in the same chat. End with the **Next:** line from `CLAUDE.md`, and the user opens a new chat for it.
 - **`Closes #N` goes in the PR body by hand.** The `pr` skill's template has no line for it. Put `Closes #N` at the top of the body, or the issue stays open after the merge.
 - **Merge by hand.** Auto-merge is turned off for this repository. Check CI once with `gh pr checks <n>`. When it passes, run `gh pr merge <n> --squash --delete-branch`. Never merge while CI is failing.
 - **Outside `/implement`, ask before committing or pushing.** Doc changes go on a branch with a PR, never straight to main.

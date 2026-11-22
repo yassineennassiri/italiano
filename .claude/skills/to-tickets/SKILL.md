@@ -120,3 +120,4 @@ These override the general steps above where they differ.
 - **Cloud sessions.** `gh issue create` is blocked there. Use the `gh api` commands under "Cloud sessions" in `docs/agents/workflow-notes.md`.
 - **The epic.** Once every ticket exists, comment on the milestone's epic with the list of new issues, then close it. This replaces the general rule about not modifying a parent issue: an epic only holds scope until it is ticketed.
 - **Then** run `/roadmap`, so the new issues appear on the user's roadmap page in build order.
+- **End** with the **Next:** line from `CLAUDE.md` ("Always end with what's next"), normally `/implement #N` for the first ready issue, in a new session.
