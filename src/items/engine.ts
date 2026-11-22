@@ -92,6 +92,13 @@ const SINGLE_CHOICE = eraseTypes<SingleChoiceItem, SingleChoiceAnswer>({
   solve: solveSingleChoice,
 });
 
+/** text_gap, and audio_gap, whose gaps are typed the same way (SPEC §5.2.2, §5.2.10). */
+const TYPED_GAPS = eraseTypes<GappedItem, GapsAnswer>({
+  answerSchema: gapsAnswerSchema,
+  check: (item, entry, answer) => checkGapValues(item, entry, answer.values, { typed: true }),
+  solve: solveGaps,
+});
+
 const ENGINES: Partial<Record<Item["type"], AnyEngine>> = {
   single_choice: SINGLE_CHOICE,
   image_choice: SINGLE_CHOICE,
@@ -106,11 +113,8 @@ const ENGINES: Partial<Record<Item["type"], AnyEngine>> = {
     check: (item, entry, answer) => checkDropdown(item, entry, answer.values),
     solve: solveGaps,
   }),
-  text_gap: eraseTypes<GappedItem, GapsAnswer>({
-    answerSchema: gapsAnswerSchema,
-    check: (item, entry, answer) => checkGapValues(item, entry, answer.values, { typed: true }),
-    solve: solveGaps,
-  }),
+  text_gap: TYPED_GAPS,
+  audio_gap: TYPED_GAPS,
   word_bank: eraseTypes<WordBankItem, GapsAnswer>({
     answerSchema: gapsAnswerSchema,
     check: (item, entry, answer) => checkWordBank(item, entry, answer.values),

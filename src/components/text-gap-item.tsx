@@ -7,7 +7,10 @@ import { insertAt } from "@/items/typing";
 import { CharacterHelper } from "./character-helper";
 import { GapFeedback, GappedItemLayout, GapText, useGappedItem } from "./gapped-item";
 
-type TextGap = Extract<Item, { type: "text_gap" }>["gaps"][number];
+/** text_gap, and audio_gap, whose gaps behave the same (SPEC §5.2.10). */
+type TypedGapContent = Extract<Item, { type: "text_gap" | "audio_gap" }>;
+
+type TextGap = TypedGapContent["gaps"][number];
 
 /** Inputs are sized to the answer (SPEC §5.2.2): the longest right answer, plus a character. */
 const widthOf = (gap: TextGap) => Math.max(2, ...[gap.answer, ...(gap.accept ?? [])].map((answer) => answer.length)) + 1;
@@ -15,9 +18,10 @@ const widthOf = (gap: TextGap) => Math.max(2, ...[gap.answer, ...(gap.accept ?? 
 /**
  * A `text_gap` item, default layout (SPEC §5.2.2): a text input per gap, sized
  * to the answer. Enter checks the item and Tab moves between gaps; the
- * character helper inserts at the cursor of the gap last typed in.
+ * character helper inserts at the cursor of the gap last typed in. `aside`
+ * replaces the left column (see `GappedItemLayout`).
  */
-export function TextGapItem({ item, notes }: { item: Extract<Item, { type: "text_gap" }>; notes?: ReactNode }) {
+export function TextGapItem({ item, notes, aside }: { item: TypedGapContent; notes?: ReactNode; aside?: ReactNode }) {
   const { looks, locked, gapProps, edit, check, solve } = useGappedItem(item, { typed: true });
   const inputs = useRef(new Map<string, HTMLInputElement>());
   const lastGap = useRef<string | null>(null);
@@ -34,7 +38,7 @@ export function TextGapItem({ item, notes }: { item: Extract<Item, { type: "text
   };
 
   return (
-    <GappedItemLayout item={item} notes={notes} locked={locked} onSolve={solve} onCheck={check}>
+    <GappedItemLayout item={item} notes={notes} locked={locked} onSolve={solve} onCheck={check} aside={aside}>
       <div className="mb-2 flex justify-end">
         <CharacterHelper disabled={locked} onInsert={insert} />
       </div>

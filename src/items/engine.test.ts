@@ -100,6 +100,38 @@ describe("the engine for word_bank", () => {
   });
 });
 
+describe("the engine for audio_gap", () => {
+  const lesson2 = loadLesson("a2.u01.l02")!;
+  const I = "a2.u01.l02.s06.i01";
+  const RIGHT = { g1: "un", g2: "una", g3: "un", g4: "una", g5: "un" };
+
+  it("checks the typed values sent with Controlla, and solves the item", () => {
+    const item = findExercise(lesson2, I)!;
+    expect(item.item.type).toBe("audio_gap");
+    expect(applyAction(item, NEW_ENTRY, { kind: "check", answer: { values: { ...RIGHT, g2: " una " } } })!.entry.state).toEqual({
+      status: "checked_correct",
+      firstCheckCorrect: true,
+      points: 1,
+    });
+    expect(applyAction(item, NEW_ENTRY, { kind: "solve" })!.entry.answer).toEqual({ values: RIGHT });
+  });
+
+  it("treats its gaps as typed: an accent-only miss is wrong and logged as spelling.accent", () => {
+    const item = findExercise(lesson2, I)!;
+    const outcome = applyAction(item, NEW_ENTRY, { kind: "check", answer: { values: { ...RIGHT, g2: "ùna" } } })!;
+    expect(outcome.entry.state).toEqual({ status: "checked_wrong", firstCheckCorrect: false, points: 0 });
+    expect(outcome.errors).toEqual([{ gapId: "g2", expected: "una", given: "ùna", errorTags: ["spelling.accent"] }]);
+  });
+
+  it("takes a gap's accept alternatives, and restores stored values", () => {
+    const found = findExercise(lesson2, I)!;
+    if (found.item.type !== "audio_gap") throw new Error("not an audio_gap");
+    const item = { ...found, item: { ...found.item, gaps: found.item.gaps.map((gap) => (gap.id === "g1" ? { ...gap, accept: ["1"] } : gap)) } };
+    expect(applyAction(item, NEW_ENTRY, { kind: "check", answer: { values: { ...RIGHT, g1: "1" } } })!.entry.state.status).toBe("checked_correct");
+    expect(parseAnswer(item, { values: { g1: "un" } })).toEqual({ answer: { values: { g1: "un" } } });
+  });
+});
+
 describe("the engine for image_choice", () => {
   const lesson2 = loadLesson("a2.u01.l02")!;
   const SPECCHIO = "a2.u01.l02.s08.i01";
