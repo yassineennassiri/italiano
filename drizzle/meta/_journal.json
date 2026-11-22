@@ -8,6 +8,20 @@
       "when": 1794748277424,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795373096781,
+      "tag": "0001_review_cards",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795373103874,
+      "tag": "0002_backfill_item_cards",
+      "breakpoints": true
     }
   ]
 }

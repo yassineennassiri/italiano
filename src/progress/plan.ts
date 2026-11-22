@@ -19,6 +19,7 @@ import {
   rateActionSchema,
   solveActionSchema,
 } from "@/items/engine";
+import { type CardRow, openedCard, opensItemCard, type StoredCard } from "@/review/item-card";
 import { applyEvent, type ExerciseState, isReopenable } from "@/scoring/exercise";
 import { bestPercent, lessonExercises, type LessonProgress, lessonProgress, type LessonStatus, lessonStatus, lessonStatuses } from "@/scoring/lesson";
 
@@ -76,6 +77,8 @@ export type ExerciseWritePlan = {
   attempt: Row<typeof exerciseAttempt>;
   errors: Row<typeof errorLog>[];
   progress: Row<typeof lessonProgressTable>;
+  /** The exercise's item card, created or graded *again* (SPEC §10.5); absent when the answer opens none. */
+  card?: CardRow;
 };
 
 /** The stored entries that still fit the content: same hash, and an answer of the right shape. */
@@ -132,6 +135,8 @@ export function planExerciseWrite({
   progress,
   firstCheckAt,
   resetAt = null,
+  card,
+  newCardId = crypto.randomUUID(),
   action,
   now,
 }: {
@@ -143,6 +148,10 @@ export function planExerciseWrite({
   firstCheckAt: Date | null;
   /** When the exercise was last reset (Azzera or Correggi), or null. */
   resetAt?: Date | null;
+  /** The exercise's stored item card, if it has one. */
+  card?: StoredCard;
+  /** The id a new item card gets. */
+  newCardId?: string;
   action: ExerciseWrite;
   now: Date;
 }): ExerciseWritePlan | undefined {
@@ -154,7 +163,8 @@ export function planExerciseWrite({
   const { id: exerciseId, item } = exercise;
 
   const entries = restoreEntries(lesson, hashes, rows);
-  const resolved = resolveOutcome(exercise, entries.get(exerciseId) ?? NEW_ENTRY, action, firstCheckAt);
+  const before = entries.get(exerciseId) ?? NEW_ENTRY;
+  const resolved = resolveOutcome(exercise, before, action, firstCheckAt);
   if (!resolved) return undefined;
   const { outcome, firstCheckWrong } = resolved;
   const { entry } = outcome;
@@ -201,6 +211,9 @@ export function planExerciseWrite({
           }))
         : [],
     progress: progressRow(lesson, progress, counts, now),
+    ...(opensItemCard({ before, outcome, firstCheckWrong, exchange: exercise.exchange !== undefined }) && {
+      card: openedCard(card, newCardId, exerciseId, now),
+    }),
   };
 }
 

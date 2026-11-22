@@ -6,6 +6,7 @@
  */
 import { db } from "@/db";
 import { PROFILE_ID } from "@/db/schema";
+import { reviewWriteSchema } from "@/review/plan";
 import { correctionWriteSchema, exerciseWriteSchema, finishWriteSchema, resetWriteSchema, visitWriteSchema } from "./plan";
 import {
   type CorrectionResponse,
@@ -14,6 +15,7 @@ import {
   saveExerciseWrite,
   saveFinish,
   saveReset,
+  saveReviewWrite,
   saveVisit,
   type WriteResponse,
 } from "./store";
@@ -54,4 +56,11 @@ export async function recordReset(input: unknown): Promise<ResetResponse | { res
   const parsed = resetWriteSchema.safeParse(input);
   if (!parsed.success) return { result: "rejected" };
   return saveReset(db(), PROFILE_ID, parsed.data);
+}
+
+/** A review answer in the review hub: grades and reschedules its card (SPEC §10.5). Never touches the lesson's progress. */
+export async function recordReview(input: unknown): Promise<ActionResponse> {
+  const parsed = reviewWriteSchema.safeParse(input);
+  if (!parsed.success) return { result: "rejected" };
+  return saveReviewWrite(db(), PROFILE_ID, parsed.data);
 }

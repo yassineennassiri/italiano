@@ -6,6 +6,7 @@ import { LanternaLogo } from "@/components/lanterna-logo";
 import { LevelResetButton } from "@/components/reset-dialog";
 import { StatusCircle } from "@/components/status-circle";
 import type { LevelId } from "@/content/ids";
+import { REVIEW_HUB_HREF } from "@/content/lesson-nav";
 import { loadCourse } from "@/content/load";
 import { LEVEL_COMPLETED_PARAM, type LessonCard, levelOverview, type UnitGroup } from "@/content/overview";
 import { type LessonCircle, levelProgress } from "@/progress/level-progress";
@@ -65,6 +66,10 @@ async function LevelOverviewView({ params, searchParams }: Pick<PageProps<"/[lev
       </ul>
 
       <div className="mt-10 grid grid-cols-1 md:grid-cols-3">
+        <Link href={REVIEW_HUB_HREF} className="border-t border-line bg-tint px-6 py-5 hover:bg-tint-strong">
+          <span className="block font-bold text-brand">{ui.level.moreLessons}</span>
+          <span className="mt-1 block text-sm">{ui.level.moreLessonsText}</span>
+        </Link>
         <div aria-disabled="true" className="border-t border-line bg-white px-6 py-5 text-muted">
           <p className="font-bold">{ui.level.finalTest}</p>
           <p className="mt-1 text-sm">{ui.comingSoon}</p>

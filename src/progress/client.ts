@@ -9,7 +9,8 @@
 import { applyAction, type Exercise, type ExerciseAction } from "@/items/engine";
 import type { ExerciseEntry } from "@/items/entry";
 import { applyEvent } from "@/scoring/exercise";
-import { recordCorrection, recordExercise, recordFinish, recordReset, recordVisit } from "./actions";
+import type { ReviewWrite } from "@/review/plan";
+import { recordCorrection, recordExercise, recordFinish, recordReset, recordReview, recordVisit } from "./actions";
 import { openIndexedDbStore } from "./indexed-db-store";
 import { LocalProgress, type ProgressResponse, type ProgressWrite } from "./local";
 import { inResetScope, resetScope, type SavedEntry } from "./merge";
@@ -30,6 +31,8 @@ function send(write: ProgressWrite): Promise<ProgressResponse> {
       return recordFinish(write.finish);
     case "reset":
       return recordReset(write.reset);
+    case "review":
+      return recordReview(write.review);
   }
 }
 
@@ -136,6 +139,11 @@ export function submitReset(target: ResetTarget): void {
 /** The Finish screen was reached: queues the write that completes the lesson. */
 export function submitFinish(lessonId: string): void {
   progressQueue.enqueue({ type: "finish", finish: { lessonId } });
+}
+
+/** A review answer (SPEC §10.5): queued like every other write, so it waits offline and survives a reload. */
+export function submitReview(review: ReviewWrite): void {
+  progressQueue.enqueue({ type: "review", review });
 }
 
 let lastVisit: VisitWrite | undefined;

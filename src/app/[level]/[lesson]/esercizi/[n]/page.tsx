@@ -1,32 +1,17 @@
 import { notFound } from "next/navigation";
-import { type ReactNode, Suspense } from "react";
+import { Suspense } from "react";
 import { AccentLink } from "@/components/accent-link";
-import { AudioGapItem } from "@/components/audio-gap-item";
 import { Breadcrumb } from "@/components/breadcrumb";
-import { ClipPlayer } from "@/components/clip-player";
-import { DropdownItem } from "@/components/dropdown-item";
-import { MediaFrame } from "@/components/media-frame";
-import { MultiSelectItem } from "@/components/multi-select-item";
-import { NoteRow } from "@/components/note-row";
-import { ParlaItem } from "@/components/parla-item";
-import { ScenePlayer } from "@/components/scene-player";
+import { ItemSlot, StepMedia } from "@/components/item-slot";
 import { ScriptToggle } from "@/components/script-toggle";
-import { SingleChoiceItem } from "@/components/single-choice-item";
-import { SpeakRateItem } from "@/components/speak-rate-item";
 import { StepCounterText, StepProgress } from "@/components/step-progress";
 import { StepInstruction } from "@/components/step-instruction";
 import { StepReading } from "@/components/step-reading";
-import { TextGapItem } from "@/components/text-gap-item";
-import { WordBankItem } from "@/components/word-bank-item";
-import { WordOrderItem } from "@/components/word-order-item";
-import { clipLines } from "@/content/clip";
 import { exerciseHashes } from "@/content/hash";
-import { type ErrorTag, loadErrorTags, loadLessonBySlug } from "@/content/load";
+import { loadErrorTags, loadLessonBySlug } from "@/content/load";
 import { stepLocation, stepPage } from "@/content/lesson-nav";
 import { readingLayout } from "@/content/reading";
-import type { Item, Lesson, Note, Scene, Step } from "@/content/schema";
 import { stepScript } from "@/content/script";
-import { audioChoiceClips } from "@/items/audio-choice";
 import { readLessonEntries } from "@/progress/read";
 import { lessonExercises } from "@/scoring/lesson";
 import { ui } from "@/ui-it";
@@ -83,86 +68,5 @@ async function StepView({ params }: Pick<PageProps<"/[level]/[lesson]/esercizi/[
         <p className="mt-5 text-sm tracking-widest text-muted">{counter}</p>
       </div>
     </StepProgress>
-  );
-}
-
-function StepMedia({ step, lesson }: { step: Step; lesson: Lesson }) {
-  switch (step.media?.kind) {
-    case "scene":
-      return <ScenePlayer scene={lesson.scene} lessonTitle={lesson.title} />;
-    case "image":
-      return <MediaFrame src={step.media.src} alt={step.media.alt} fit="contain" />;
-    case "clip":
-      return <ClipPlayer lines={clipLines(lesson.scene, step.media)} />;
-    default:
-      return null;
-  }
-}
-
-/**
- * An item's interaction, with its notes placed before Soluzione / Controlla
- * (SPEC §4.2). `renderNotes` renders a list of notes, for a speaking item's
- * exchanges (between an exchange and its rating, SPEC §4.3).
- */
-function ItemInteraction({
-  item,
-  scene,
-  notes,
-  renderNotes,
-}: {
-  item: Item;
-  scene: Scene;
-  notes: ReactNode;
-  renderNotes: (notes?: Note[]) => ReactNode;
-}) {
-  switch (item.type) {
-    case "single_choice":
-    case "image_choice":
-      return <SingleChoiceItem item={item} notes={notes} />;
-    case "audio_choice":
-      return <SingleChoiceItem item={item} notes={notes} promptClips={audioChoiceClips(item, scene)} />;
-    case "multi_select":
-      return <MultiSelectItem item={item} notes={notes} />;
-    case "dropdown":
-      return <DropdownItem item={item} notes={notes} />;
-    case "text_gap":
-      return <TextGapItem item={item} notes={notes} />;
-    case "word_bank":
-      return <WordBankItem item={item} notes={notes} />;
-    case "audio_gap":
-      return <AudioGapItem item={item} clip={clipLines(scene, item.clip)} notes={notes} />;
-    case "word_order":
-      return <WordOrderItem item={item} notes={notes} />;
-    case "speak_rate": {
-      const exchangeNotes = Object.fromEntries(item.exchanges.map((exchange) => [exchange.id, renderNotes(exchange.notes)]));
-      return <SpeakRateItem item={item} exchangeNotes={exchangeNotes} notes={notes} />;
-    }
-    case "parla":
-      return <ParlaItem item={item} notes={notes} />;
-    default:
-      // No component yet: a plain card. The item still counts as an unattempted exercise.
-      return <UnbuiltItem />;
-  }
-}
-
-/** In place of an item whose type has no component yet; its notes wait for the component too. */
-function UnbuiltItem() {
-  return <p className="rounded-lg border-2 border-dashed border-line bg-tint px-4 py-6 text-center text-muted">{ui.lesson.unbuiltItem}</p>;
-}
-
-/** One item: its interaction and its notes, or a placeholder card for types without a component yet. */
-function ItemSlot({ item, scene, errorTags }: { item: Item; scene: Scene; errorTags: ReadonlyMap<string, ErrorTag> }) {
-  const renderNotes = (notes?: Note[]) =>
-    notes && (
-      <div className="mt-4 space-y-2 pl-2">
-        {notes.map((note, index) => (
-          <NoteRow key={index} note={note} errorTag={note.error_tag ? errorTags.get(note.error_tag) : undefined} />
-        ))}
-      </div>
-    );
-  return (
-    <section data-item-id={item.id} data-item-type={item.type}>
-      <ItemInteraction item={item} scene={scene} notes={renderNotes(item.notes)} renderNotes={renderNotes} />
-    </section>
   );
 }

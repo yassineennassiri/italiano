@@ -9,7 +9,7 @@ import type { Lesson } from "@/content/schema";
 import { db } from "@/db";
 import { PROFILE_ID } from "@/db/schema";
 import type { SavedEntry } from "./merge";
-import { loadLastLocation, loadLessonEntries, loadProgressSummaries, type ProgressSummary } from "./store";
+import { type DueCards, loadDueCards, loadLastLocation, loadLessonEntries, loadProgressSummaries, type ProgressSummary } from "./store";
 
 /** Every lesson's progress, most recently changed first; empty when the database is unreachable. */
 export async function readProgressSummaries(): Promise<ProgressSummary[]> {
@@ -41,5 +41,16 @@ export async function readLastLocation(lessonId: string): Promise<string | null>
   } catch (error) {
     console.error("Could not load the resume point; opening the intro.", error);
     return null;
+  }
+}
+
+/** The item cards due now: how many, and up to `limit` of the most overdue; `loaded` is false when the database couldn't be read. */
+export async function readDueCards(limit: number): Promise<DueCards & { loaded: boolean }> {
+  await connection();
+  try {
+    return { ...(await loadDueCards(db(), PROFILE_ID, new Date(), limit)), loaded: true };
+  } catch (error) {
+    console.error("Could not load the due review cards.", error);
+    return { total: 0, cards: [], loaded: false };
   }
 }

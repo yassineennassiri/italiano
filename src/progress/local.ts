@@ -16,6 +16,7 @@ import {
   type SavedEntry,
   settleLocal,
 } from "./merge";
+import type { ReviewWrite } from "@/review/plan";
 import type { CorrectionWrite, ExerciseWrite, FinishWrite, ResetWrite, VisitWrite } from "./plan";
 import type { CorrectionResponse, ResetResponse, WriteResponse } from "./store";
 
@@ -27,7 +28,9 @@ export type ProgressWrite =
   /** `reopened`: the exercises Correggi i miei errori reopened, as this tab shows them. */
   | { type: "correction"; correction: CorrectionWrite; reopened: Record<string, ExerciseEntry> }
   | { type: "finish"; finish: FinishWrite }
-  | { type: "reset"; reset: ResetWrite };
+  | { type: "reset"; reset: ResetWrite }
+  /** A review answer: the session shows its own entries, so this tab's lesson entries don't change. */
+  | { type: "review"; review: ReviewWrite };
 
 type Rejected = { result: "rejected" };
 
@@ -100,6 +103,7 @@ export class LocalProgress {
       }
       case "visit":
       case "finish":
+      case "review":
         return;
     }
     this.changed();
@@ -136,6 +140,7 @@ export class LocalProgress {
       }
       case "visit":
       case "finish":
+      case "review":
         return;
     }
     this.changed();
