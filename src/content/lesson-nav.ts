@@ -6,12 +6,18 @@ import { parseLessonId } from "./ids";
 import type { Lesson } from "./schema";
 
 /** The pages of the lesson menu (SPEC §3.1), in order. */
-export type LessonPage = "info" | "esercizi" | "grammatica" | "vocabolario" | "cultura" | "copione" | "corso";
+export type LessonPage = "info" | "esercizi" | "grammatica" | "vocabolario" | "cultura" | "copione" | "strumenti" | "corso";
 
 /** Pages a lesson may lack: numbered ones (one per step or grammar page) and optional ones. */
 export type ContentPage = "esercizi" | "grammatica" | "vocabolario" | "cultura";
 
 export type MenuEntry = { page: LessonPage; href: string };
+
+/** The review hub (SPEC §3, §10.5). */
+export const REVIEW_HUB_HREF = "/ripasso";
+
+/** A review session of the hub's due cards. */
+export const REVIEW_SESSION_HREF = "/ripasso/sessione";
 
 type LessonRef = Pick<Lesson, "id" | "slug">;
 
@@ -28,7 +34,7 @@ export function lessonPath(lesson: LessonRef): string {
 /** A page of the lesson: `lessonPageHref(lesson, "esercizi", 3)` → `/a2/benvenuto-a-genova/esercizi/3`. */
 export function lessonPageHref(
   lesson: LessonRef,
-  page: Exclude<LessonPage, "corso"> | "risultati" | "fine",
+  page: Exclude<LessonPage, "corso" | "strumenti"> | "risultati" | "fine",
   number?: number,
 ): string {
   return `${lessonPath(lesson)}/${page}${number === undefined ? "" : `/${number}`}`;
@@ -59,8 +65,8 @@ export function hasPage(lesson: PagedLesson, page: ContentPage, segment?: string
 
 /**
  * The lesson menu's entries. Grammatica, Vocabolario and Cultura are hidden
- * when the lesson has none. The menu adds *Azzera gli esercizi* before the course
- * overview (`LessonMenu`); Altri strumenti joins in M2.
+ * when the lesson has none. Altri strumenti opens the review hub. The menu adds
+ * *Azzera gli esercizi* before the course overview (`LessonMenu`).
  */
 export function lessonMenu(lesson: Lesson): MenuEntry[] {
   const entries: (MenuEntry | false)[] = [
@@ -70,6 +76,7 @@ export function lessonMenu(lesson: Lesson): MenuEntry[] {
     hasPage(lesson, "vocabolario") && { page: "vocabolario", href: lessonPageHref(lesson, "vocabolario") },
     hasPage(lesson, "cultura") && { page: "cultura", href: lessonPageHref(lesson, "cultura") },
     { page: "copione", href: lessonPageHref(lesson, "copione") },
+    { page: "strumenti", href: REVIEW_HUB_HREF },
     { page: "corso", href: levelPath(lesson) },
   ];
   return entries.filter((entry) => entry !== false);

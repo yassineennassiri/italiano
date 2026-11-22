@@ -1,8 +1,8 @@
 /**
- * The M1 tables from SPEC §10.1–10.4. Content is not in the database: rows
+ * The tables from SPEC §10.1–10.5. Content is not in the database: rows
  * point at content ids from the JSON files (`a2.u01.l01`, item and exchange
  * ids). Every table carries `user_id` so a second profile stays possible
- * (ADR-0001). `review_card` and `feedback_note` (§10.5–10.6) come in M2.
+ * (ADR-0001). `feedback_note` (§10.6) comes later in M2.
  *
  * After changing this file run `npm run db:generate` and commit the new SQL
  * under `drizzle/`.
@@ -11,6 +11,7 @@ import { sql } from "drizzle-orm";
 import {
   boolean,
   check,
+  doublePrecision,
   index,
   integer,
   jsonb,
@@ -19,8 +20,10 @@ import {
   smallint,
   text,
   timestamp,
+  unique,
   uuid,
 } from "drizzle-orm/pg-core";
+import { grades } from "../review/sm2";
 import { exerciseStatuses } from "../scoring/exercise";
 import { lessonStatuses } from "../scoring/lesson";
 
@@ -41,7 +44,8 @@ function oneOf(name: string, column: { name: string }, values: readonly string[]
   return check(name, sql`${sql.identifier(column.name)} in (${list})`);
 }
 
-export const attemptActions = ["check", "solve", "rate", "reset"] as const;
+/** `review`: an answer given in the review hub or a Ripasso personale step (§10.3). */
+export const attemptActions = ["check", "solve", "rate", "reset", "review"] as const;
 export const errorSources = ["exercise", "speak_rate", "parla", "parla_note", "manual", "ai"] as const;
 
 /** §10.1: one row with a fixed UUID, created by `npm run db:seed`. No login. */
@@ -132,4 +136,65 @@ export const errorLog = pgTable(
     createdAt: createdAt(),
   },
   (t) => [oneOf("error_log_source_check", t.source, errorSources)],
+);
+
+/** The three kinds of review card (CONTEXT.md): vocab, item, error. */
+export const cardKinds = ["vocab", "item", "error"] as const;
+/** Where a review session answers a card (§10.5). */
+export const sessionSources = ["hub", "drill", "ripasso_personale"] as const;
+/**
+ * What graded the card in a `review_log` row: a session, or `lesson`, a lesson
+ * answer that graded an existing card *again* (§10.5). Logging those too
+ * keeps the history complete for a later FSRS fit (ADR-0004).
+ */
+export const reviewSources = [...sessionSources, "lesson"] as const;
+
+/**
+ * §10.5: a spaced-repetition card, scheduled with SM-2 (ADR-0004). For `item`
+ * cards `ref_id` is an exercise id. Reset (Azzera) never deletes cards.
+ */
+export const reviewCard = pgTable(
+  "review_card",
+  {
+    id: uuid("id").primaryKey(),
+    userId: userId(),
+    kind: text("kind", { enum: cardKinds }).notNull(),
+    refId: text("ref_id").notNull(),
+    dueAt: timestamp("due_at", { withTimezone: true }).notNull(),
+    intervalDays: doublePrecision("interval_days").notNull(),
+    ease: doublePrecision("ease").notNull(),
+    reps: integer("reps").notNull().default(0),
+    lapses: integer("lapses").notNull().default(0),
+    lastResult: text("last_result", { enum: grades }),
+    /** Non-*again* grades in a row; 3 resolve the card's error_log rows. */
+    streak: integer("streak").notNull().default(0),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    unique("review_card_ref_unique").on(t.userId, t.kind, t.refId),
+    index("review_card_due_idx").on(t.userId, t.dueAt),
+    oneOf("review_card_kind_check", t.kind, cardKinds),
+    oneOf("review_card_last_result_check", t.lastResult, grades),
+  ],
+);
+
+/** §10.5: append-only, one row per review, the history a later FSRS fit needs (ADR-0004). `id` is the write's eventId. */
+export const reviewLog = pgTable(
+  "review_log",
+  {
+    id: uuid("id").primaryKey(),
+    userId: userId(),
+    cardId: uuid("card_id")
+      .notNull()
+      .references(() => reviewCard.id),
+    grade: text("grade", { enum: grades }).notNull(),
+    intervalBefore: doublePrecision("interval_before").notNull(),
+    intervalAfter: doublePrecision("interval_after").notNull(),
+    easeBefore: doublePrecision("ease_before").notNull(),
+    easeAfter: doublePrecision("ease_after").notNull(),
+    source: text("source", { enum: reviewSources }).notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [oneOf("review_log_grade_check", t.grade, grades), oneOf("review_log_source_check", t.source, reviewSources)],
 );

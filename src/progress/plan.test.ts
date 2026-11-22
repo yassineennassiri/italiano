@@ -498,3 +498,87 @@ describe("planReset (Azzera)", () => {
     expect(planReset({ lessons: [lesson], rows: [], at: AT }).attempts).toEqual([]);
   });
 });
+
+describe("planExerciseWrite and item cards (SPEC §10.5)", () => {
+  const TEXT_GAP = "a2.u01.l01.s03.i01";
+  const E2 = "a2.u01.l01.s05.i01.e2";
+  const PARLA = "a2.u01.l01.s06.i01";
+  /** Midnight in Genoa after NOW (11:10 there on 20 November). */
+  const TOMORROW = new Date("2026-11-20T23:00:00Z");
+  const newCard = { id: "card-new", kind: "item", refId: I02, dueAt: TOMORROW, intervalDays: 1, ease: 2.5, reps: 0, lapses: 0, streak: 0, lastResult: null, updatedAt: NOW };
+
+  /** The example lesson with s03.i01's first gap expecting "è", so "e" there is an accent-only miss. */
+  function accentLesson() {
+    const dir = copyContent();
+    editJson(dir, LESSON_FILE, (lesson) => {
+      lesson.steps[2].items[0].gaps[0].answer = "è";
+    });
+    const lesson = loadLesson("a2.u01.l01", dir)!;
+    return { lesson, hashes: exerciseHashes(lesson) };
+  }
+  const typed = (hashes: ReadonlyMap<string, string>, values: Record<string, string>) =>
+    ({ eventId: "evt-t", lessonId: "a2.u01.l01", exerciseId: TEXT_GAP, contentHash: hashes.get(TEXT_GAP)!, at: AT, kind: "check", answer: { values } }) as const;
+
+  it("a wrong first Check creates an item card due tomorrow", () => {
+    const { input, hash } = base();
+    const plan = planExerciseWrite({ ...input, newCardId: "card-new", action: pick(2, { contentHash: hash }) })!;
+    expect(plan.card).toEqual(newCard);
+  });
+
+  it("a right first Check, and a wrong retry after it was logged, create no card", () => {
+    const { input, hash } = base();
+    expect(planExerciseWrite({ ...input, action: pick(0, { contentHash: hash }) })!.card).toBeUndefined();
+    const rows = [row(hash, {})];
+    expect(planExerciseWrite({ ...input, rows, action: pick(1, { contentHash: hash }) })!.card).toBeUndefined();
+  });
+
+  it("an accent-only miss creates no card; a miss that is also wrong elsewhere does", () => {
+    const { lesson, hashes } = accentLesson();
+    const input = { lesson, hashes, rows: [], progress: undefined, firstCheckAt: null, now: NOW };
+    const accentOnly = { g1: "e", g2: "gli", g3: "gli", g4: "le", g5: "gli" };
+    expect(planExerciseWrite({ ...input, action: typed(hashes, accentOnly) })!.card).toBeUndefined();
+    expect(planExerciseWrite({ ...input, action: typed(hashes, { ...accentOnly, g2: "lo" }) })!.card).toMatchObject({ refId: TEXT_GAP });
+  });
+
+  it("Soluzione before any Check creates a card; after a wrong Check it adds nothing", () => {
+    const { input, hash } = base();
+    const solve = { eventId: "evt-s", lessonId: "a2.u01.l01", exerciseId: I02, contentHash: hash, at: AT, kind: "solve" } as const;
+    expect(planExerciseWrite({ ...input, action: solve })!.card).toMatchObject({ refId: I02, dueAt: TOMORROW });
+    expect(planExerciseWrite({ ...input, rows: [row(hash, {})], action: solve })!.card).toBeUndefined();
+  });
+
+  it("Non tanto bene on a speaking exchange creates a card for the exchange; Bene and Parla! don't", () => {
+    const { input } = base();
+    const rate = (exerciseId: string, rating: "good" | "not_great") =>
+      ({ eventId: "evt-r", lessonId: "a2.u01.l01", exerciseId, contentHash: input.hashes.get(exerciseId)!, at: AT, kind: "rate", rating }) as const;
+    expect(planExerciseWrite({ ...input, action: rate(E2, "not_great") })!.card).toMatchObject({ refId: E2, dueAt: TOMORROW });
+    expect(planExerciseWrite({ ...input, action: rate(E2, "good") })!.card).toBeUndefined();
+    expect(planExerciseWrite({ ...input, action: rate(PARLA, "not_great") })!.card).toBeUndefined();
+  });
+
+  it("grades an existing card again: due tomorrow, a lapse, its streak back to 0, and a review_log row from the lesson", () => {
+    const { input, hash } = base();
+    const card = { id: "card-1", refId: I02, intervalDays: 15, ease: 2.5, reps: 3, lapses: 0, streak: 3 };
+    const plan = planExerciseWrite({ ...input, card, newCardId: "unused", action: pick(2, { contentHash: hash }) })!;
+    expect(plan.card).toEqual({ ...newCard, id: "card-1", ease: 2.3, lapses: 1, lastResult: "again" });
+    expect(plan.cardLog).toEqual({
+      id: "evt-1",
+      cardId: "card-1",
+      grade: "again",
+      intervalBefore: 15,
+      intervalAfter: 1,
+      easeBefore: 2.5,
+      easeAfter: 2.3,
+      source: "lesson",
+      createdAt: new Date(AT),
+    });
+  });
+
+  it("a new card logs no review, and counts tomorrow from when the learner answered, synced late or not", () => {
+    const { input, hash } = base();
+    // Answered offline on 18 November, synced on 20 November.
+    const plan = planExerciseWrite({ ...input, action: pick(2, { contentHash: hash, at: "2026-11-18T09:00:00.000Z" }) })!;
+    expect(plan.cardLog).toBeUndefined();
+    expect(plan.card?.dueAt).toEqual(new Date("2026-11-18T23:00:00Z"));
+  });
+});

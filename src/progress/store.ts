@@ -10,7 +10,8 @@ import { exerciseHashes } from "@/content/hash";
 import { loadCourse, loadLesson } from "@/content/load";
 import type { Lesson } from "@/content/schema";
 import type { Db } from "@/db/connect";
-import { errorLog, exerciseAttempt, itemState, lessonProgress } from "@/db/schema";
+import { errorLog, exerciseAttempt, itemState, lessonProgress, reviewLog } from "@/db/schema";
+import { itemCard, upsertCard } from "@/review/store";
 import type { SavedEntry } from "./merge";
 import {
   type CorrectionWrite,
@@ -127,7 +128,7 @@ export async function saveExerciseWrite(db: Db, userId: string, write: ExerciseW
   const lesson = loadLesson(write.lessonId);
   if (!lesson) return { result: "ignored" };
 
-  const [rows, [progress], [seen], [firstCheck], [lastReset]] = await db.batch([
+  const [rows, [progress], [seen], [firstCheck], [lastReset], [card]] = await db.batch([
     lessonRows(db, userId, lesson.id),
     storedProgress(db, userId, lesson.id),
     db.select({ id: exerciseAttempt.id }).from(exerciseAttempt).where(eq(exerciseAttempt.id, write.eventId)),
@@ -143,6 +144,7 @@ export async function saveExerciseWrite(db: Db, userId: string, write: ExerciseW
       .where(
         and(eq(exerciseAttempt.userId, userId), eq(exerciseAttempt.itemId, write.exerciseId), eq(exerciseAttempt.action, "reset")),
       ),
+    itemCard(db, userId, write.exerciseId),
   ]);
   const ignored = (): WriteResponse => ({ result: "ignored", saved: savedEntries(lesson, rows).get(write.exerciseId) });
   if (seen) return ignored();
@@ -154,6 +156,7 @@ export async function saveExerciseWrite(db: Db, userId: string, write: ExerciseW
     progress,
     firstCheckAt: firstCheck?.at ?? null,
     resetAt: lastReset?.at ?? null,
+    card,
     action: write,
     now,
   });
@@ -165,6 +168,8 @@ export async function saveExerciseWrite(db: Db, userId: string, write: ExerciseW
     upsertProgress(db, userId, plan.progress),
   ];
   if (plan.errors.length > 0) writes.push(db.insert(errorLog).values(plan.errors.map((row) => ({ ...row, userId }))));
+  if (plan.card) writes.push(upsertCard(db, userId, plan.card));
+  if (plan.cardLog) writes.push(db.insert(reviewLog).values({ ...plan.cardLog, userId }));
   await db.batch(writes as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
   return { result: "saved", saved: { entry: plan.entry, savedAt: now.toISOString() } };
 }

@@ -12,7 +12,8 @@ import { ui } from "@/ui-it";
 type StepProgressValue = {
   entry: (exerciseId: string) => ExerciseEntry;
   dispatch: (exercise: Exercise, action: ExerciseAction) => void;
-  step: LessonShape["steps"][number];
+  /** The step page's step, for the footer counter; absent in a review session. */
+  step?: LessonShape["steps"][number];
 };
 
 const StepProgressContext = createContext<StepProgressValue | null>(null);
@@ -56,6 +57,18 @@ export function StepProgress({
   return <StepProgressContext value={value}>{children}</StepProgressContext>;
 }
 
+/**
+ * The exercise entries of items shown outside a step page: a review session
+ * (SPEC §10.5) keeps its own entries and decides what an action writes.
+ */
+export function ExerciseProgress({
+  entry,
+  dispatch,
+  children,
+}: Pick<StepProgressValue, "entry" | "dispatch"> & { children: ReactNode }) {
+  return <StepProgressContext value={{ entry, dispatch }}>{children}</StepProgressContext>;
+}
+
 function useStepProgress(): StepProgressValue {
   const value = use(StepProgressContext);
   if (!value) throw new Error("useStepProgress needs a <StepProgress> around it.");
@@ -72,6 +85,7 @@ export function useExercise(item: Item, exchange?: Exchange): [ExerciseEntry, (a
 /** The footer band's live counter (SPEC §6.2) for this step. */
 export function StepCounterText() {
   const { entry, step } = useStepProgress();
+  if (!step) throw new Error("StepCounterText needs the <StepProgress> of a step page.");
   const states = new Map(lessonExercises({ steps: [step] }).map(({ id }) => [id, entry(id).state]));
   return <p aria-live="polite">{ui.lesson.footerCounter(lessonProgress({ steps: [step] }, states))}</p>;
 }

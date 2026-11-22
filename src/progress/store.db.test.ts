@@ -10,7 +10,7 @@ import { loadLesson } from "@/content/load";
 import { connect } from "@/db/connect";
 import { databaseUrl, loadLocalEnv } from "@/db/env";
 import { migrateDatabase } from "@/db/migrate";
-import { errorLog, exerciseAttempt, itemState, lessonProgress, profile } from "@/db/schema";
+import { errorLog, exerciseAttempt, itemState, lessonProgress, profile, reviewCard, reviewLog } from "@/db/schema";
 import type { ExerciseWrite } from "./plan";
 import {
   loadLastLocation,
@@ -36,7 +36,7 @@ beforeAll(() => migrateDatabase(db));
 
 afterEach(async () => {
   for (const user of users.splice(0)) {
-    for (const table of [itemState, exerciseAttempt, errorLog, lessonProgress]) await db.delete(table).where(eq(table.userId, user));
+    for (const table of [itemState, exerciseAttempt, errorLog, lessonProgress, reviewLog, reviewCard]) await db.delete(table).where(eq(table.userId, user));
     await db.delete(profile).where(eq(profile.id, user));
   }
 });

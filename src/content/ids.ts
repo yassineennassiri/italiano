@@ -38,6 +38,12 @@ export function exchangeExerciseId(itemId: string, exchangeId: string): string {
   return `${itemId}.${exchangeId}`;
 }
 
+/** The lesson an exercise id belongs to: `a2.u01.l01.s05.i01.e2` → `a2.u01.l01`. */
+export function lessonIdOfExercise(exerciseId: string): string | undefined {
+  const lessonId = /^(.+?\.l\d{2})\.s\d+\./.exec(exerciseId)?.[1];
+  return lessonId !== undefined && LESSON_ID_PATTERN.test(lessonId) ? lessonId : undefined;
+}
+
 /** The lesson a grammar page id belongs to: `a2.u01.l01.gr2` → `a2.u01.l01`. */
 export function lessonIdOfGrammarPage(pageId: string): string | undefined {
   return /^(.+)\.gr\d+$/.exec(pageId)?.[1];

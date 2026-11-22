@@ -1,0 +1,2 @@
+ALTER TABLE "review_log" DROP CONSTRAINT "review_log_source_check";--> statement-breakpoint
+ALTER TABLE "review_log" ADD CONSTRAINT "review_log_source_check" CHECK ("source" in ('hub', 'drill', 'ripasso_personale', 'lesson'));

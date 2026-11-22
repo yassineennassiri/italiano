@@ -800,7 +800,7 @@ The `manual` source lets me paste corrections from voice sessions with my Italia
 
 For `item` cards, `ref_id` is an **exercise** id: an item id, or an exchange id for speaking items.
 
-**`review_log`** (append-only, never reset): `id` (the write's `eventId`), `user_id`, `card_id`, `grade`, `interval_before`, `interval_after`, `ease_before`, `ease_after`, `source` (`hub` · `drill` · `ripasso_personale`), `created_at`. Every review writes one row, so the scheduler can later be swapped for FSRS fitted to this history (ADR-0004).
+**`review_log`** (append-only, never reset): `id` (the write's `eventId`), `user_id`, `card_id`, `grade`, `interval_before`, `interval_after`, `ease_before`, `ease_after`, `source` (`hub` · `drill` · `ripasso_personale` · `lesson`: a lesson answer that grades an existing item card *again*), `created_at`. Every review writes one row, so the scheduler can later be swapped for FSRS fitted to this history (ADR-0004).
 
 **Scheduler (SM-2, ADR-0004).** One pure function with Vitest cases.
 - A new card starts with ease 2.5; ease never drops below 1.3.

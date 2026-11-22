@@ -6,7 +6,7 @@ import { copyContent, editJson, LESSON_FILE } from "./test-content";
 const lesson = () => loadLesson("a2.u01.l01")!;
 
 describe("lessonMenu", () => {
-  it("lists every page the example lesson has, then the course overview", () => {
+  it("lists every page the example lesson has, then the review hub and the course overview", () => {
     expect(lessonMenu(lesson()).map((entry) => [entry.page, entry.href])).toEqual([
       ["info", "/a2/benvenuto-a-genova/info"],
       ["esercizi", "/a2/benvenuto-a-genova/esercizi/1"],
@@ -14,6 +14,7 @@ describe("lessonMenu", () => {
       ["vocabolario", "/a2/benvenuto-a-genova/vocabolario"],
       ["cultura", "/a2/benvenuto-a-genova/cultura"],
       ["copione", "/a2/benvenuto-a-genova/copione"],
+      ["strumenti", "/ripasso"],
       ["corso", "/a2"],
     ]);
   });
@@ -26,7 +27,7 @@ describe("lessonMenu", () => {
       delete data.culture;
     });
     const pages = lessonMenu(loadLesson("a2.u01.l01", dir)!).map((entry) => entry.page);
-    expect(pages).toEqual(["info", "esercizi", "copione", "corso"]);
+    expect(pages).toEqual(["info", "esercizi", "copione", "strumenti", "corso"]);
   });
 });
 

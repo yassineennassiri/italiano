@@ -9,6 +9,7 @@ import type { LessonPage, ReviewPage } from "@/content/lesson-nav";
 import type { Note, VocabEntry } from "@/content/schema";
 import type { SubtitleMode } from "@/audio/subtitles";
 import type { Rating } from "@/items/self-rating";
+import type { Grade } from "@/review/sm2";
 import type { ScoreBand } from "@/progress/results";
 import type { SyncStatus } from "@/progress/write-queue";
 import type { LessonStatus } from "@/scoring/lesson";
@@ -51,6 +52,7 @@ export const ui = {
     menuTitle: "Menu",
     home: "Home",
     levels: "Livelli",
+    review: "Ripasso",
   },
 
   footer: {
@@ -95,6 +97,9 @@ export const ui = {
     /** The banner after the level's last lesson (SPEC §4.9). */
     completed: "Livello completato",
     finalTest: "Test finale",
+    /** The link to the review hub below the unit grid (SPEC §3.3). */
+    moreLessons: "Altre lezioni",
+    moreLessonsText: "Ripassa i tuoi errori",
   },
 
   /** The Results screen (SPEC §4.4) and the Finish screen (§4.9). */
@@ -125,6 +130,7 @@ export const ui = {
       vocabolario: "Vocabolario",
       cultura: "Cultura",
       copione: "Copione",
+      strumenti: "Altri strumenti",
       corso: "Panoramica del corso",
     } satisfies Record<LessonPage, string>,
     breadcrumb: "Percorso",
@@ -257,6 +263,34 @@ export const ui = {
     keptText: "Gli errori registrati restano: fanno parte della tua storia di apprendimento.",
     cancel: "Annulla",
     confirm: "Azzera",
+  },
+
+  /** The review hub and its review sessions (SPEC §10.5). */
+  review: {
+    pageTitle: `Ripasso · ${appName}`,
+    heading: "Ripasso",
+    dueHeading: "Da ripassare oggi",
+    /** The due count: "3 esercizi da ripassare". */
+    dueCount: (count: number) => `${count} ${count === 1 ? "esercizio" : "esercizi"} da ripassare`,
+    nothingDue: "Oggi non hai niente da ripassare.",
+    unreachable: "Il ripasso non è disponibile: il database non risponde.",
+    start: "Inizia il ripasso",
+    /** Above each card: where its exercise comes from. */
+    source: (lessonTitle: string, stepTitle: string) => `${lessonTitle} · ${stepTitle}`,
+    /** The session's progress: "2 / 20". */
+    counter: (number: number, total: number) => `${number} / ${total}`,
+    next: "Avanti",
+    finish: "Fine",
+    summaryHeading: "Ripasso finito",
+    summaryCount: (count: number) => `Hai ripassato ${count} ${count === 1 ? "esercizio" : "esercizi"}.`,
+    /** How each answer went, as the summary counts them. */
+    /** The grades as SPEC §10.5 names them (the vocab cards' buttons, later). */
+    grade: { again: "Ancora", hard: "Difficile", good: "Bene", easy: "Facile" } satisfies Record<Grade, string>,
+    /** One line of the summary: "Bene: 4". */
+    gradeCount: (grade: Grade, count: number) => `${ui.review.grade[grade]}: ${count}`,
+    /** Another session: "Altri 20". */
+    more: (count: number) => `Altri ${count}`,
+    backToHub: "Torna al ripasso",
   },
 
   /** The status circle's tooltip, e.g. "Completata · 87%". */
