@@ -1,0 +1,179 @@
+{
+  "_about": "Feature map for the roadmap page. Milestones match the GitHub milestones whose title starts with their id (\"M1: …\"). Features are listed in build order and issues inside a feature too: the page numbers them in this order. Labels are in words a learner would use. `npm run roadmap` adds each issue's status from GitHub and writes roadmap.json. Open issues missing from here show up under 'Not on the map yet'. See .claude/skills/roadmap/SKILL.md.",
+  "app": "Italiano",
+  "repo": "yassineennassiri/italiano",
+  "milestones": [
+    {
+      "id": "M1",
+      "name": "One lesson, start to finish",
+      "goal": "Play lesson A2.1.1 from the level overview to the Finish screen, and find the same progress on another computer.",
+      "doneWhen": "I finish the lesson and see the right %, then open the app on my other computer: the lesson shows as completed with the same %, and my green and red answers are still there.",
+      "features": [
+        {
+          "name": "Foundations",
+          "about": "The groundwork you don't see: the app, its database, the lesson format and how answers are scored.",
+          "issues": [
+            { "n": 1, "label": "App skeleton, with code checks and tests on every change" },
+            { "n": 2, "label": "Online database, with a real copy and a test copy" },
+            { "n": 3, "label": "Database tables for your progress" },
+            { "n": 4, "label": "Lesson file format, its checker, and lesson A2.1.1" },
+            { "n": 5, "label": "Answer checking, points and percentages" }
+          ]
+        },
+        {
+          "name": "Home and course map",
+          "about": "Open the app, pick Ripasso A2 and see all ten units.",
+          "issues": [{ "n": 6, "label": "Home page and the A2 level overview" }]
+        },
+        {
+          "name": "Lesson pages",
+          "about": "The lesson intro, the step pages and the lesson menu.",
+          "issues": [{ "n": 7, "label": "Lesson intro, step pages and the lesson menu" }]
+        },
+        {
+          "name": "Your progress, saved",
+          "about": "Answers are saved online, so any computer picks up where you left off.",
+          "issues": [{ "n": 8, "label": "Answers saved and restored on any computer" }]
+        },
+        {
+          "name": "Exercise types",
+          "about": "The other kinds of exercise lesson 1 uses.",
+          "issues": [
+            { "n": 9, "label": "Pick several answers" },
+            { "n": 10, "label": "Choose from a dropdown" },
+            { "n": 11, "label": "Type into a gap, with an accent helper" },
+            { "n": 12, "label": "Put the words in order" },
+            { "n": 13, "label": "Speak, rate yourself, and Parla!" }
+          ]
+        },
+        {
+          "name": "Scene, results and review pages",
+          "about": "Listen to the scene, see your results, then go through grammar, vocabulary and culture.",
+          "issues": [
+            { "n": 14, "label": "Listen to the scene and read its script (Copione)" },
+            { "n": 15, "label": "Results, the Finish screen and the lesson %" },
+            { "n": 16, "label": "Grammar, vocabulary and culture pages" }
+          ]
+        },
+        {
+          "name": "Start again, and a full play-through test",
+          "about": "Reset a lesson or the level, and an automatic test that plays lesson 1 to the end.",
+          "issues": [
+            { "n": 17, "label": "Start a lesson or the whole level again (Azzera)" },
+            { "n": 18, "label": "Automatic play-through of lesson 1" }
+          ]
+        },
+        {
+          "name": "Sign-off",
+          "about": "Checking the milestone does what it promised.",
+          "issues": [{ "n": 19, "label": "Final check on two computers" }]
+        }
+      ]
+    },
+    {
+      "id": "M2",
+      "name": "All of unit A2.1, and reviewing your mistakes",
+      "goal": "Play all three lessons of unit A2.1 with every exercise type, and practise your own mistakes again.",
+      "doneWhen": "All three lessons are ready and playable to the end. A wrong answer in one lesson comes back the next day, both in the Review hub and inside another lesson. Reloading while offline keeps the answers that weren't sent yet.",
+      "features": [
+        {
+          "name": "M1 loose ends",
+          "about": "What was left open at the end of M1.",
+          "issues": [{ "n": 36, "label": "Focus goes back to the right button after Azzera" }]
+        },
+        {
+          "name": "Lesson 2 draft",
+          "about": "Claude writes La casa della signora Pina, with placeholders for exercise types not built yet.",
+          "issues": [{ "n": 37, "label": "Lesson 2 draft: La casa della signora Pina" }]
+        },
+        {
+          "name": "New exercise types",
+          "about": "The exercises lesson 2 needs on top of lesson 1's. Each one replaces a placeholder.",
+          "issues": [
+            { "n": 38, "label": "Choose the right picture, and a reading text above a step" },
+            { "n": 39, "label": "Listen and choose, with short scene clips" },
+            { "n": 40, "label": "Fill the gaps from a word bank" },
+            { "n": 41, "label": "Listen and fill in the gaps" },
+            { "n": 42, "label": "Put the lines of a dialogue in order" }
+          ]
+        },
+        {
+          "name": "Works offline",
+          "about": "No connection? Answers wait on the computer and are sent later. Comes before the review system, which saves more.",
+          "issues": [{ "n": 43, "label": "Answers kept on the computer while offline" }]
+        },
+        {
+          "name": "Review your mistakes",
+          "about": "Wrong answers and new words come back on a schedule until they stick.",
+          "issues": [
+            { "n": 44, "label": "Wrong answers come back as review cards" },
+            { "n": 45, "label": "Vocabulary flip cards" },
+            { "n": 46, "label": "Add a correction and practise it" },
+            { "n": 47, "label": "Your most common mistakes, with drills" },
+            { "n": 48, "label": "A personal review step inside each lesson" }
+          ]
+        },
+        {
+          "name": "Help while reading",
+          "about": "Tap a word in the text to see what it means.",
+          "issues": [{ "n": 49, "label": "Word meanings on tap" }]
+        },
+        {
+          "name": "Settings and feedback",
+          "about": "Choose your defaults, and note problems as you find them.",
+          "issues": [
+            { "n": 50, "label": "Settings page" },
+            { "n": 51, "label": "Report a problem, and a list of your notes" }
+          ]
+        },
+        {
+          "name": "Lesson 2 sign-off, then lesson 3",
+          "about": "You play lesson 2 and sign it off. Claude then drafts Il vicino di casa using your feedback, and you sign that off too.",
+          "issues": [
+            { "n": 52, "label": "Play and sign off lesson 2" },
+            { "n": 53, "label": "Lesson 3 draft: Il vicino di casa" },
+            { "n": 54, "label": "Play and sign off lesson 3" }
+          ]
+        },
+        {
+          "name": "Sign-off",
+          "about": "Checking the milestone does what it promised.",
+          "issues": [{ "n": 55, "label": "Final check of M2" }]
+        }
+      ]
+    },
+    {
+      "id": "M3",
+      "name": "Real voices and pictures, units 2 to 10",
+      "goal": "Replace the placeholder audio and pictures, let you record yourself, and add the rest of Ripasso A2.",
+      "doneWhen": "Decided in the M3 grilling, after M2 is signed off.",
+      "epic": 62,
+      "sketch": [
+        { "name": "Real Italian audio", "about": "Generated MP3s for every scene line, prompt and vocabulary word, one fixed voice per character." },
+        { "name": "Real pictures", "about": "A style guide with model sheets for Adam, Pina, Giulia and the rest, then illustrations in place of the placeholders." },
+        { "name": "Record yourself", "about": "A 🎙 button in the speaking exercises, played back next to the model audio. Kept in the browser only." },
+        { "name": "Ripasso A2, units 2 to 10", "about": "From Una casa nei caruggi (prepositions) to La settimana prossima (future tense and review)." }
+      ],
+      "features": []
+    },
+    {
+      "id": "M4",
+      "name": "Level B1 and practice tools",
+      "goal": "Start level B1 with Adam's first project, and add ways to practise outside the lessons.",
+      "doneWhen": "Decided when M4 is grilled, after M3.",
+      "epic": 63,
+      "sketch": [
+        { "name": "B1, units 1 to 4", "about": "Il kick-off, Il Gantt, All'ASL and Il rischio della rete." },
+        { "name": "Vocabulary trainer", "about": "Flashcards: Italian to English, English to Italian with the article, and listening." },
+        { "name": "Placement test", "about": "About 30 mixed questions that tell you which A2 units you can skip." }
+      ],
+      "features": []
+    }
+  ],
+  "later": [
+    "Speak, and get your Italian corrected by AI",
+    "A final test per level",
+    "A personal glossary from words you looked up",
+    "Dark mode and a keyboard-only drill mode"
+  ]
+}
