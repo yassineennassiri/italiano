@@ -24,7 +24,17 @@ export default defineConfig({
     baseURL: `http://localhost:${PORT}`,
     trace: "retain-on-failure",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    {
+      name: "chromium",
+      use: {
+        ...devices["Desktop Chrome"],
+        // Cloud sessions have Chrome for Testing at $CHROME_PATH and can't download
+        // Playwright's own browser. Locally it's unset, so Playwright's Chromium is used.
+        launchOptions: { executablePath: process.env.CHROME_PATH || undefined },
+      },
+    },
+  ],
   webServer: {
     command: "npm run dev:test",
     url: `http://localhost:${PORT}`,
