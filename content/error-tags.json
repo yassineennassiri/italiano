@@ -4,13 +4,23 @@
     "unit": "a2.u01"
   },
   "article.lo": {
-    "explanation_en": "Masculine nouns starting with s + consonant, z, gn, ps or y take lo, not il: lo zaino, lo straniero.",
+    "explanation_en": "Masculine nouns starting with s + consonant, z, gn, ps or y take lo, not il, and uno, not un: lo zaino, lo straniero, uno specchio.",
     "unit": "a2.u01"
   },
   "article.plural_gli": {
     "explanation_en": "lo and masculine l' both become gli in the plural: gli zaini, gli appartamenti. Feminine l' becomes le.",
     "unit": "a2.u01",
     "grammar_page": "a2.u01.l01.gr2"
+  },
+  "article.indefinite_apostrophe": {
+    "explanation_en": "Only feminine una becomes un' before a vowel: un'altana, un'amica. Masculine un never takes an apostrophe: un ingegnere, un armadio.",
+    "unit": "a2.u01",
+    "grammar_page": "a2.u01.l02.gr1"
+  },
+  "gender.noun_ending": {
+    "explanation_en": "A noun's ending doesn't always show its gender: il problema and il sistema are masculine, la mano is feminine, and nouns in -e can be either (la chiave, il bicchiere). Learn each noun with its article.",
+    "unit": "a2.u01",
+    "grammar_page": "a2.u01.l02.gr2"
   },
   "partitive.masc_plural": {
     "explanation_en": "The partitive follows the plural article: dei, degli, delle. Masculine nouns that take gli take degli: degli esercizi, not delle esercizi.",

@@ -78,6 +78,43 @@ describe("checkContent", () => {
     ]);
   });
 
+  it("accepts an audio_choice clip of scene lines that runs forward, or a single line", () => {
+    const dir = copyContent();
+    editJson(dir, LESSON_FILE, (lesson) => {
+      lesson.steps[0].items[1].type = "audio_choice";
+      lesson.steps[0].items[1].clip = { from_line: "L3", to_line: "L4" };
+      lesson.steps[0].items[0].type = "audio_choice";
+      lesson.steps[0].items[0].clip = { from_line: "L5", to_line: "L5" };
+    });
+    expect(checkContent(dir)).toEqual([]);
+  });
+
+  it("reports an audio_choice clip with an unknown line id", () => {
+    const dir = copyContent();
+    editJson(dir, LESSON_FILE, (lesson) => {
+      lesson.steps[0].items[1].type = "audio_choice";
+      lesson.steps[0].items[1].clip = { from_line: "L3", to_line: "L99" };
+    });
+    expect(checkContent(dir)).toEqual([`${LESSON_FILE}: steps[0].items[1].clip.to_line: no scene line "L99"`]);
+  });
+
+  it("reports clips that run backwards: audio_choice, audio_gap and clip step media", () => {
+    const dir = copyContent();
+    editJson(dir, LESSON_FILE, (lesson) => {
+      lesson.steps[0].items[1].type = "audio_choice";
+      lesson.steps[0].items[1].clip = { from_line: "L4", to_line: "L3" };
+      lesson.steps[2].items[0].type = "audio_gap";
+      lesson.steps[2].items[0].clip = { from_line: "L10", to_line: "L8" };
+      delete lesson.steps[2].items[0].image;
+      lesson.steps[3].media = { kind: "clip", from_line: "L2", to_line: "L1" };
+    });
+    expect(checkContent(dir)).toEqual([
+      `${LESSON_FILE}: steps[0].items[1].clip: clip runs backwards: "L4" comes after "L3" in the scene`,
+      `${LESSON_FILE}: steps[2].items[0].clip: clip runs backwards: "L10" comes after "L8" in the scene`,
+      `${LESSON_FILE}: steps[3].media: clip runs backwards: "L2" comes after "L1" in the scene`,
+    ]);
+  });
+
   it("reports a scene panel that starts at an unknown line", () => {
     const dir = copyContent();
     editJson(dir, LESSON_FILE, (lesson) => {
@@ -116,17 +153,17 @@ describe("checkContent", () => {
   it("reports a lesson listed in course.json that has no file", () => {
     const dir = copyContent();
     editJson(dir, "course.json", (course) => {
-      course.levels[0].units[0].lessons.push("a2.u01.l02");
+      course.levels[0].units[0].lessons.push("a2.u01.l03");
     });
     expect(checkContent(dir)).toEqual([
-      `course.json: levels[0].units[0].lessons[1]: no lesson file for "a2.u01.l02"`,
+      `course.json: levels[0].units[0].lessons[2]: no lesson file for "a2.u01.l03"`,
     ]);
   });
 
   it("reports a lesson file that course.json does not list", () => {
     const dir = copyContent();
     editJson(dir, "course.json", (course) => {
-      course.levels[0].units[0].lessons = [];
+      course.levels[0].units[0].lessons = ["a2.u01.l02"];
     });
     expect(checkContent(dir)).toEqual([
       `${LESSON_FILE}: lesson "a2.u01.l01" is not listed in course.json under unit "a2.u01"`,

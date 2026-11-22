@@ -140,6 +140,12 @@ function checkGapMarkers(item: { text: string; gaps: { id: string }[] }, ctx: Is
   });
 }
 
+/** One correct option out of several (single_choice, image_choice, audio_choice). */
+const choiceFields = {
+  options: z.array(z.string().min(1)).min(2),
+  answer: z.number().int(),
+};
+
 const itemVariants = z.discriminatedUnion("type", [
   z.strictObject({
     ...itemBase,
@@ -179,9 +185,15 @@ const itemVariants = z.discriminatedUnion("type", [
   }),
   z.strictObject({
     ...itemBase,
-    type: z.enum(["single_choice", "image_choice", "audio_choice"]),
-    options: z.array(z.string().min(1)).min(2),
-    answer: z.number().int(),
+    type: z.enum(["single_choice", "image_choice"]),
+    ...choiceFields,
+  }),
+  z.strictObject({
+    ...itemBase,
+    type: z.literal("audio_choice"),
+    ...choiceFields,
+    /** The scene lines 🔊 plays; without it (and without `prompt_audio`) there is no 🔊. */
+    clip: clipSchema.optional(),
   }),
   z.strictObject({
     ...itemBase,
@@ -402,16 +414,23 @@ export const lessonSchema = lessonFields.superRefine((lesson, ctx) => {
   const checkLine = (lineId: string, path: PropertyKey[]) => {
     if (!lineIds.includes(lineId)) report(ctx, path, `no scene line "${lineId}"`);
   };
+  /** A clip's lines exist in the scene and run forward; a single line is fine. */
+  const checkClip = (clip: z.infer<typeof clipSchema>, path: PropertyKey[]) => {
+    checkLine(clip.from_line, [...path, "from_line"]);
+    checkLine(clip.to_line, [...path, "to_line"]);
+    const from = lineIds.indexOf(clip.from_line);
+    const to = lineIds.indexOf(clip.to_line);
+    if (from >= 0 && to >= 0 && from > to) {
+      report(ctx, path, `clip runs backwards: "${clip.from_line}" comes after "${clip.to_line}" in the scene`);
+    }
+  };
   lesson.scene.panels.forEach((panel, i) => checkLine(panel.from_line, ["scene", "panels", i, "from_line"]));
   lesson.steps.forEach((step, s) => {
-    if (step.media?.kind === "clip") {
-      checkLine(step.media.from_line, ["steps", s, "media", "from_line"]);
-      checkLine(step.media.to_line, ["steps", s, "media", "to_line"]);
-    }
+    if (step.media?.kind === "clip") checkClip(step.media, ["steps", s, "media"]);
     step.items.forEach((item, i) => {
-      if (item.type !== "audio_gap") return;
-      checkLine(item.clip.from_line, ["steps", s, "items", i, "clip", "from_line"]);
-      checkLine(item.clip.to_line, ["steps", s, "items", i, "clip", "to_line"]);
+      if ((item.type === "audio_gap" || item.type === "audio_choice") && item.clip) {
+        checkClip(item.clip, ["steps", s, "items", i, "clip"]);
+      }
     });
   });
 

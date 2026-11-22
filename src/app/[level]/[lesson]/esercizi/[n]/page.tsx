@@ -7,7 +7,6 @@ import { MediaFrame } from "@/components/media-frame";
 import { MultiSelectItem } from "@/components/multi-select-item";
 import { NoteRow } from "@/components/note-row";
 import { ParlaItem } from "@/components/parla-item";
-import { ItemPrompt } from "@/components/prompt-bubble";
 import { ScenePlayer } from "@/components/scene-player";
 import { ScriptToggle } from "@/components/script-toggle";
 import { SingleChoiceItem } from "@/components/single-choice-item";
@@ -31,7 +30,7 @@ export function generateStaticParams({ params }: { params: LessonRouteParams }) 
   return (lesson?.steps ?? []).map((_, index) => ({ n: String(index + 1) }));
 }
 
-/** An exercise step (SPEC §4.2) with its saved progress. Item types without an engine yet show their prompt only. */
+/** An exercise step (SPEC §4.2) with its saved progress. Item types without a component yet show a placeholder card. */
 export default function StepRoute({ params }: PageProps<"/[level]/[lesson]/esercizi/[n]">) {
   return (
     <Suspense fallback={null}>
@@ -115,17 +114,17 @@ function ItemInteraction({ item, notes, renderNotes }: { item: Item; notes: Reac
     case "parla":
       return <ParlaItem item={item} notes={notes} />;
     default:
-      // No engine yet: just the prompt, then the notes.
-      return (
-        <>
-          <ItemPrompt item={item} />
-          {notes}
-        </>
-      );
+      // No component yet: a plain card. The item still counts as an unattempted exercise.
+      return <UnbuiltItem />;
   }
 }
 
-/** One item: its interaction (or just its prompt, for types without an engine yet) and its notes. */
+/** In place of an item whose type has no component yet; its notes wait for the component too. */
+function UnbuiltItem() {
+  return <p className="rounded-lg border-2 border-dashed border-line bg-tint px-4 py-6 text-center text-muted">{ui.lesson.unbuiltItem}</p>;
+}
+
+/** One item: its interaction and its notes, or a placeholder card for types without a component yet. */
 function ItemSlot({ item, errorTags }: { item: Item; errorTags: ReadonlyMap<string, ErrorTag> }) {
   const renderNotes = (notes?: Note[]) =>
     notes && (

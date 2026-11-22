@@ -16,7 +16,7 @@ describe("homeLevels", () => {
 });
 
 describe("levelOverview", () => {
-  it("lists all ten Ripasso A2 units, unit 1 with its real lesson card", () => {
+  it("lists all ten Ripasso A2 units, unit 1 with its real lesson cards", () => {
     const overview = levelOverview("a2");
 
     expect(overview?.title).toBe("Ripasso A2");
@@ -32,6 +32,14 @@ describe("levelOverview", () => {
           grammarLabel: "Articoli: il, lo, l', la · i, gli, le",
           draft: false,
           href: "/a2/benvenuto-a-genova",
+        },
+        {
+          id: "a2.u01.l02",
+          title: "La casa della signora Pina",
+          topic: "Visitare la casa nuova",
+          grammarLabel: "Articoli: un, uno, una, un' · genere difficile",
+          draft: true,
+          href: "/a2/la-casa-della-signora-pina",
         },
       ],
     });
@@ -55,8 +63,8 @@ describe("levelOverview", () => {
   });
 });
 
-/** A content copy with a second lesson: unit 2's first lesson, a copy of the example under another id and slug. */
-function withSecondLesson(): string {
+/** A content copy with a lesson in unit 2: a copy of lesson 1 under another id and slug. */
+function withUnit2Lesson(): string {
   const dir = copyContent();
   const lesson = JSON.parse(readFileSync(path.join(dir, LESSON_FILE), "utf8"));
   Object.assign(lesson, { id: "a2.u02.l01", slug: "una-casa" });
@@ -71,13 +79,14 @@ function withSecondLesson(): string {
 }
 
 describe("finishTarget", () => {
-  it("goes to the next lesson's intro, across units", () => {
-    expect(finishTarget("a2.u01.l01", withSecondLesson())).toEqual({ href: "/a2/una-casa/info", levelCompleted: false });
+  it("goes to the next lesson's intro, in the same unit and across units", () => {
+    expect(finishTarget("a2.u01.l01")).toEqual({ href: "/a2/la-casa-della-signora-pina/info", levelCompleted: false });
+    expect(finishTarget("a2.u01.l02", withUnit2Lesson())).toEqual({ href: "/a2/una-casa/info", levelCompleted: false });
   });
 
   it("goes to the level overview with Livello completato after the level's last lesson", () => {
-    expect(finishTarget("a2.u01.l01")).toEqual({ href: "/a2?completato=1", levelCompleted: true });
-    expect(finishTarget("a2.u02.l01", withSecondLesson())).toEqual({ href: "/a2?completato=1", levelCompleted: true });
+    expect(finishTarget("a2.u01.l02")).toEqual({ href: "/a2?completato=1", levelCompleted: true });
+    expect(finishTarget("a2.u02.l01", withUnit2Lesson())).toEqual({ href: "/a2?completato=1", levelCompleted: true });
   });
 });
 
@@ -88,7 +97,7 @@ describe("continueHref (Continua da dove eri)", () => {
 
   it("goes back into the most recently played lesson, completed or not: the lesson route resumes at the last step", () => {
     const recentFirst = [{ lessonId: "a2.u02.l01" }, { lessonId: "a2.u01.l01" }];
-    expect(continueHref(recentFirst, withSecondLesson())).toBe("/a2/una-casa");
+    expect(continueHref(recentFirst, withUnit2Lesson())).toBe("/a2/una-casa");
   });
 
   it("skips lessons the content no longer has", () => {
