@@ -1,6 +1,6 @@
 # Setting up Claude Code for this repo
 
-The project's knowledge lives in the repo: `SPEC.md`, `CONTEXT.md`, `docs/adr/`, `docs/course-plan.md`, `CLAUDE.md`, and `docs/agents/`, including `workflow-notes.md`. The `tdd`, `code-review`, `pr`, `implement` and `roadmap` skills are in `.claude/skills/`. Chats and memory belong to a Claude account and machine. Nothing in them is needed to continue.
+The project's knowledge lives in the repo: `SPEC.md`, `CONTEXT.md`, `docs/adr/`, `docs/course-plan.md`, `CLAUDE.md`, and `docs/agents/`, including `workflow-notes.md`. The project's skills are in `.claude/skills/`: `implement`, `tdd`, `code-review`, `pr` and `roadmap`, plus copies of Matt Pocock's `grill-with-docs`, `grilling`, `domain-modeling` and `to-tickets`, so milestone grilling also works in cloud sessions, which don't load plugins. Chats and memory belong to a Claude account and machine. Nothing in them is needed to continue.
 
 The roadmap page is at https://claude.ai/artifact/LyHDvxTR4TNV4qb7NxQhAs. It's private to the Claude account that published it, so after switching accounts, publish it once as a new artifact and put the new link in `.claude/skills/roadmap/SKILL.md` and here.
 
@@ -12,7 +12,7 @@ The roadmap page is at https://claude.ai/artifact/LyHDvxTR4TNV4qb7NxQhAs. It's p
    claude plugin marketplace add mattpocock/skills --scope user
    claude plugin install mattpocock-skills@mattpocock --scope user
    ```
-   The plugin also has `tdd`, `pr`, `code-review` and `implement`, listed as `mattpocock-skills:tdd` and so on. Keep the repo's own copies in `.claude/skills/`: `tdd` and `pr` are edited to use `CONTEXT.md`, and cloud sessions don't load plugins.
+   The plugin also has `tdd`, `pr`, `code-review`, `implement`, `grill-with-docs`, `grilling`, `domain-modeling` and `to-tickets`, listed as `mattpocock-skills:tdd` and so on. Keep the repo's own copies in `.claude/skills/`: they're edited for this repo (`CONTEXT.md`, milestones, epics, cloud commands), and cloud sessions don't load plugins.
 3. Open a chat in `C:\dev\italiano`.
 4. Set the model's effort level to high.
 5. In the sidebar, create the sections `italiano · M1`, `italiano · M2` and `italiano · M3`.

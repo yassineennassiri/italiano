@@ -4,7 +4,7 @@ Things agents learned while building M1 that the code doesn't show. Read this be
 
 ## Working on issues
 
-- **One chat per issue.** From M2 on, each `/implement #N` runs in its own chat. At the start, rename the chat to `#N short title` (for example `#37 Lesson 2 draft`) and file it in the sidebar section for its milestone (`italiano · M2`). Don't go on to the next issue in the same chat. Say which issue is next, and the user opens a new chat for it.
+- **One chat per issue.** From M2 on, each `/implement #N` runs in its own chat. At the start, rename the chat to `#N short title` (for example `#37 Lesson 2 draft`) and file it in the sidebar section for its milestone (`italiano · M2`). Don't go on to the next issue in the same chat. End with the **Next:** line from `CLAUDE.md`, and the user opens a new chat for it.
 - **`Closes #N` goes in the PR body by hand.** The `pr` skill's template has no line for it. Put `Closes #N` at the top of the body, or the issue stays open after the merge.
 - **Merge by hand.** Auto-merge is turned off for this repository. Check CI once with `gh pr checks <n>`. When it passes, run `gh pr merge <n> --squash --delete-branch`. Never merge while CI is failing.
 - **Outside `/implement`, ask before committing or pushing.** Doc changes go on a branch with a PR, never straight to main.
@@ -43,7 +43,7 @@ Things agents learned while building M1 that the code doesn't show. Read this be
 Issues can also run in a Claude Code cloud session (claude.ai/code), started and followed from the user's phone while their PC is off. The environment is set up as described in `setup.md` under "Cloud environment". This section covers what is different there.
 
 - **How to tell.** `CLAUDE_CODE_REMOTE` is `true` in a cloud session, and never set locally. The machine is Ubuntu, so the Windows notes above (Git Bash heredocs, CRLF, `file:///C:/...` imports, `process.chdir("C:/dev/italiano")`) don't apply. Use the repo root you're in.
-- **What loads.** `CLAUDE.md`, `.claude/skills/` and `.claude/settings.json` load. Plugins don't, so Matt Pocock's plugin skills (grilling, diagnosing-bugs and the rest) aren't there. The four repo skills are.
+- **What loads.** `CLAUDE.md`, `.claude/skills/` and `.claude/settings.json` load. Plugins installed on a PC don't, so only the repo's skills are there: the issue workflow, `/roadmap`, and the grilling set (`/grill-with-docs`, `/grilling`, `/domain-modeling`, `/to-tickets`). Matt Pocock's other skills, such as diagnosing-bugs, aren't.
 - **Packages.** The `SessionStart` hook in `.claude/settings.json` runs `npm ci` when `node_modules` is missing, and only in the cloud.
 - **Both database variables point at Neon `dev`.** In the cloud, `DATABASE_URL` and `DATABASE_URL_TEST` are both the `dev` branch, so real progress on `main` can't be touched. The model can read environment variables, which is why `main`'s URL is never set there. Still verify with `npm run dev:test`.
 - **No browser pane.** Verify with headless Playwright. Chrome for Testing is at `$CHROME_PATH` (`/usr/bin/google-chrome`), and `playwright.config.ts` uses it when the variable is set, so `npm run test:e2e` needs no `npx playwright install`. For a one-off check, a scratch Playwright script can launch `chromium.launch({ executablePath: process.env.CHROME_PATH })` against `http://localhost:3001`. This hasn't been tried yet: if it fails, say so in the issue comment instead of skipping the check silently.
@@ -78,4 +78,18 @@ Set `R=repos/yassineennassiri/italiano` first. Pass long text (comments, issue b
 - **Squash-merge**, step 9 (instead of `gh pr merge P --squash --delete-branch`): `gh api -X PUT $R/pulls/P/merge -f merge_method=squash`. Don't delete the branch: GitHub does it.
 - **Confirm the issue closed**, step 9: `gh api $R/issues/N --jq .state` should print `closed`.
 
-The merge command hasn't been confirmed in the cloud yet. If it fails, don't try workarounds: leave the PR open with green CI, comment on the issue that it's ready to merge, and tell the user.
+The merge command works in the cloud (first used for #39, PR #65). If it ever fails, don't try workarounds: leave the PR open with green CI, comment on the issue that it's ready to merge, and tell the user.
+
+### Creating issues in the cloud (`/to-tickets`)
+
+- **Find the milestone's number:** `gh api "$R/milestones?state=all" --jq '.[] | select(.title | startswith("M3:")) | .number'`
+- **Create an issue** (instead of `gh issue create`), with its label and milestone `M`:
+  ```sh
+  gh api $R/issues -f title="…" -F body=@issue.md -f "labels[]=ready-for-agent" -F milestone=M --jq .number
+  ```
+- **Add a blocking edge** (issue `N` is blocked by `B`). The API wants `B`'s internal id, not its number:
+  ```sh
+  gh api -X POST $R/issues/N/dependencies/blocked_by -F issue_id="$(gh api $R/issues/B --jq .id)"
+  ```
+  Check with `gh api $R/issues/N/dependencies/blocked_by --jq '[.[].number]'`.
+- **Close the epic:** comment the list of new issues with `gh api $R/issues/E/comments -F body=@comment.md`, then `gh api -X PATCH $R/issues/E -f state=closed`.

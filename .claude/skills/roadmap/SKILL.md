@@ -32,6 +32,7 @@ It lives at a fixed link. Always republish to it; never create a new artifact:
    - If there's no Artifact tool in this session, or the publish fails, say so plainly. `roadmap.json` is still up to date on disk, and the page can be republished from a desktop session.
 5. If `features.json` changed, it needs a PR like any doc change (`docs/agents/workflow-notes.md`). Outside `/implement`, ask the user before committing. In a cloud session, use the `gh api` commands under "Cloud sessions" in the workflow notes.
 6. Tell the user in two or three plain sentences what changed since the last refresh: what got done, what is being built, what is ready, and what is waiting on them. Give the link.
+7. End with the **Next:** line from `CLAUDE.md` ("Always end with what's next").
 
 ## Page conventions
 
