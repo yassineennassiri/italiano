@@ -31,4 +31,39 @@ describe("exerciseHashes", () => {
     });
     expect(hashesOf(dir)).toEqual(hashesOf());
   });
+
+  it("hashes a vocab link as its plain word, so adding links keeps progress (ADR-0006)", () => {
+    const dir = copyContent();
+    editJson(dir, LESSON_FILE, (lesson) => {
+      lesson.steps[0].items[0].prompt = "Prima di guardare: secondo te, chi aspetta Adam alla [[stazione|v-stazione]]?";
+      lesson.steps[1].items[0].text = "{{g1}} [[valigia|v-valigia]], {{g2}} [[zaino|v-zaino]], {{g3}} ombrello e {{g4}} computer.";
+      lesson.steps[4].items[0].exchanges[1].other = "Com'è andato il [[viaggio|v-viaggio]]?";
+    });
+    expect(hashesOf(dir)).toEqual(hashesOf());
+  });
+
+  it("still changes the hash when the linked word itself changes", () => {
+    const dir = copyContent();
+    editJson(dir, LESSON_FILE, (lesson) => {
+      lesson.steps[1].items[0].text = "{{g1}} [[valigie|v-valigia]], {{g2}} zaino, {{g3}} ombrello e {{g4}} computer.";
+    });
+    expect(hashesOf(dir).get("a2.u01.l01.s02.i01")).not.toBe(hashesOf().get("a2.u01.l01.s02.i01"));
+  });
+
+  it("keeps lesson 1's hashes as they were when its progress was stored", () => {
+    // Recorded before vocab links existed; a change here resets stored progress.
+    expect(Object.fromEntries(hashesOf())).toEqual({
+      "a2.u01.l01.s01.i01": "5bfa22e1a62a6010",
+      "a2.u01.l01.s01.i02": "6c35bbc5992b9282",
+      "a2.u01.l01.s01.i03": "5e26ec4e49f656b5",
+      "a2.u01.l01.s02.i01": "23ff92cca484f167",
+      "a2.u01.l01.s03.i01": "5bd01b83f7beabe2",
+      "a2.u01.l01.s04.i01": "d8118a967b3371eb",
+      "a2.u01.l01.s04.i02": "364501b964f40b1f",
+      "a2.u01.l01.s05.i01.e1": "a7a51f8c36781ebe",
+      "a2.u01.l01.s05.i01.e2": "48a5e74f37250173",
+      "a2.u01.l01.s05.i01.e3": "4b2c3122e2c28fe5",
+      "a2.u01.l01.s06.i01": "8c3a47130d6469e0",
+    });
+  });
 });

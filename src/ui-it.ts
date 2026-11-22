@@ -202,6 +202,8 @@ export const ui = {
     /** A word_order item's answer box and the tiles still to place (SPEC §5.2.3). */
     answerBox: "La tua risposta",
     tileTray: "Parole da mettere in ordine",
+    /** In place of an item whose type has no component yet (M2 lesson drafts). */
+    unbuiltItem: "Esercizio non ancora disponibile",
     /** Read out with the ✓ and ✗ icons. */
     correct: "Giusto",
     wrong: "Sbagliato",

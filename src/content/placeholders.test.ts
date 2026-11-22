@@ -53,6 +53,8 @@ describe("generatePlaceholders", () => {
   it("skips a lesson file that isn't valid JSON instead of crashing", async () => {
     const dir = contentWithoutMedia();
     writeFileSync(path.join(dir, LESSON_FILE), "{ not json");
-    await expect(generatePlaceholders(dir)).resolves.toEqual([]);
+    const created = await generatePlaceholders(dir);
+    expect(created.length).toBeGreaterThan(0); // the other lessons' images
+    expect(created.filter((file) => file.startsWith("images/a2/u01/l01/"))).toEqual([]);
   });
 });

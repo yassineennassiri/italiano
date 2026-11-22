@@ -1,0 +1,366 @@
+{
+  "id": "a2.u01.l02",
+  "version": 1,
+  "status": "draft",
+  "slug": "la-casa-della-signora-pina",
+  "title": "La casa della signora Pina",
+  "topic": "Visitare la casa nuova",
+  "grammar_label": "Articoli: un, uno, una, un' · genere difficile",
+  "summary": "Adam e la signora Pina salgono le scale fino al quinto piano. Pina gli mostra l'appartamento nei caruggi: la cucina, il bagno, la camera da letto e una vista sui tetti di ardesia. Ma in cucina c'è un problema con la luce…",
+  "objectives": [
+    "descrivere una casa: le stanze e gli oggetti",
+    "scegliere l'articolo indeterminativo giusto: un, uno, una, un'",
+    "riconoscere i nomi dal genere difficile: il problema, la mano, la chiave",
+    "dire che cosa c'è e che cosa non c'è"
+  ],
+  "scene": {
+    "poster": "images/a2/u01/l02/poster.webp",
+    "duration_s": 75,
+    "panels": [
+      { "image": "images/a2/u01/l02/panel-01.webp", "from_line": "L1" },
+      { "image": "images/a2/u01/l02/panel-02.webp", "from_line": "L5" },
+      { "image": "images/a2/u01/l02/panel-03.webp", "from_line": "L10" }
+    ],
+    "lines": [
+      { "id": "L1",  "speaker": "pina", "it": "Eccoci! L'appartamento è al quinto piano.", "en": "Here we are! The flat is on the fifth floor." },
+      { "id": "L2",  "speaker": "adam", "it": "Al quinto piano? C'è un ascensore?", "en": "On the fifth floor? Is there a lift?" },
+      { "id": "L3",  "speaker": "pina", "it": "No, caro, ci sono solo le [[scale|v-scala]]. Nei caruggi è normale!", "en": "No, dear, there are only the stairs. That's normal in the caruggi!" },
+      { "id": "L4",  "speaker": "adam", "it": "Va bene, è un buon esercizio.", "en": "That's fine, it's good exercise." },
+      { "id": "L5",  "speaker": "pina", "it": "Ecco la [[chiave|v-chiave]]. Attenzione, la porta è un po' difficile.", "en": "Here's the key. Careful, the door is a bit tricky." },
+      { "id": "L6",  "speaker": "pina", "it": "Allora: questa è la [[cucina|v-cucina]], con un [[frigorifero|v-frigorifero]] e una [[lavatrice|v-lavatrice]].", "en": "So: this is the kitchen, with a fridge and a washing machine." },
+      { "id": "L7",  "speaker": "adam", "it": "E c'è anche un [[bagno|v-bagno]]?", "en": "And is there a bathroom too?" },
+      { "id": "L8",  "speaker": "pina", "it": "Certo: un bagno piccolo, con una doccia. E qui c'è una [[camera da letto|v-camera]] con un [[armadio|v-armadio]].", "en": "Of course: a small bathroom, with a shower. And here there's a bedroom with a wardrobe." },
+      { "id": "L9",  "speaker": "adam", "it": "C'è uno [[specchio|v-specchio]]?", "en": "Is there a mirror?" },
+      { "id": "L10", "speaker": "pina", "it": "Sì, nell'armadio. E dalla finestra si vede un'[[altana|v-altana]] sui tetti di [[ardesia|v-ardesia]].", "en": "Yes, in the wardrobe. And from the window you can see a roof terrace on the slate roofs." },
+      { "id": "L11", "speaker": "adam", "it": "Che bello! Ma c'è un [[problema|v-problema]]: in cucina la [[luce|v-luce]] non funziona.", "en": "How lovely! But there's a problem: the light in the kitchen doesn't work." },
+      { "id": "L12", "speaker": "pina", "it": "Ah, sì, il problema della luce… Domani chiamo un elettricista.", "en": "Ah yes, the problem with the light… Tomorrow I'll call an electrician." },
+      { "id": "L13", "speaker": "adam", "it": "Non serve, signora: sono un ingegnere elettrico!", "en": "No need, signora: I'm an electrical engineer!" },
+      { "id": "L14", "speaker": "pina", "it": "Che fortuna! Allora Lei mi dà una [[mano|v-mano]], e io Le offro un caffè e un [[bicchiere|v-bicchiere]] d'acqua.", "en": "What luck! Then you give me a hand, and I'll get you a coffee and a glass of water." }
+    ]
+  },
+  "steps": [
+    {
+      "id": "a2.u01.l02.s01",
+      "title": "La casa nei caruggi",
+      "instruction": "Guarda la scena e rispondi alle domande.",
+      "media": { "kind": "scene" },
+      "script": "scene",
+      "items": [
+        {
+          "id": "a2.u01.l02.s01.i01", "type": "single_choice",
+          "prompt": "Prima di guardare: secondo te, che cosa mostra la signora Pina ad Adam?",
+          "options": ["L'appartamento", "Il suo ufficio", "Il porto di Genova"],
+          "answer": 0
+        },
+        {
+          "id": "a2.u01.l02.s01.i02", "type": "single_choice",
+          "prompt": "Vero o falso? Adam deve salire le [[scale|v-scala]] fino al quinto piano.",
+          "options": ["Vero", "Falso"],
+          "answer": 0
+        },
+        {
+          "id": "a2.u01.l02.s01.i03", "type": "dropdown",
+          "prompt": "Chi lo dice?",
+          "text": "{{g1}}: «C'è uno specchio?»\n{{g2}}: «Domani chiamo un elettricista.»\n{{g3}}: «Sono un ingegnere elettrico!»",
+          "gaps": [
+            { "id": "g1", "options": ["Adam", "Pina"], "answer": "Adam" },
+            { "id": "g2", "options": ["Adam", "Pina"], "answer": "Pina" },
+            { "id": "g3", "options": ["Adam", "Pina"], "answer": "Adam" }
+          ],
+          "solvable": true
+        }
+      ]
+    },
+    {
+      "id": "a2.u01.l02.s02",
+      "title": "un, uno, una o un'?",
+      "instruction": "Scegli l'articolo indeterminativo giusto.",
+      "script": "scene",
+      "items": [
+        {
+          "id": "a2.u01.l02.s02.i01", "type": "dropdown",
+          "prompt": "Che cosa c'è nell'appartamento?",
+          "text": "Pina: «Questa è la cucina, con {{g1}} frigorifero e {{g2}} lavatrice.»\nAdam: «C'è {{g3}} specchio?»\nPina: «Dalla finestra si vede {{g4}} altana.»\nAdam: «Sono {{g5}} ingegnere elettrico!»",
+          "gaps": [
+            { "id": "g1", "options": ["un", "uno", "una", "un'"], "answer": "un" },
+            { "id": "g2", "options": ["un", "uno", "una", "un'"], "answer": "una" },
+            { "id": "g3", "options": ["un", "uno", "una", "un'"], "answer": "uno" },
+            { "id": "g4", "options": ["un", "uno", "una", "un'"], "answer": "un'" },
+            { "id": "g5", "options": ["un", "uno", "una", "un'"], "answer": "un" }
+          ],
+          "error_tags": ["article.lo", "article.indefinite_apostrophe"],
+          "solvable": true,
+          "notes": [
+            { "kind": "info", "text_en": "un, uno and una follow the sounds of il, lo and la: un frigorifero, uno specchio, una lavatrice." },
+            { "kind": "attenzione", "text_en": "Only una takes an apostrophe before a vowel: un'altana. Masculine un never does: un ingegnere.", "error_tag": "article.indefinite_apostrophe" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a2.u01.l02.s03",
+      "title": "Tocca a te: visiti l'appartamento",
+      "instruction": "Ascolta la signora Pina e rispondi ad alta voce. Poi valuta come è andata.",
+      "items": [
+        {
+          "id": "a2.u01.l02.s03.i01", "type": "speak_rate", "variant": "dialogue",
+          "exchanges": [
+            { "id": "e1", "other": "L'appartamento è al quinto piano, senza ascensore. Va bene per Lei?", "me": "Sì, va bene: è un buon esercizio!",
+              "notes": [{ "kind": "tip", "text_en": "Signora Pina still uses Lei. Keep answering formally." }] },
+            { "id": "e2", "other": "Questa è la cucina. Che cosa c'è, secondo Lei?", "me": "C'è un frigorifero e c'è una lavatrice." },
+            { "id": "e3", "other": "E nella camera da letto?", "me": "C'è un armadio, ma non c'è uno specchio.", "hint": "Usa un, uno o una davanti a ogni oggetto." }
+          ],
+          "error_tags": ["article.lo", "register.lei"]
+        }
+      ]
+    },
+    {
+      "id": "a2.u01.l02.s04",
+      "title": "Il problema, la mano",
+      "instruction": "Scrivi l'articolo indeterminativo: un, uno, una o un'.",
+      "items": [
+        {
+          "id": "a2.u01.l02.s04.i01", "type": "text_gap", "layout": "full",
+          "prompt": "Pina scrive una lista per il nuovo inquilino. C'è anche un [[problema|v-problema]] con la [[luce|v-luce]]…",
+          "text": "Per Adam:\n{{g1}} chiave per il portone\n{{g2}} problema con la luce in cucina\n{{g3}} bicchiere per l'acqua\n{{g4}} mano di vernice per la porta\n{{g5}} armadio nuovo\n{{g6}} specchio per il bagno",
+          "gaps": [
+            { "id": "g1", "answer": "una" },
+            { "id": "g2", "answer": "un" },
+            { "id": "g3", "answer": "un" },
+            { "id": "g4", "answer": "una" },
+            { "id": "g5", "answer": "un" },
+            { "id": "g6", "answer": "uno" }
+          ],
+          "error_tags": ["gender.noun_ending", "article.lo"],
+          "solvable": true,
+          "notes": [
+            { "kind": "attenzione", "text_en": "The ending can mislead: il problema is masculine, la mano is feminine. Nouns in -e can be either: la chiave, il bicchiere.", "error_tag": "gender.noun_ending" },
+            { "kind": "new_words", "text_en": "una mano di vernice = a coat of paint · il portone = the main door of a building" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a2.u01.l02.s05",
+      "title": "Ascolta e scegli",
+      "instruction": "Ascolta e scegli la risposta giusta.",
+      "items": [
+        {
+          "id": "a2.u01.l02.s05.i01", "type": "audio_choice",
+          "prompt": "Adam: «Al quinto piano? C'è un ascensore?» Pina: «…»",
+          "clip": { "from_line": "L2", "to_line": "L3" },
+          "options": ["No, caro, ci sono solo le scale.", "Sì, l'ascensore è a destra.", "No, ma c'è un ascensore nel palazzo vicino."],
+          "answer": 0
+        },
+        {
+          "id": "a2.u01.l02.s05.i02", "type": "audio_choice",
+          "prompt": "Adam non vuole un elettricista, …",
+          "clip": { "from_line": "L11", "to_line": "L13" },
+          "options": ["perché è un ingegnere elettrico.", "perché la luce funziona già.", "perché la signora Pina ha un amico elettricista."],
+          "answer": 0
+        }
+      ]
+    },
+    {
+      "id": "a2.u01.l02.s06",
+      "title": "Che cosa c'è in casa?",
+      "instruction": "Ascolta la signora Pina e completa gli appunti di Adam.",
+      "items": [
+        {
+          "id": "a2.u01.l02.s06.i01", "type": "audio_gap",
+          "prompt": "Adam prende appunti sull'appartamento.",
+          "clip": { "from_line": "L6", "to_line": "L8" },
+          "text": "Appartamento, quinto piano\n– cucina: {{g1}} frigorifero e {{g2}} lavatrice\n– {{g3}} bagno piccolo, con {{g4}} doccia\n– camera da letto: {{g5}} armadio",
+          "gaps": [
+            { "id": "g1", "answer": "un" },
+            { "id": "g2", "answer": "una" },
+            { "id": "g3", "answer": "un" },
+            { "id": "g4", "answer": "una" },
+            { "id": "g5", "answer": "un" }
+          ],
+          "error_tags": ["gender.noun_ending"],
+          "solvable": true,
+          "notes": [{ "kind": "info", "text_en": "Nouns in -ice are feminine: la lavatrice, l'attrice. That's why it is una lavatrice." }]
+        }
+      ]
+    },
+    {
+      "id": "a2.u01.l02.s07",
+      "title": "Le regole del palazzo",
+      "instruction": "Leggi le regole del palazzo e rispondi alle domande.",
+      "reading": "# Le regole del palazzo\n\nBenvenuti! Il palazzo è antico: ha cinque piani, una [[scala|v-scala]] di pietra e un tetto di [[ardesia|v-ardesia]].\n\n## Per gli inquilini\n\n- La [[chiave|v-chiave]] del portone apre anche la cantina.\n- La [[lavatrice|v-lavatrice]] è in cucina: non usarla dopo le dieci di sera.\n- Sull'[[altana|v-altana]] c'è un filo per i panni: è di tutti.\n- Un [[problema|v-problema]] con la [[luce|v-luce]] o con l'acqua? Suonare alla signora Pina, interno 1.\n\nGrazie e buona permanenza!",
+      "items": [
+        {
+          "id": "a2.u01.l02.s07.i01", "type": "single_choice",
+          "prompt": "Dov'è la [[lavatrice|v-lavatrice]]?",
+          "options": ["In cucina.", "In cantina.", "Sull'altana."],
+          "answer": 0
+        },
+        {
+          "id": "a2.u01.l02.s07.i02", "type": "single_choice",
+          "prompt": "Che cosa c'è sull'[[altana|v-altana]]?",
+          "options": ["Un filo per i panni.", "Una lavatrice.", "Un armadio."],
+          "answer": 0
+        },
+        {
+          "id": "a2.u01.l02.s07.i03", "type": "single_choice",
+          "prompt": "Secondo le regole, che cosa fai se c'è un problema con la luce?",
+          "options": ["Suono alla signora Pina.", "Telefono a un elettricista.", "Scrivo una mail al Comune."],
+          "answer": 0,
+          "notes": [{ "kind": "new_words", "text_en": "l'inquilino = tenant · il filo per i panni = washing line · l'interno = flat number in a building" }]
+        }
+      ]
+    },
+    {
+      "id": "a2.u01.l02.s08",
+      "title": "Che cos'è?",
+      "instruction": "Guarda le immagini e scegli la descrizione giusta.",
+      "reading": "Nell'appartamento di Adam ci sono tante cose nuove: uno [[specchio|v-specchio]], una [[lavatrice|v-lavatrice]], e fuori dalla finestra un'[[altana|v-altana]]. Le riconosci?",
+      "items": [
+        {
+          "id": "a2.u01.l02.s08.i01", "type": "image_choice",
+          "prompt": "Che cos'è?",
+          "image": "images/a2/u01/l02/ic-specchio.webp",
+          "options": ["Uno specchio.", "Un armadio."],
+          "answer": 0,
+          "error_tags": ["article.lo"]
+        },
+        {
+          "id": "a2.u01.l02.s08.i02", "type": "image_choice",
+          "prompt": "Che cos'è?",
+          "image": "images/a2/u01/l02/ic-lavatrice.webp",
+          "options": ["Un frigorifero.", "Una lavatrice."],
+          "answer": 1
+        },
+        {
+          "id": "a2.u01.l02.s08.i03", "type": "image_choice",
+          "prompt": "Che cosa si vede dalla finestra?",
+          "image": "images/a2/u01/l02/ic-altana.webp",
+          "options": ["Un'altana sui tetti.", "Una scala di pietra."],
+          "answer": 0,
+          "error_tags": ["article.indefinite_apostrophe"]
+        }
+      ]
+    },
+    {
+      "id": "a2.u01.l02.s09",
+      "title": "Un messaggio a casa",
+      "instruction": "Completa il messaggio di Adam con le parole nell'ordine giusto.",
+      "instruction_en": "Fill the gaps in order: each word you click goes into the first empty gap. One word is left over.",
+      "items": [
+        {
+          "id": "a2.u01.l02.s09.i01", "type": "word_bank",
+          "prompt": "Adam scrive alla sua famiglia.",
+          "text": "Ciao a tutti! L'appartamento è piccolo ma bello. C'è {{g1}} [[cucina|v-cucina]] con {{g2}} frigorifero, {{g3}} bagno e {{g4}} camera da letto. Dalla finestra vedo {{g5}} altana. C'è solo {{g6}} problema: cinque piani di scale!",
+          "bank": ["una", "un", "un", "una", "un'", "un", "uno"],
+          "gaps": [
+            { "id": "g1", "answer": "una" },
+            { "id": "g2", "answer": "un" },
+            { "id": "g3", "answer": "un" },
+            { "id": "g4", "answer": "una" },
+            { "id": "g5", "answer": "un'" },
+            { "id": "g6", "answer": "un" }
+          ],
+          "error_tags": ["article.indefinite_apostrophe", "gender.noun_ending"],
+          "solvable": true
+        }
+      ]
+    },
+    {
+      "id": "a2.u01.l02.s10",
+      "title": "In che ordine?",
+      "instruction": "Ascolta e metti le battute nell'ordine giusto.",
+      "media": { "kind": "clip", "from_line": "L5", "to_line": "L8" },
+      "items": [
+        {
+          "id": "a2.u01.l02.s10.i01", "type": "word_order", "layout": "lines",
+          "tiles": [
+            "Pina: Ecco la chiave. Attenzione, la porta è un po' difficile.",
+            "Pina: Allora: questa è la cucina, con un frigorifero e una lavatrice.",
+            "Adam: E c'è anche un bagno?",
+            "Pina: Certo: un bagno piccolo, con una doccia."
+          ],
+          "solvable": true
+        }
+      ]
+    },
+    {
+      "id": "a2.u01.l02.s11",
+      "title": "Parla! La tua nuova casa",
+      "instruction": "Parla liberamente per circa un minuto, poi valuta come è andata.",
+      "items": [
+        {
+          "id": "a2.u01.l02.s11.i01", "type": "parla",
+          "task": "Un amico ti chiama e ti chiede com'è il tuo appartamento a Genova. Descrivi le stanze e che cosa c'è dentro, e raccontagli il problema con la luce.",
+          "example": "L'appartamento è al quinto piano, senza ascensore. C'è una cucina con un frigorifero e una lavatrice, c'è un bagno piccolo e una camera da letto con un armadio. Dalla finestra vedo un'altana e i tetti di ardesia. Però c'era un problema: in cucina la luce non funzionava…",
+          "checklist": [
+            "Usa un, uno, una e un' almeno una volta ciascuno",
+            "Usa almeno un nome dal genere difficile: il problema, la mano, la chiave o la luce",
+            "Descrivi almeno tre cose con c'è o ci sono"
+          ],
+          "error_tags": ["article.indefinite_apostrophe", "gender.noun_ending"]
+        }
+      ]
+    }
+  ],
+  "grammar": [
+    {
+      "id": "a2.u01.l02.gr1",
+      "title": "Articoli indeterminativi: un, uno, una, un'",
+      "blocks": [
+        { "kind": "example", "image": "images/a2/u01/l02/gr-kitchen.webp", "it": "Questa è la cucina, con **un** frigorifero e **una** lavatrice. C'è **uno** specchio?", "en": "This is the kitchen, with a fridge and a washing machine. Is there a mirror?" },
+        { "kind": "table", "columns": ["", "Masculine", "Feminine"],
+          "rows": [
+            ["before a consonant", "un bagno, un frigorifero", "una cucina, una chiave"],
+            ["before s + consonant, z, gn, ps, y", "uno specchio, uno zaino", "una scala, una zona"],
+            ["before a vowel", "un armadio, un ingegnere", "un'altana, un'amica"]
+          ] },
+        { "kind": "rule",
+          "rows": [
+            [{ "text": "una", "style": "highlight" }, { "text": " altana" }],
+            [{ "text": "un'", "style": "highlight" }, { "text": "altana" }]
+          ],
+          "arrows": [{ "from": [0, 0], "to": [1, 0], "kind": "down" }] },
+        { "kind": "text", "md": "The indefinite article follows the same sounds as the definite one: **uno** where you would say *lo*, **un** where you would say *il* or masculine *l'*. Only the feminine **una** drops its vowel before a vowel: *un'altana*. Masculine **un** never takes an apostrophe: *un ingegnere*, *un armadio*. The apostrophe tells you the noun is feminine." },
+        { "kind": "terms", "items": [{ "term": "indefinite article", "def_en": "a / an: introduces something new or not yet identified, as in c'è un bagno = there is a bathroom" }] }
+      ]
+    },
+    {
+      "id": "a2.u01.l02.gr2",
+      "title": "Il genere difficile: il problema, la mano, la chiave",
+      "blocks": [
+        { "kind": "example", "it": "Ah, sì, **il** problema della luce… Allora Lei mi dà **una** mano!", "en": "Ah yes, the problem with the light… Then you give me a hand!" },
+        { "kind": "table", "columns": ["Ending", "Usually", "Watch out"],
+          "rows": [
+            ["-o", "masculine: il bagno, lo specchio", "la mano (le mani), la foto, la radio"],
+            ["-a", "feminine: la cucina, la scala", "il problema, il sistema, il programma"],
+            ["-e", "either gender", "la chiave, la luce, la lavatrice · il bicchiere, l'ingegnere"]
+          ] },
+        { "kind": "text", "md": "Most nouns in **-o** are masculine and most nouns in **-a** are feminine, but some everyday words break the pattern. Many masculine nouns in **-ma** come from Greek: *il problema*, *il sistema*, *il programma*. Nouns in **-e** can be either gender, so always learn them **with the article**: *la chiave*, *il bicchiere*. The plural follows the gender, not the ending: *i problemi*, *le mani*, *le chiavi*, *i bicchieri*." },
+        { "kind": "terms", "items": [{ "term": "gender", "def_en": "every Italian noun is masculine or feminine; the article and adjectives agree with it" }] }
+      ]
+    }
+  ],
+  "vocab": [
+    { "id": "v-altana", "it": "l'altana", "plural": "le altane", "gender": "f", "pos": "noun", "forms": "tipica dei tetti di Genova", "en": "roof terrace" },
+    { "id": "v-ardesia", "it": "l'ardesia", "gender": "f", "pos": "noun", "forms": "solo singolare", "en": "slate" },
+    { "id": "v-armadio", "it": "l'armadio", "plural": "gli armadi", "gender": "m", "pos": "noun", "en": "wardrobe" },
+    { "id": "v-bagno", "it": "il bagno", "plural": "i bagni", "gender": "m", "pos": "noun", "en": "bathroom" },
+    { "id": "v-bicchiere", "it": "il bicchiere", "plural": "i bicchieri", "gender": "m", "pos": "noun", "en": "glass (for drinking)" },
+    { "id": "v-camera", "it": "la camera da letto", "plural": "le camere da letto", "gender": "f", "pos": "noun", "sort_key": "camera da letto", "en": "bedroom" },
+    { "id": "v-chiave", "it": "la chiave", "plural": "le chiavi", "gender": "f", "pos": "noun", "en": "key" },
+    { "id": "v-cucina", "it": "la cucina", "plural": "le cucine", "gender": "f", "pos": "noun", "en": "kitchen" },
+    { "id": "v-frigorifero", "it": "il frigorifero", "plural": "i frigoriferi", "gender": "m", "pos": "noun", "forms": "anche: il frigo", "en": "fridge" },
+    { "id": "v-lavatrice", "it": "la lavatrice", "plural": "le lavatrici", "gender": "f", "pos": "noun", "en": "washing machine" },
+    { "id": "v-luce", "it": "la luce", "plural": "le luci", "gender": "f", "pos": "noun", "en": "light" },
+    { "id": "v-mano", "it": "la mano", "plural": "le mani", "gender": "f", "pos": "noun", "forms": "femminile in -o; dare una mano", "en": "hand; dare una mano = to give a hand" },
+    { "id": "v-problema", "it": "il problema", "plural": "i problemi", "gender": "m", "pos": "noun", "forms": "maschile in -a", "en": "problem" },
+    { "id": "v-scala", "it": "la scala", "plural": "le scale", "gender": "f", "pos": "noun", "forms": "le scale: le rampe di un palazzo", "en": "staircase; ladder (le scale = the stairs)" },
+    { "id": "v-specchio", "it": "lo specchio", "plural": "gli specchi", "gender": "m", "pos": "noun", "en": "mirror" }
+  ],
+  "culture": {
+    "title": "Stairs and slate: living in the caruggi",
+    "image": "images/a2/u01/l02/culture-ardesia.webp",
+    "md": "The buildings of Genoa's old town are tall and narrow, squeezed along the caruggi, and many of them have no lift. Five or six floors of **scale** are part of daily life, and the flats at the top get the most light and the best view.\n\nFrom up there you look out over a sea of grey roofs covered in **ardesia**, slate quarried in the hills of eastern Liguria, around the Val Fontanabuona. Slate is so much part of the region that the coastal town of Lavagna gave its name to the Italian word for blackboard, *la lavagna*. In the old palazzi it is used for steps and for the carved doorways above the main door, the *portone*.\n\nOn many roofs you will spot an **altana**, a small terrace built on top of the building, where people hang their washing and catch the sea breeze."
+  }
+}

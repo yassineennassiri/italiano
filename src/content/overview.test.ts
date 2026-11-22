@@ -16,7 +16,7 @@ describe("homeLevels", () => {
 });
 
 describe("levelOverview", () => {
-  it("lists all ten Ripasso A2 units, unit 1 with its real lesson card", () => {
+  it("lists all ten Ripasso A2 units, unit 1 with its real lesson cards", () => {
     const overview = levelOverview("a2");
 
     expect(overview?.title).toBe("Ripasso A2");
@@ -32,6 +32,14 @@ describe("levelOverview", () => {
           grammarLabel: "Articoli: il, lo, l', la · i, gli, le",
           draft: false,
           href: "/a2/benvenuto-a-genova",
+        },
+        {
+          id: "a2.u01.l02",
+          title: "La casa della signora Pina",
+          topic: "Visitare la casa nuova",
+          grammarLabel: "Articoli: un, uno, una, un' · genere difficile",
+          draft: true,
+          href: "/a2/la-casa-della-signora-pina",
         },
       ],
     });
@@ -71,12 +79,13 @@ function withSecondLesson(): string {
 }
 
 describe("finishTarget", () => {
-  it("goes to the next lesson's intro, across units", () => {
-    expect(finishTarget("a2.u01.l01", withSecondLesson())).toEqual({ href: "/a2/una-casa/info", levelCompleted: false });
+  it("goes to the next lesson's intro, in the same unit and across units", () => {
+    expect(finishTarget("a2.u01.l01")).toEqual({ href: "/a2/la-casa-della-signora-pina/info", levelCompleted: false });
+    expect(finishTarget("a2.u01.l02", withSecondLesson())).toEqual({ href: "/a2/una-casa/info", levelCompleted: false });
   });
 
   it("goes to the level overview with Livello completato after the level's last lesson", () => {
-    expect(finishTarget("a2.u01.l01")).toEqual({ href: "/a2?completato=1", levelCompleted: true });
+    expect(finishTarget("a2.u01.l02")).toEqual({ href: "/a2?completato=1", levelCompleted: true });
     expect(finishTarget("a2.u02.l01", withSecondLesson())).toEqual({ href: "/a2?completato=1", levelCompleted: true });
   });
 });

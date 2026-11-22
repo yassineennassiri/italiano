@@ -10,12 +10,17 @@ import { CONTENT_DIR, findLessonFiles, readContentFile } from "./files";
 import { lessonFilePattern, lessonIdOfGrammarPage, parseLessonId } from "./ids";
 import { lessonPageHref } from "./lesson-nav";
 import { type Course, courseSchema, type ErrorTagEntry, errorTagsSchema, type Lesson, lessonSchema } from "./schema";
+import { withPlainVocabLinks } from "./vocab-links";
 
 export function loadCourse(contentDir = CONTENT_DIR): Course {
   return readContentFile(contentDir, "course.json", courseSchema);
 }
 
-/** The first lesson file whose path matches and whose content passes `matches`. */
+/**
+ * The first lesson file whose path matches and whose content passes `matches`.
+ * Vocab links come back as plain words, so every page shows `word` until the
+ * popovers render them; `content:check` still sees the markup.
+ */
 function loadLessonWhere(
   contentDir: string,
   filePattern: RegExp,
@@ -23,7 +28,7 @@ function loadLessonWhere(
 ): Lesson | undefined {
   for (const file of findLessonFiles(contentDir).filter((file) => filePattern.test(file))) {
     const lesson = readContentFile(contentDir, file, lessonSchema);
-    if (matches(lesson)) return lesson;
+    if (matches(lesson)) return withPlainVocabLinks(lesson);
   }
   return undefined;
 }

@@ -119,13 +119,11 @@ test("plays A2.1.1 to the Finish screen and the overview shows it completed with
   await expect(page).toHaveURL(`${LESSON}/fine`);
   await expect(shownText(page, ui.percent(57))).toBeVisible();
 
-  // Avanti after the level's only lesson: the overview, with the lesson completed.
+  // Avanti: the next lesson's intro.
   await page.getByRole("link", { name: ui.lesson.next, exact: true }).click();
-  await expect(page).toHaveURL("/a2?completato=1");
-  await expect(shownText(page, ui.level.completed)).toBeVisible();
-  await expectCardStatus(card, ui.lessonStatus("completed", 57));
+  await expect(page).toHaveURL("/a2/la-casa-della-signora-pina/info");
 
-  // Saved, not just shown: the same after a reload, and step 1 reopens with its answers.
+  // Saved, not just shown: the overview shows the lesson completed, and step 1 reopens with its answers.
   await page.goto("/a2");
   await expectCardStatus(card, ui.lessonStatus("completed", 57));
   await page.goto(`${LESSON}/esercizi/1`);

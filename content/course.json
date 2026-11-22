@@ -5,7 +5,7 @@
       "title": "Ripasso A2",
       "description": "Le prime settimane: l'arrivo, la casa, il codice fiscale, i primi giorni in ufficio e i primi amici.",
       "units": [
-        { "id": "a2.u01", "number": 1, "title": "Arrivo a Genova", "planned_lessons": 3, "lessons": ["a2.u01.l01"] },
+        { "id": "a2.u01", "number": 1, "title": "Arrivo a Genova", "planned_lessons": 3, "lessons": ["a2.u01.l01", "a2.u01.l02"] },
         { "id": "a2.u02", "number": 2, "title": "Una casa nei caruggi", "planned_lessons": 3, "lessons": [] },
         { "id": "a2.u03", "number": 3, "title": "Il codice fiscale", "planned_lessons": 3, "lessons": [] },
         { "id": "a2.u04", "number": 4, "title": "Primo giorno in ufficio", "planned_lessons": 3, "lessons": [] },
