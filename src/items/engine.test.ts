@@ -105,6 +105,27 @@ describe("the engine for image_choice", () => {
   });
 });
 
+describe("the engine for audio_choice", () => {
+  const lesson2 = loadLesson("a2.u01.l02")!;
+  const ASCENSORE = "a2.u01.l02.s05.i01";
+
+  it("checks a pick at once and scores a right first pick, as single_choice does", () => {
+    const item = findExercise(lesson2, ASCENSORE)!;
+    expect(item.item.type).toBe("audio_choice");
+    const outcome = applyAction(item, NEW_ENTRY, { kind: "pick", option: 0 })!;
+    expect(outcome.entry.state).toEqual({ status: "checked_correct", firstCheckCorrect: true, points: 1 });
+  });
+
+  it("leaves the other options open after a wrong pick, and a right retry scores 0", () => {
+    const item = findExercise(lesson2, ASCENSORE)!;
+    const wrong = applyAction(item, NEW_ENTRY, { kind: "pick", option: 1 })!;
+    expect(wrong.entry.state).toEqual({ status: "checked_wrong", firstCheckCorrect: false, points: 0 });
+    expect(wrong.errors).toEqual([{ expected: "No, caro, ci sono solo le scale.", given: "Sì, l'ascensore è a destra." }]);
+    const retry = applyAction(item, wrong.entry, { kind: "pick", option: 0 })!;
+    expect(retry.entry.state).toEqual({ status: "checked_correct", firstCheckCorrect: false, points: 0 });
+  });
+});
+
 describe("speaking exercises", () => {
   const E2 = "a2.u01.l01.s05.i01.e2";
   const PARLA = "a2.u01.l01.s06.i01";

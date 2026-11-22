@@ -15,7 +15,7 @@ import { NOTE_MAX_LENGTH, type Rating, type RatingAnswer, ratingAnswerSchema, ra
 import { pickOption, type SingleChoiceAnswer, type SingleChoiceItem, singleChoiceAnswerSchema, solveSingleChoice } from "./single-choice";
 import { checkWordOrder, solveWordOrder, type WordOrderAnswer, wordOrderAnswerSchema, type WordOrderItem } from "./word-order";
 
-/** single_choice and image_choice: clicking an option checks it at once. */
+/** single_choice, image_choice and audio_choice: clicking an option checks it at once. */
 export const pickActionSchema = z.strictObject({ kind: z.literal("pick"), option: z.number().int().nonnegative() });
 /**
  * Controlla: the learner's inputs, in the shape the item type stores as its
@@ -84,7 +84,7 @@ function eraseTypes<I, A>(engine: Engine<I, A>): AnyEngine {
   };
 }
 
-/** single_choice, and image_choice, which differs only in layout (SPEC §5.2.6). */
+/** single_choice, and image_choice and audio_choice, which check and score the same way (SPEC §5.2.6, §5.2.8). */
 const SINGLE_CHOICE = eraseTypes<SingleChoiceItem, SingleChoiceAnswer>({
   answerSchema: singleChoiceAnswerSchema,
   pick: pickOption,
@@ -94,6 +94,7 @@ const SINGLE_CHOICE = eraseTypes<SingleChoiceItem, SingleChoiceAnswer>({
 const ENGINES: Partial<Record<Item["type"], AnyEngine>> = {
   single_choice: SINGLE_CHOICE,
   image_choice: SINGLE_CHOICE,
+  audio_choice: SINGLE_CHOICE,
   multi_select: eraseTypes<MultiSelectItem, MultiSelectAnswer>({
     answerSchema: multiSelectAnswerSchema,
     check: (item, entry, answer) => checkMultiSelect(item, entry, answer.selected),

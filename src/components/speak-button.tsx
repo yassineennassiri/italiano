@@ -18,12 +18,23 @@ const PATHS = {
 
 /**
  * The 🔊 button (SPEC §11.1), or ▶ for a script line (§4.8): plays `clip`
- * through the audio service, or stops it while it plays (■). When the clip has
+ * (or several clips, one after another) through the audio service, or stops
+ * it while it plays (■). When the clip has
  * no MP3 and the browser has no working Italian voice it does nothing, but
  * stays focusable and says why, so keyboard and screen-reader users hear the
  * reason too. `id` names the clip while it plays.
  */
-export function SpeakButton({ id, clip, icon = "speaker", className = "" }: { id: string; clip: Clip; icon?: "speaker" | "play"; className?: string }) {
+export function SpeakButton({
+  id,
+  clip,
+  icon = "speaker",
+  className = "",
+}: {
+  id: string;
+  clip: Clip | readonly Clip[];
+  icon?: "speaker" | "play";
+  className?: string;
+}) {
   const audio = useAudio();
   const reasonId = useId();
   const isPlaying = audio.playing === id;

@@ -8,10 +8,17 @@
  * One clip plays at a time. The browser objects are injected, so it runs in tests.
  */
 import { mediaUrl } from "@/content/media-url";
-import { estimateLineSeconds } from "./scene-timeline";
+import type { ScriptLine } from "@/content/schema";
+import { estimateLineSeconds, LINE_GAP_S } from "./scene-timeline";
 
-/** Something to say: Italian text, and the content media path of its MP3 if there is one. */
+/**
+ * Something to say: Italian text, and the content media path of its MP3 if
+ * there is one. One line of a scene's clip (CONTEXT.md) is one of these.
+ */
 export type Clip = { text: string; audio?: string };
+
+/** A script line as something to say. */
+export const lineClip = (line: Pick<ScriptLine, "it" | "audio">): Clip => ({ text: line.it, audio: line.audio });
 
 /** How a play ended: it finished, it was stopped (or replaced), or it couldn't be heard at all. */
 export type PlayResult = "ended" | "stopped" | "unavailable";
@@ -67,8 +74,11 @@ export type Availability = "speech" | "unavailable";
 
 const isItalian = (voice: VoiceLike) => voice.lang.toLowerCase().replace("_", "-").startsWith("it");
 
-/** Whether a clip can be heard: it has an MP3, or there is a working Italian voice. */
-export const canPlayClip = (clip: Clip, availability: Availability): boolean => clip.audio !== undefined || availability === "speech";
+const asList = (clips: Clip | readonly Clip[]): readonly Clip[] => ("text" in clips ? [clips] : clips);
+
+/** Whether a clip, or every one of several, can be heard: it has an MP3, or there is a working Italian voice. */
+export const canPlayClip = (clips: Clip | readonly Clip[], availability: Availability): boolean =>
+  asList(clips).every((clip) => clip.audio !== undefined || availability === "speech");
 
 /** How long an utterance may take before it counts as lost (Chrome can drop one after cancel). */
 const watchdogMs = (text: string, rate: number) => (estimateLineSeconds(text, rate) * 2 + 2) * 1000;
@@ -113,16 +123,27 @@ export class AudioService {
     return () => this.listeners.delete(listener);
   }
 
-  /** Plays a clip, stopping the one playing; resolves when it ends or is stopped. */
-  play(clip: Clip, { rate = 1, key, silentFallback = false }: PlayOptions = {}): Promise<PlayResult> {
+  /**
+   * Plays a clip, or several one after another with a short gap between them
+   * (a clip of scene lines, SPEC §5.2.8), stopping whatever plays now. `key`
+   * names them the whole time, gaps included. Resolves when the last one ends,
+   * or as soon as one is stopped or can't be heard.
+   */
+  play(clips: Clip | readonly Clip[], { rate = 1, key, silentFallback = false }: PlayOptions = {}): Promise<PlayResult> {
+    const queue = asList(clips);
     this.stop();
     return new Promise((resolve) => {
       let settled = false;
-      let cleanup = () => {};
+      let cancelLine: (() => void) | undefined;
+      let gap: ReturnType<typeof setTimeout> | undefined;
+      const cancel = () => {
+        cancelLine?.();
+        clearTimeout(gap);
+      };
       const settle = (result: PlayResult) => {
         if (settled) return;
         settled = true;
-        cleanup();
+        cancel();
         if (this.stopCurrent === stop) {
           this.stopCurrent = undefined;
           this.currentKey = null;
@@ -135,56 +156,77 @@ export class AudioService {
       this.currentKey = key ?? null;
       this.changed();
 
-      const speakOrWait = () => {
-        if (settled) return;
-        if (this.availability() === "speech" && this.env.speech) {
-          const speech = this.env.speech;
-          const utterance = this.env.createUtterance?.(clip.text) ?? { text: clip.text };
-          utterance.lang = "it-IT";
-          utterance.voice = this.voice;
-          utterance.rate = rate;
-          // An utterance that never ends (dropped after a cancel) mustn't leave playback stuck.
-          const watchdog = setTimeout(() => settle("ended"), watchdogMs(clip.text, rate));
-          utterance.onend = () => settle("ended");
-          utterance.onerror = (event) => {
-            if (event.error === "interrupted" || event.error === "canceled") return settle("stopped");
-            // The voice itself failed: count it as unavailable, and carry on without it.
-            clearTimeout(watchdog);
-            utterance.onend = null;
-            utterance.onerror = null;
-            this.voiceFailed = true;
-            this.changed();
-            speakOrWait();
-          };
-          cleanup = () => {
-            clearTimeout(watchdog);
-            utterance.onend = null;
-            utterance.onerror = null;
-            speech.cancel();
-          };
-          speech.speak(utterance);
-        } else if (silentFallback) {
-          const timer = setTimeout(() => settle("ended"), estimateLineSeconds(clip.text, rate) * 1000);
-          cleanup = () => clearTimeout(timer);
-        } else {
-          settle("unavailable");
-        }
+      const playFrom = (index: number) => {
+        if (index >= queue.length) return settle("ended");
+        cancelLine = this.sound(queue[index], rate, silentFallback, (result) => {
+          if (result !== "ended" || index + 1 >= queue.length) return settle(result);
+          gap = setTimeout(() => playFrom(index + 1), LINE_GAP_S * 1000);
+        });
       };
+      playFrom(0);
+    });
+  }
 
-      if (clip.audio === undefined) {
-        speakOrWait();
-        return;
+  /** Makes one clip heard: its MP3, else the voice, else (with `silentFallback`) its estimated time. Returns a cancel. */
+  private sound(clip: Clip, rate: Rate, silentFallback: boolean, done: (result: PlayResult) => void): () => void {
+    let over = false;
+    let cleanup = () => {};
+    const finish = (result: PlayResult) => {
+      if (over) return;
+      over = true;
+      cleanup();
+      done(result);
+    };
+
+    const speakOrWait = () => {
+      if (over) return;
+      if (this.availability() === "speech" && this.env.speech) {
+        const speech = this.env.speech;
+        const utterance = this.env.createUtterance?.(clip.text) ?? { text: clip.text };
+        utterance.lang = "it-IT";
+        utterance.voice = this.voice;
+        utterance.rate = rate;
+        // An utterance that never ends (dropped after a cancel) mustn't leave playback stuck.
+        const watchdog = setTimeout(() => finish("ended"), watchdogMs(clip.text, rate));
+        utterance.onend = () => finish("ended");
+        utterance.onerror = (event) => {
+          if (event.error === "interrupted" || event.error === "canceled") return finish("stopped");
+          // The voice itself failed: count it as unavailable, and carry on without it.
+          clearTimeout(watchdog);
+          utterance.onend = null;
+          utterance.onerror = null;
+          this.voiceFailed = true;
+          this.changed();
+          speakOrWait();
+        };
+        cleanup = () => {
+          clearTimeout(watchdog);
+          utterance.onend = null;
+          utterance.onerror = null;
+          speech.cancel();
+        };
+        speech.speak(utterance);
+      } else if (silentFallback) {
+        const timer = setTimeout(() => finish("ended"), estimateLineSeconds(clip.text, rate) * 1000);
+        cleanup = () => clearTimeout(timer);
+      } else {
+        finish("unavailable");
       }
+    };
+
+    if (clip.audio === undefined) {
+      speakOrWait();
+    } else {
       const audio = this.env.createAudio(mediaUrl(clip.audio));
       audio.playbackRate = rate;
       // A missing, blocked or broken MP3 falls back to the voice.
       const fallBack = () => {
-        if (settled) return;
+        if (over) return;
         audio.onended = null;
         audio.onerror = null;
         speakOrWait();
       };
-      audio.onended = () => settle("ended");
+      audio.onended = () => finish("ended");
       audio.onerror = fallBack;
       cleanup = () => {
         audio.onended = null;
@@ -192,7 +234,13 @@ export class AudioService {
         audio.pause();
       };
       audio.play().catch(fallBack);
-    });
+    }
+
+    return () => {
+      if (over) return;
+      over = true;
+      cleanup();
+    };
   }
 
   /** Stops the clip playing, if any. */

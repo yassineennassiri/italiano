@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { type ReactNode, Suspense } from "react";
 import { AccentLink } from "@/components/accent-link";
 import { Breadcrumb } from "@/components/breadcrumb";
+import { ClipPlayer } from "@/components/clip-player";
 import { DropdownItem } from "@/components/dropdown-item";
 import { MediaFrame } from "@/components/media-frame";
 import { MultiSelectItem } from "@/components/multi-select-item";
@@ -16,12 +17,14 @@ import { StepInstruction } from "@/components/step-instruction";
 import { StepReading } from "@/components/step-reading";
 import { TextGapItem } from "@/components/text-gap-item";
 import { WordOrderItem } from "@/components/word-order-item";
+import { clipLines } from "@/content/clip";
 import { exerciseHashes } from "@/content/hash";
 import { type ErrorTag, loadErrorTags, loadLessonBySlug } from "@/content/load";
 import { stepLocation, stepPage } from "@/content/lesson-nav";
 import { readingLayout } from "@/content/reading";
-import type { Item, Lesson, Note, Step } from "@/content/schema";
+import type { Item, Lesson, Note, Scene, Step } from "@/content/schema";
 import { stepScript } from "@/content/script";
+import { audioChoiceClips } from "@/items/audio-choice";
 import { readLessonEntries } from "@/progress/read";
 import { lessonExercises } from "@/scoring/lesson";
 import { ui } from "@/ui-it";
@@ -65,7 +68,7 @@ async function StepView({ params }: Pick<PageProps<"/[level]/[lesson]/esercizi/[
           {step.reading && <StepReading md={step.reading} layout={readingLayout(step)} />}
           <div className="mt-8 space-y-10">
             {step.items.map((item) => (
-              <ItemSlot key={item.id} item={item} errorTags={errorTags} />
+              <ItemSlot key={item.id} item={item} scene={lesson.scene} errorTags={errorTags} />
             ))}
           </div>
         </div>
@@ -87,8 +90,9 @@ function StepMedia({ step, lesson }: { step: Step; lesson: Lesson }) {
       return <ScenePlayer scene={lesson.scene} lessonTitle={lesson.title} />;
     case "image":
       return <MediaFrame src={step.media.src} alt={step.media.alt} fit="contain" />;
+    case "clip":
+      return <ClipPlayer lines={clipLines(lesson.scene, step.media)} />;
     default:
-      // No media, or a clip (M2).
       return null;
   }
 }
@@ -98,11 +102,23 @@ function StepMedia({ step, lesson }: { step: Step; lesson: Lesson }) {
  * (SPEC §4.2). `renderNotes` renders a list of notes, for a speaking item's
  * exchanges (between an exchange and its rating, SPEC §4.3).
  */
-function ItemInteraction({ item, notes, renderNotes }: { item: Item; notes: ReactNode; renderNotes: (notes?: Note[]) => ReactNode }) {
+function ItemInteraction({
+  item,
+  scene,
+  notes,
+  renderNotes,
+}: {
+  item: Item;
+  scene: Scene;
+  notes: ReactNode;
+  renderNotes: (notes?: Note[]) => ReactNode;
+}) {
   switch (item.type) {
     case "single_choice":
     case "image_choice":
       return <SingleChoiceItem item={item} notes={notes} />;
+    case "audio_choice":
+      return <SingleChoiceItem item={item} notes={notes} promptClips={audioChoiceClips(item, scene)} />;
     case "multi_select":
       return <MultiSelectItem item={item} notes={notes} />;
     case "dropdown":
@@ -129,7 +145,7 @@ function UnbuiltItem() {
 }
 
 /** One item: its interaction and its notes, or a placeholder card for types without a component yet. */
-function ItemSlot({ item, errorTags }: { item: Item; errorTags: ReadonlyMap<string, ErrorTag> }) {
+function ItemSlot({ item, scene, errorTags }: { item: Item; scene: Scene; errorTags: ReadonlyMap<string, ErrorTag> }) {
   const renderNotes = (notes?: Note[]) =>
     notes && (
       <div className="mt-4 space-y-2 pl-2">
@@ -140,7 +156,7 @@ function ItemSlot({ item, errorTags }: { item: Item; errorTags: ReadonlyMap<stri
     );
   return (
     <section data-item-id={item.id} data-item-type={item.type}>
-      <ItemInteraction item={item} notes={renderNotes(item.notes)} renderNotes={renderNotes} />
+      <ItemInteraction item={item} scene={scene} notes={renderNotes(item.notes)} renderNotes={renderNotes} />
     </section>
   );
 }

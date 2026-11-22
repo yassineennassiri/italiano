@@ -152,6 +152,11 @@ export const ui = {
       subtitleModes: { off: "No", it: "IT", it_en: "IT + EN" } satisfies Record<SubtitleMode, string>,
       panelAlt: (panel: number, total: number) => `Scena, immagine ${panel} di ${total}`,
     },
+    /** The audio-only clip player at the top of a step, and audio_gap's mini player (SPEC §5.2.8, §9.1). */
+    clipPlayer: {
+      label: "Ascolta il dialogo",
+      noVoice: "Nessuna voce italiana installata: l'audio non è disponibile.",
+    },
     /** The 🔊 buttons and the script's ▶ (SPEC §11.1). */
     listen: "Ascolta",
     stopListening: "Ferma l'audio",
