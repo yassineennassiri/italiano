@@ -399,7 +399,7 @@ describe("loadTopErrorTags (I miei errori più frequenti)", () => {
 describe("saveDrillWrite (tag drills)", () => {
   const drillPick = (option: number, at: Date): DrillWrite => ({ eventId: randomUUID(), exerciseId: I01, contentHash: HASH, at: at.toISOString(), kind: "pick", option });
 
-  it("grades the exercise's existing item card with source drill, without touching item_state or the error log", async () => {
+  it("grades the exercise's existing item card with source drill, without touching item_state or adding an error_log row", async () => {
     const user = await newUser();
     await saveExerciseWrite(db, user, pick(2), NOW);
     const [before] = await db.select().from(reviewCard).where(eq(reviewCard.userId, user));

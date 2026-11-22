@@ -1,11 +1,12 @@
 /**
- * Planning a review write (SPEC §10.5, ADR-0004): from the card, the current
- * content and the learner's answer, the rows to write. The answer is graded
- * here, against the content, not trusted from the client. A review writes
- * the card's new schedule, a `review_log` row and an `exercise_attempt` row
- * with action `review`. It never writes `item_state` and never adds an
- * error_log row; a third non-*again* grade in a row only marks the card's
- * rows resolved.
+ * Planning a review write or a tag drill answer (SPEC §10.5, ADR-0004): from
+ * the card, the current content and the learner's answer, the rows to write.
+ * The answer is graded here, against the content, not trusted from the
+ * client. A review writes the card's new schedule, a `review_log` row and an
+ * `exercise_attempt` row with action `review`. A drill answer writes the same
+ * when its exercise has an item card, and only the attempt when it has none.
+ * Neither writes `item_state` or adds an error_log row; a third non-*again*
+ * grade in a row only marks the card's rows resolved.
  */
 import { z } from "zod";
 import type { Lesson } from "@/content/schema";
@@ -27,24 +28,23 @@ const cardFields = {
   source: z.enum(sessionSources),
 };
 
+/** The exercise an answer is for, and the content it was given against. */
+const exerciseFields = {
+  /** An item id, or an exchange id. */
+  exerciseId: z.string().min(1),
+  /** A write for since-changed content is ignored. */
+  contentHash: z.string().min(1),
+};
+
+const writeFields = { ...cardFields, ...exerciseFields };
+
 /** What a drill answer carries besides the action: no card, since most drilled exercises have none. */
 const drillFields = {
   /** Also the attempt's id (and with a card the review_log row's), so a retried write is applied once. */
   eventId: z.uuid(),
   /** When the learner answered, on their computer. */
   at: z.iso.datetime(),
-  /** The drilled exercise: an item id, or an exchange id. */
-  exerciseId: z.string().min(1),
-  /** The content the answer was given against; a write for since-changed content is ignored. */
-  contentHash: z.string().min(1),
-};
-
-const writeFields = {
-  ...cardFields,
-  /** The card's exercise: an item id, or an exchange id. */
-  exerciseId: z.string().min(1),
-  /** The content the answer was given against; a write for since-changed content is ignored. */
-  contentHash: z.string().min(1),
+  ...exerciseFields,
 };
 
 /** A vocab card graded with one of the flip card's four buttons (SPEC §10.5). */

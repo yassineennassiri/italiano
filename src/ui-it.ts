@@ -320,10 +320,10 @@ export const ui = {
     /** The second panel of the hub (SPEC §10.5): the top error tags, each starting a tag drill. */
     topTags: {
       heading: "I miei errori più frequenti",
-      intro: "Gli errori non ancora risolti degli ultimi 30 giorni. Scegline uno per esercitarti.",
+      intro: (days: number) => `Gli errori non ancora risolti degli ultimi ${days} giorni. Scegline uno per esercitarti.`,
       /** How many unresolved errors carry the tag: "3 errori". */
       count: (count: number) => (count === 1 ? "1 errore" : `${count} errori`),
-      none: "Negli ultimi 30 giorni non hai errori da ripassare.",
+      none: (days: number) => `Negli ultimi ${days} giorni non hai errori da ripassare.`,
     },
     /** A tag drill (SPEC §10.5). */
     drill: {

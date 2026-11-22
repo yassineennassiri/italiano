@@ -225,9 +225,9 @@ export async function loadItemCardRefs(db: Db, userId: string): Promise<Set<stri
  * current content. With an item card, the card is rescheduled and logged
  * with source `drill`, and a third non-*again* grade in a row resolves its
  * error_log rows; without one, no card is made. Either way a `review` attempt
- * is written, and `item_state`, the lesson % and the error log are never
- * touched. "ignored" for an exercise the content doesn't have, changed
- * content, or a retry of a write already applied.
+ * is written; `item_state` and the lesson % are never touched, and no
+ * error_log row is added. "ignored" for an exercise the content doesn't
+ * have, changed content, or a retry of a write already applied.
  */
 export async function saveDrillWrite(db: Db, userId: string, write: DrillWrite, now = new Date()): Promise<ReviewResponse> {
   const lessonId = lessonIdOfExercise(write.exerciseId);

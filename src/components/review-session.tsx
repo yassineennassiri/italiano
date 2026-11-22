@@ -35,8 +35,8 @@ const keyOf = (card: ReviewCardView): string => (card.kind === "drill" ? card.ex
 
 /**
  * A review session (SPEC §10.5): the cards one at a time. A tag drill runs
- * the same way, its exercises shown and graded like item cards. An item card shows
- * its item in the normal item UI (`slots`, rendered on the server); the
+ * the same way, its exercises shown and graded like item cards. An item
+ * card shows its item in the normal item UI (`slots`, rendered on the server); the
  * first answer grades it and queues its review write, and the item then
  * behaves as in a lesson, but nothing more is written. A vocab card is a flip
  * card: its grade button queues the write and moves on. An error card asks
@@ -51,7 +51,7 @@ export function ReviewSession({
   sessionSize,
 }: {
   cards: ReviewCardView[];
-  /** Each item card's item UI; null for a vocab or error card. */
+  /** Each item card's or drilled exercise's item UI; null for a vocab or error card. */
   slots: ReactNode[];
   /** More cards are due than this session holds. */
   more: boolean;

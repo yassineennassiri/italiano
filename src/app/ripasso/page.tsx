@@ -7,6 +7,7 @@ import { drillHref, REVIEW_SESSION_HREF } from "@/content/lesson-nav";
 import { loadErrorTags } from "@/content/load";
 import { readDueCards, readTopErrorTags } from "@/progress/read";
 import { dueSession } from "@/review/session";
+import { RECENT_DAYS } from "@/review/top-tags";
 import { ui } from "@/ui-it";
 
 export const metadata: Metadata = { title: ui.review.pageTitle };
@@ -62,10 +63,10 @@ async function DuePanel() {
 async function TopTagsPanel() {
   const { top, loaded } = await readTopErrorTags();
   if (!loaded) return <p className="mt-3 text-bad">{ui.review.unreachable}</p>;
-  if (top.length === 0) return <p className="mt-3">{ui.review.topTags.none}</p>;
+  if (top.length === 0) return <p className="mt-3">{ui.review.topTags.none(RECENT_DAYS)}</p>;
   return (
     <>
-      <p className="mt-3">{ui.review.topTags.intro}</p>
+      <p className="mt-3">{ui.review.topTags.intro(RECENT_DAYS)}</p>
       <ul className="mt-4 space-y-3">
         {top.map((tag) => (
           <li key={tag.id}>

@@ -12,6 +12,7 @@ import { and, eq } from "drizzle-orm";
 import { connect } from "@/db/connect";
 import { databaseUrl, loadLocalEnv } from "@/db/env";
 import { errorLog, lessonProgress, PROFILE_ID, reviewCard, reviewLog } from "@/db/schema";
+import { RECENT_DAYS } from "@/review/top-tags";
 import { ui } from "@/ui-it";
 import { hydrated, LESSON, resetLesson, shownText } from "./helpers";
 
@@ -35,7 +36,7 @@ test("with no recent unresolved errors, the panel says so", async ({ page }) => 
     { userId: PROFILE_ID, source: "exercise", errorTags: ["article.lo"], createdAt: days(-31) },
   ]);
   await page.goto("/ripasso");
-  await expect(shownText(page, ui.review.topTags.none)).toBeVisible();
+  await expect(shownText(page, ui.review.topTags.none(RECENT_DAYS))).toBeVisible();
 });
 
 test("the top tags count recent unresolved errors, and a tag's drill grades its exercises like a review", async ({ page }) => {
