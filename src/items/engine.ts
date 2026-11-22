@@ -84,7 +84,7 @@ function eraseTypes<I, A>(engine: Engine<I, A>): AnyEngine {
   };
 }
 
-/** single_choice, and image_choice and audio_choice, which differ only in layout (SPEC §5.2.6, §5.2.8). */
+/** single_choice, and image_choice and audio_choice, which check and score the same way (SPEC §5.2.6, §5.2.8). */
 const SINGLE_CHOICE = eraseTypes<SingleChoiceItem, SingleChoiceAnswer>({
   answerSchema: singleChoiceAnswerSchema,
   pick: pickOption,

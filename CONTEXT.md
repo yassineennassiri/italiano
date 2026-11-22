@@ -29,6 +29,10 @@ _Avoid_: Video, episode
 The transcript of a scene's lines, with speakers and English translations. Shown in the UI as *Copione*.
 _Avoid_: Transcript, subtitles
 
+**Clip**:
+A span of a scene's lines, from one line to a later one (or a single line), that an exercise plays on its own: an *audio_choice* 🔊, the clip player at the top of a step, or an *audio_gap* mini player.
+_Avoid_: Excerpt, snippet
+
 **Step**:
 One numbered exercise page inside a lesson ("3 / 9"), holding one or more items.
 _Avoid_: Page, exercise, screen

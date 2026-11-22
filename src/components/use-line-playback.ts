@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { audioService, type Rate } from "@/audio/audio-service";
+import { audioService, lineClip, type Rate } from "@/audio/audio-service";
 import { LINE_GAP_S } from "@/audio/scene-timeline";
 import type { ScriptLine } from "@/content/schema";
 
@@ -26,8 +26,7 @@ export function useLinePlayback(lines: readonly PlaybackLine[], { key, rate = 1,
     let cancelled = false;
     let gap: ReturnType<typeof setTimeout> | undefined;
     const service = audioService();
-    const { it, audio } = lines[line];
-    void service.play({ text: it, audio }, { rate, key, silentFallback }).then((result) => {
+    void service.play(lineClip(lines[line]), { rate, key, silentFallback }).then((result) => {
       if (cancelled) return;
       if (result !== "ended") return setPlaying(false); // Stopped, taken over, or not heard.
       if (line + 1 >= lines.length) {

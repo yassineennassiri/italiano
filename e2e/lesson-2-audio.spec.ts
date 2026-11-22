@@ -111,10 +111,10 @@ test("a clip step shows the clip player at the top, which plays only its span", 
   const title = shown(page.getByRole("heading", { name: "In che ordine?", level: 1 }));
   expect((await player.boundingBox())!.y).toBeLessThan((await title.boundingBox())!.y);
 
-  const play = player.getByRole("button", { name: ui.lesson.clipPlayer.play, exact: true });
+  const play = player.getByRole("button", { name: ui.lesson.listen, exact: true });
   await hydrated(play);
   await play.click();
-  await expect(player.getByRole("button", { name: ui.lesson.clipPlayer.pause, exact: true })).toBeVisible();
+  await expect(player.getByRole("button", { name: ui.lesson.player.pause, exact: true })).toBeVisible();
   // L5 to L8 of the scene, and nothing else.
   await expect.poll(() => spoken(page)).toEqual([
     "Ecco la chiave. Attenzione, la porta è un po' dura.",

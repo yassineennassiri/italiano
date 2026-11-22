@@ -8,10 +8,17 @@
  * One clip plays at a time. The browser objects are injected, so it runs in tests.
  */
 import { mediaUrl } from "@/content/media-url";
+import type { ScriptLine } from "@/content/schema";
 import { estimateLineSeconds, LINE_GAP_S } from "./scene-timeline";
 
-/** Something to say: Italian text, and the content media path of its MP3 if there is one. */
+/**
+ * Something to say: Italian text, and the content media path of its MP3 if
+ * there is one. One line of a scene's clip (CONTEXT.md) is one of these.
+ */
 export type Clip = { text: string; audio?: string };
+
+/** A script line as something to say. */
+export const lineClip = (line: Pick<ScriptLine, "it" | "audio">): Clip => ({ text: line.it, audio: line.audio });
 
 /** How a play ended: it finished, it was stopped (or replaced), or it couldn't be heard at all. */
 export type PlayResult = "ended" | "stopped" | "unavailable";
@@ -127,7 +134,12 @@ export class AudioService {
     this.stop();
     return new Promise((resolve) => {
       let settled = false;
-      let cancel = () => {};
+      let cancelLine: (() => void) | undefined;
+      let gap: ReturnType<typeof setTimeout> | undefined;
+      const cancel = () => {
+        cancelLine?.();
+        clearTimeout(gap);
+      };
       const settle = (result: PlayResult) => {
         if (settled) return;
         settled = true;
@@ -146,10 +158,9 @@ export class AudioService {
 
       const playFrom = (index: number) => {
         if (index >= queue.length) return settle("ended");
-        cancel = this.sound(queue[index], rate, silentFallback, (result) => {
+        cancelLine = this.sound(queue[index], rate, silentFallback, (result) => {
           if (result !== "ended" || index + 1 >= queue.length) return settle(result);
-          const gap = setTimeout(() => playFrom(index + 1), LINE_GAP_S * 1000);
-          cancel = () => clearTimeout(gap);
+          gap = setTimeout(() => playFrom(index + 1), LINE_GAP_S * 1000);
         });
       };
       playFrom(0);

@@ -24,8 +24,8 @@ export function SingleChoiceItem({
 }: {
   item: Extract<Item, { options: string[]; answer: number }>;
   notes?: ReactNode;
-  /** What the prompt's 🔊 plays, when not the prompt itself; empty for no 🔊. */
-  promptClips?: readonly Clip[];
+  /** What the prompt's 🔊 plays, when not the prompt itself; `null` for no 🔊. */
+  promptClips?: readonly Clip[] | null;
 }) {
   const [entry, dispatch] = useExercise(item);
   const looks = optionLooks(item, entry as ExerciseEntry<SingleChoiceAnswer>);

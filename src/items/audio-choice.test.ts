@@ -23,6 +23,6 @@ describe("audioChoiceClips: what an audio_choice item's 🔊 plays", () => {
   });
 
   it("plays nothing, so there is no 🔊, with neither a clip nor prompt_audio", () => {
-    expect(audioChoiceClips({ ...ELETTRICISTA, clip: undefined }, lesson.scene)).toEqual([]);
+    expect(audioChoiceClips({ ...ELETTRICISTA, clip: undefined }, lesson.scene)).toBeNull();
   });
 });

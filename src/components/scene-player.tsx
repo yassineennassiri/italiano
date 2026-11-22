@@ -8,6 +8,7 @@ import { SUBTITLE_MODES, type SubtitleMode } from "@/audio/subtitles";
 import { mediaUrl } from "@/content/media-url";
 import type { Scene } from "@/content/schema";
 import { ui } from "@/ui-it";
+import { PAUSE_PATH, PLAY_PATH, PlayerIcon } from "./player-icons";
 import { useAudio } from "./use-audio";
 import { useLinePlayback } from "./use-line-playback";
 
@@ -19,15 +20,6 @@ const SPEEDS: readonly { value: Rate; label: string }[] = [
   { value: 0.75, label: ui.lesson.player.speeds.slow },
 ];
 
-function Icon({ path }: { path: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true" focusable="false">
-      <path d={path} fill="currentColor" />
-    </svg>
-  );
-}
-const PLAY = "M8 5 L19 12 L8 19 Z";
-const PAUSE = "M7 5 H10.5 V19 H7 Z M13.5 5 H17 V19 H13.5 Z";
 const PREVIOUS = "M6 5 H8.5 V19 H6 Z M19 5 V19 L9.5 12 Z";
 const NEXT = "M15.5 5 H18 V19 H15.5 Z M5 5 L14.5 12 L5 19 Z";
 
@@ -159,7 +151,7 @@ export function ScenePlayer({ scene, lessonTitle }: { scene: Scene; lessonTitle:
                 }}
                 className="inline-flex size-14 items-center justify-center rounded-full bg-accent text-foreground shadow-lg hover:brightness-95"
               >
-                <Icon path={PLAY} />
+                <PlayerIcon path={PLAY_PATH} />
               </button>
               <span className="rounded bg-black/60 px-2 py-1 text-sm font-semibold text-white">{duration}</span>
             </div>
@@ -176,13 +168,13 @@ export function ScenePlayer({ scene, lessonTitle }: { scene: Scene; lessonTitle:
         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg bg-tint px-3 py-2">
           <div className="flex items-center gap-1">
             <ControlButton label={ui.lesson.player.previousLine} onClick={() => goTo(line - 1)} disabled={line === 0}>
-              <Icon path={PREVIOUS} />
+              <PlayerIcon path={PREVIOUS} />
             </ControlButton>
             <ControlButton ref={playPause} label={playing ? ui.lesson.player.pause : ui.lesson.player.play} onClick={togglePlay}>
-              <Icon path={playing ? PAUSE : PLAY} />
+              <PlayerIcon path={playing ? PAUSE_PATH : PLAY_PATH} />
             </ControlButton>
             <ControlButton label={ui.lesson.player.nextLine} onClick={() => goTo(line + 1)} disabled={line === total - 1}>
-              <Icon path={NEXT} />
+              <PlayerIcon path={NEXT} />
             </ControlButton>
           </div>
           <label className="flex min-w-40 flex-1 items-center gap-2 text-sm text-muted">

@@ -19,11 +19,10 @@ export function PromptBubble({ speak, children }: { speak?: { id: string; clip: 
 /**
  * An item's prompt bubble with its 🔊, or nothing when the item has no prompt.
  * The 🔊 reads the prompt, unless `clips` says what it plays instead (an
- * `audio_choice` clip, SPEC §5.2.8); empty `clips` means no 🔊.
+ * `audio_choice` clip, SPEC §5.2.8); `null` means no 🔊.
  */
-export function ItemPrompt({ item, clips }: { item: Pick<Item, "id" | "prompt" | "prompt_audio">; clips?: readonly Clip[] }) {
+export function ItemPrompt({ item, clips }: { item: Pick<Item, "id" | "prompt" | "prompt_audio">; clips?: readonly Clip[] | null }) {
   if (!item.prompt) return null;
-  const clip = clips ?? { text: item.prompt, audio: item.prompt_audio };
-  const silent = clips !== undefined && clips.length === 0;
-  return <PromptBubble speak={silent ? undefined : { id: `prompt:${item.id}`, clip }}>{item.prompt}</PromptBubble>;
+  const clip = clips === undefined ? { text: item.prompt, audio: item.prompt_audio } : clips;
+  return <PromptBubble speak={clip ? { id: `prompt:${item.id}`, clip } : undefined}>{item.prompt}</PromptBubble>;
 }
