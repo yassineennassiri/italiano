@@ -798,7 +798,7 @@ The `manual` source lets me paste corrections from voice sessions with my Italia
 | created_at, updated_at | timestamptz | |
 | UNIQUE | (user_id, kind, ref_id) | |
 
-For `item` cards, `ref_id` is an **exercise** id: an item id, or an exchange id for speaking items.
+For `item` cards, `ref_id` is an **exercise** id: an item id, or an exchange id for speaking items. For `vocab` cards it is the lesson id plus the vocab id, e.g. `a2.u01.l01.v-ombrello`, because vocab ids are only unique inside their lesson.
 
 **`review_log`** (append-only, never reset): `id` (the write's `eventId`), `user_id`, `card_id`, `grade`, `interval_before`, `interval_after`, `ease_before`, `ease_after`, `source` (`hub` · `drill` · `ripasso_personale` · `lesson`: a lesson answer that grades an existing item card *again*), `created_at`. Every review writes one row, so the scheduler can later be swapped for FSRS fitted to this history (ADR-0004).
 

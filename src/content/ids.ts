@@ -44,6 +44,20 @@ export function lessonIdOfExercise(exerciseId: string): string | undefined {
   return lessonId !== undefined && LESSON_ID_PATTERN.test(lessonId) ? lessonId : undefined;
 }
 
+/**
+ * A vocab card's `ref_id` (SPEC §10.5): lesson id + "." + vocab id, e.g.
+ * `a2.u01.l01.v-ombrello`. Vocab ids are only unique inside their lesson.
+ */
+export function vocabCardRef(lessonId: string, vocabId: string): string {
+  return `${lessonId}.${vocabId}`;
+}
+
+/** A vocab card's lesson and vocab entry: `a2.u01.l01.v-ombrello` → `a2.u01.l01`, `v-ombrello`. */
+export function parseVocabCardRef(refId: string): { lessonId: string; vocabId: string } | undefined {
+  const match = /^((?:a2|b1|b2)\.u\d{2}\.l\d{2})\.(.+)$/.exec(refId);
+  return match ? { lessonId: match[1], vocabId: match[2] } : undefined;
+}
+
 /** The lesson a grammar page id belongs to: `a2.u01.l01.gr2` → `a2.u01.l01`. */
 export function lessonIdOfGrammarPage(pageId: string): string | undefined {
   return /^(.+)\.gr\d+$/.exec(pageId)?.[1];

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { exerciseHashes } from "@/content/hash";
 import { loadLesson } from "@/content/load";
 import { copyContent, editJson, LESSON_FILE } from "@/content/test-content";
-import { planReview, type ReviewWrite, reviewWriteSchema } from "./plan";
+import { type ItemReviewWrite, planReview, reviewWriteSchema } from "./plan";
 
 const NOW = new Date("2026-11-21T08:00:00Z");
 const AT = "2026-11-21T07:59:00.000Z";
@@ -27,7 +27,7 @@ const card = (refId: string, fields = {}) => ({ id: CARD_ID, refId, intervalDays
 
 function review(refId: string, action: Record<string, unknown>, fields = {}) {
   const { lesson: content, hashes } = lesson();
-  const write = { eventId: "evt-1", cardId: CARD_ID, exerciseId: refId, contentHash: hashes.get(refId)!, at: AT, source: "hub", ...action } as ReviewWrite;
+  const write = { eventId: "evt-1", cardId: CARD_ID, exerciseId: refId, contentHash: hashes.get(refId)!, at: AT, source: "hub", ...action } as ItemReviewWrite;
   return planReview({ lesson: content, hashes, card: card(refId, fields), write, now: NOW });
 }
 

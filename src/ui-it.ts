@@ -10,6 +10,7 @@ import type { Note, VocabEntry } from "@/content/schema";
 import type { SubtitleMode } from "@/audio/subtitles";
 import type { Rating } from "@/items/self-rating";
 import type { Grade } from "@/review/sm2";
+import { type SessionCardKind, sessionCardKinds } from "@/review/kinds";
 import type { ScoreBand } from "@/progress/results";
 import type { SyncStatus } from "@/progress/write-queue";
 import type { LessonStatus } from "@/scoring/lesson";
@@ -31,6 +32,18 @@ const reviewPageName: Record<ReviewPage, string> = {
   vocabolario: "vocabolario",
   cultura: "cultura e società",
 };
+
+/** Review cards of each kind a session shows, as its counts name them. */
+const cardKindName: Record<SessionCardKind, { one: string; many: string }> = {
+  vocab: { one: "parola", many: "parole" },
+  item: { one: "esercizio", many: "esercizi" },
+};
+
+/** The counts of the kinds that have any, joined: "3 parole e 2 esercizi". */
+function kindCounts(counts: Readonly<Record<SessionCardKind, number>>): string {
+  const parts = sessionCardKinds.filter((kind) => counts[kind] > 0).map((kind) => ui.review.kindCount(kind, counts[kind]));
+  return parts.length > 1 ? `${parts.slice(0, -1).join(", ")} e ${parts.at(-1)}` : (parts[0] ?? ui.review.kindCount("item", 0));
+}
 
 /** A level (masculine) in each status. */
 const levelStatusName: Record<LessonStatus, string> = {
@@ -270,8 +283,10 @@ export const ui = {
     pageTitle: `Ripasso · ${appName}`,
     heading: "Ripasso",
     dueHeading: "Da ripassare oggi",
-    /** The due count: "3 esercizi da ripassare". */
-    dueCount: (count: number) => `${count} ${count === 1 ? "esercizio" : "esercizi"} da ripassare`,
+    /** A count of cards of one kind: "3 parole", "1 esercizio". */
+    kindCount: (kind: SessionCardKind, count: number) => `${count} ${count === 1 ? cardKindName[kind].one : cardKindName[kind].many}`,
+    /** The due counts by kind, the kinds with none left out: "3 parole e 2 esercizi da ripassare". */
+    dueCount: (counts: Readonly<Record<SessionCardKind, number>>) => `${kindCounts(counts)} da ripassare`,
     nothingDue: "Oggi non hai niente da ripassare.",
     unreachable: "Il ripasso non è disponibile: il database non risponde.",
     start: "Inizia il ripasso",
@@ -282,9 +297,12 @@ export const ui = {
     next: "Avanti",
     finish: "Fine",
     summaryHeading: "Ripasso finito",
-    summaryCount: (count: number) => `Hai ripassato ${count} ${count === 1 ? "esercizio" : "esercizi"}.`,
-    /** How each answer went, as the summary counts them. */
-    /** The grades as SPEC §10.5 names them (the vocab cards' buttons, later). */
+    /** The cards reviewed, by kind: "Hai ripassato 3 parole e 2 esercizi." */
+    summaryCount: (counts: Readonly<Record<SessionCardKind, number>>) => `Hai ripassato ${kindCounts(counts)}.`,
+    /** A vocab card (SPEC §10.5): the front asks for the Italian, Gira turns it over. */
+    vocabPrompt: "Come si dice in italiano?",
+    flip: "Gira",
+    /** The grades as SPEC §10.5 names them: the vocab card's four buttons, and the summary's counts. */
     grade: { again: "Ancora", hard: "Difficile", good: "Bene", easy: "Facile" } satisfies Record<Grade, string>,
     /** One line of the summary: "Bene: 4". */
     gradeCount: (grade: Grade, count: number) => `${ui.review.grade[grade]}: ${count}`,

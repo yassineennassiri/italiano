@@ -4,8 +4,9 @@
  * image_choice steps (issue #38), its audio steps (issue #39), its
  * word_bank step (issue #40), its audio_gap step (issue #41) and its
  * word_order lines step (issue #42), and the IndexedDB write queue
- * offline and across a reload and two tabs (issue #43), and a first
- * review session of item cards (issue #44), against the
+ * offline and across a reload and two tabs (issue #43), a first
+ * review session of item cards (issue #44) and vocab flip cards
+ * (issue #45), against the
  * Neon `dev` branch only (ADR-0001, SPEC §12). It starts
  * `npm run dev:test` on port 3001, or reuses one that is already running;
  * `e2e/global-setup.ts` refuses to go on unless the app says it uses `dev`.

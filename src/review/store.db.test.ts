@@ -15,7 +15,7 @@ import { databaseUrl, loadLocalEnv } from "@/db/env";
 import { MIGRATIONS_DIR, migrateDatabase } from "@/db/migrate";
 import { errorLog, exerciseAttempt, itemState, lessonProgress, profile, reviewCard, reviewLog } from "@/db/schema";
 import type { ExerciseWrite } from "@/progress/plan";
-import { loadLessonEntries, saveExerciseWrite, saveReset } from "@/progress/store";
+import { loadLessonEntries, saveExerciseWrite, saveFinish, saveReset } from "@/progress/store";
 import type { ReviewWrite } from "./plan";
 import { loadDueCards, saveReviewWrite } from "./store";
 
@@ -77,7 +77,7 @@ describe("item cards from lesson answers", () => {
     const [card] = await db.select().from(reviewCard).where(eq(reviewCard.userId, user));
     expect(card).toMatchObject({ kind: "item", refId: I01, dueAt: TOMORROW, intervalDays: 1, ease: 2.5, streak: 0 });
     expect(await loadDueCards(db, user, NOW)).toEqual([]);
-    expect(await loadDueCards(db, user, TOMORROW)).toEqual([{ id: card.id, refId: I01 }]);
+    expect(await loadDueCards(db, user, TOMORROW)).toEqual([{ id: card.id, kind: "item", refId: I01 }]);
   });
 
   it("a wrong first Check after Azzera grades the existing card again, and logs it with source lesson", async () => {
@@ -176,6 +176,81 @@ describe("the item card backfill (drizzle/0002_backfill_item_cards.sql)", () => 
     expect(cards.map((card) => card.refId).sort()).toEqual([I01, E2]);
     for (const card of cards) {
       expect(card).toMatchObject({ kind: "item", intervalDays: 1, ease: 2.5, reps: 0, streak: 0 });
+      const hoursAhead = (card.dueAt.getTime() - Date.now()) / 3_600_000;
+      expect(hoursAhead).toBeGreaterThan(0);
+      expect(hoursAhead).toBeLessThanOrEqual(24);
+    }
+  });
+});
+
+describe("vocab cards from finishing a lesson", () => {
+  const vocabCards = (user: string) => db.select().from(reviewCard).where(and(eq(reviewCard.userId, user), eq(reviewCard.kind, "vocab")));
+
+  it("finishing creates one vocab card per entry, due tomorrow; finishing again creates no duplicates and keeps their schedule", async () => {
+    const user = await newUser();
+    await saveFinish(db, user, { lessonId: LESSON }, NOW);
+
+    const cards = await vocabCards(user);
+    expect(cards).toHaveLength(lesson.vocab.length);
+    expect(cards.map((card) => card.refId)).toContain("a2.u01.l01.v-ombrello");
+    for (const card of cards) expect(card).toMatchObject({ dueAt: TOMORROW, intervalDays: 1, ease: 2.5, reps: 0 });
+
+    await saveFinish(db, user, { lessonId: LESSON }, days(3));
+    expect((await vocabCards(user)).sort((a, b) => a.id.localeCompare(b.id))).toEqual(cards.sort((a, b) => a.id.localeCompare(b.id)));
+  });
+});
+
+describe("saveReviewWrite for a vocab card", () => {
+  const grade = (cardId: string, given: "again" | "good", at: Date): ReviewWrite => ({
+    eventId: randomUUID(),
+    cardId,
+    at: at.toISOString(),
+    source: "hub",
+    kind: "grade",
+    grade: given,
+  });
+
+  it("reschedules the card and logs the grade, with no exercise attempt; a retry, or a grade for an item card, is ignored", async () => {
+    const user = await newUser();
+    await saveFinish(db, user, { lessonId: LESSON }, NOW);
+    const [card] = await db
+      .select()
+      .from(reviewCard)
+      .where(and(eq(reviewCard.userId, user), eq(reviewCard.refId, "a2.u01.l01.v-ombrello")));
+
+    const write = grade(card.id, "again", days(1));
+    expect(await saveReviewWrite(db, user, write, days(1))).toEqual({ result: "saved" });
+    expect(await saveReviewWrite(db, user, write, days(1))).toEqual({ result: "ignored" });
+
+    const [after] = await db.select().from(reviewCard).where(eq(reviewCard.id, card.id));
+    expect(after).toMatchObject({ lapses: 1, streak: 0, lastResult: "again", dueAt: new Date("2026-11-21T23:00:00.000Z") });
+    expect(await db.select().from(reviewLog).where(eq(reviewLog.userId, user))).toMatchObject([
+      { id: write.eventId, cardId: card.id, grade: "again", source: "hub" },
+    ]);
+    expect(await db.select().from(exerciseAttempt).where(eq(exerciseAttempt.userId, user))).toEqual([]);
+
+    await saveExerciseWrite(db, user, pick(2), NOW);
+    const [itemCard] = await db.select().from(reviewCard).where(and(eq(reviewCard.userId, user), eq(reviewCard.kind, "item")));
+    expect(await saveReviewWrite(db, user, grade(itemCard.id, "good", days(1)), days(1))).toEqual({ result: "ignored" });
+  });
+});
+
+describe("the vocab card backfill (drizzle/0004_backfill_vocab_cards.sql)", () => {
+  it("gives every vocab entry of a completed lesson a card due tomorrow, keeps existing cards, and skips lessons not completed", async () => {
+    const user = await newUser();
+    const progress = (lessonId: string, status: "in_progress" | "completed") => ({ userId: user, lessonId, contentVersion: 1, status });
+    await db.insert(lessonProgress).values([progress(LESSON, "completed"), progress("a2.u01.l02", "in_progress")]);
+    const existing = { id: randomUUID(), userId: user, kind: "vocab" as const, refId: "a2.u01.l01.v-ombrello", dueAt: days(30), intervalDays: 30, ease: 2.6, reps: 4 };
+    await db.insert(reviewCard).values(existing);
+
+    const backfill = fs.readFileSync(path.join(MIGRATIONS_DIR, "0004_backfill_vocab_cards.sql"), "utf8");
+    await db.execute(sql.raw(backfill));
+
+    const cards = await db.select().from(reviewCard).where(eq(reviewCard.userId, user));
+    expect(cards.map((card) => card.refId).sort()).toEqual(lesson.vocab.map((entry) => `${LESSON}.${entry.id}`).sort());
+    expect(cards.find((card) => card.id === existing.id)).toMatchObject({ intervalDays: 30, reps: 4, dueAt: days(30) });
+    for (const card of cards.filter((one) => one.id !== existing.id)) {
+      expect(card).toMatchObject({ kind: "vocab", intervalDays: 1, ease: 2.5, reps: 0, streak: 0 });
       const hoursAhead = (card.dueAt.getTime() - Date.now()) / 3_600_000;
       expect(hoursAhead).toBeGreaterThan(0);
       expect(hoursAhead).toBeLessThanOrEqual(24);
