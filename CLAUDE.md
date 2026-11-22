@@ -33,3 +33,5 @@ When I run /implement #N:
 9. Squash-merge the PR, delete the branch, and confirm the issue closed.
 10. Comment a short summary on the issue and tell me which issue is next.
 Never merge with failing CI. HITL issues (ready-for-human): stop and ask me.
+
+In a cloud session (`CLAUDE_CODE_REMOTE` is `true`), `gh issue` and `gh pr` don't work. Before step 1, read "Cloud sessions" in `docs/agents/workflow-notes.md`, and use the `gh api` commands it gives for each step.
