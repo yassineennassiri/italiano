@@ -1,6 +1,8 @@
 # Setting up Claude Code for this repo
 
-The project's knowledge lives in the repo: `SPEC.md`, `CONTEXT.md`, `docs/adr/`, `docs/course-plan.md`, `CLAUDE.md`, and `docs/agents/`, including `workflow-notes.md`. The `tdd`, `code-review`, `pr` and `implement` skills are in `.claude/skills/`. Chats and memory belong to a Claude account and machine. Nothing in them is needed to continue.
+The project's knowledge lives in the repo: `SPEC.md`, `CONTEXT.md`, `docs/adr/`, `docs/course-plan.md`, `CLAUDE.md`, and `docs/agents/`, including `workflow-notes.md`. The `tdd`, `code-review`, `pr`, `implement` and `roadmap` skills are in `.claude/skills/`. Chats and memory belong to a Claude account and machine. Nothing in them is needed to continue.
+
+The roadmap page is at https://claude.ai/artifact/LyHDvxTR4TNV4qb7NxQhAs. It's private to the Claude account that published it, so after switching accounts, publish it once as a new artifact and put the new link in `.claude/skills/roadmap/SKILL.md` and here.
 
 ## New Claude account on a computer that already runs the app
 

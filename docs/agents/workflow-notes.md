@@ -9,6 +9,8 @@ Things agents learned while building M1 that the code doesn't show. Read this be
 - **Merge by hand.** Auto-merge is turned off for this repository. Check CI once with `gh pr checks <n>`. When it passes, run `gh pr merge <n> --squash --delete-branch`. Never merge while CI is failing.
 - **Outside `/implement`, ask before committing or pushing.** Doc changes go on a branch with a PR, never straight to main.
 - Each issue lists its blockers as native GitHub dependencies, plus a `Blocked by:` line. An issue is ready once all its blockers are closed.
+- **Every issue belongs to a GitHub milestone** (`M1: …`, `M2: …`). A milestone that hasn't been grilled yet holds one `epic` issue with its scope. Epics are never implemented: grilling turns them into ready issues under the same milestone, and then the epic is closed.
+- **The roadmap page** (`/roadmap`, `docs/roadmap/`) is how the user follows progress from their phone. New issues appear there under "Not on the map yet" until `/roadmap` places them in `docs/roadmap/features.json`.
 
 ## Real data vs test data
 
