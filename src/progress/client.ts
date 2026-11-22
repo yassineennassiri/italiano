@@ -10,8 +10,8 @@ import { applyAction, type Exercise, type ExerciseAction } from "@/items/engine"
 import type { ExerciseEntry } from "@/items/entry";
 import { applyEvent } from "@/scoring/exercise";
 import type { NewCorrectionWrite } from "@/review/error-card";
-import type { ReviewWrite } from "@/review/plan";
-import { recordCorrection, recordExercise, recordFinish, recordNewCorrection, recordReset, recordReview, recordVisit } from "./actions";
+import type { DrillWrite, ReviewWrite } from "@/review/plan";
+import { recordCorrection, recordDrill, recordExercise, recordFinish, recordNewCorrection, recordReset, recordReview, recordVisit } from "./actions";
 import { openIndexedDbStore } from "./indexed-db-store";
 import { LocalProgress, type ProgressResponse, type ProgressWrite } from "./local";
 import { inResetScope, resetScope, type SavedEntry } from "./merge";
@@ -34,6 +34,8 @@ function send(write: ProgressWrite): Promise<ProgressResponse> {
       return recordReset(write.reset);
     case "review":
       return recordReview(write.review);
+    case "drill":
+      return recordDrill(write.drill);
     case "newCorrection":
       return recordNewCorrection(write.newCorrection);
   }
@@ -147,6 +149,11 @@ export function submitFinish(lessonId: string): void {
 /** A review answer (SPEC §10.5): queued like every other write, so it waits offline and survives a reload. */
 export function submitReview(review: ReviewWrite): void {
   progressQueue.enqueue({ type: "review", review });
+}
+
+/** A tag drill answer (SPEC §10.5): queued like a review answer. */
+export function submitDrill(drill: DrillWrite): void {
+  progressQueue.enqueue({ type: "drill", drill });
 }
 
 /** Aggiungi una correzione (SPEC §10.5): queued like every other write, so a correction saved offline isn't lost. */

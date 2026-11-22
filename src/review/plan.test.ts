@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { exerciseHashes } from "@/content/hash";
 import { loadLesson } from "@/content/load";
 import { copyContent, editJson, LESSON_FILE } from "@/content/test-content";
-import { type ItemReviewWrite, planReview, reviewWriteSchema } from "./plan";
+import { type DrillWrite, drillWriteSchema, type ItemReviewWrite, planDrill, planReview, reviewWriteSchema } from "./plan";
 
 const NOW = new Date("2026-11-21T08:00:00Z");
 const AT = "2026-11-21T07:59:00.000Z";
@@ -90,5 +90,47 @@ describe("planReview (SPEC §10.5, ADR-0004)", () => {
     const write = { eventId: "6f1c2a4e-0b7d-4c3e-9a51-2d8e7f4b1c90", cardId: CARD_ID, exerciseId: I02, contentHash: "h", at: AT, source: "hub", kind: "pick", option: 0 };
     expect(reviewWriteSchema.safeParse(write).success).toBe(true);
     expect(reviewWriteSchema.safeParse({ ...write, cardId: undefined }).success).toBe(false);
+  });
+});
+
+function drill(refId: string, action: Record<string, unknown>, stored?: ReturnType<typeof card>, fields = {}) {
+  const { lesson: content, hashes } = lesson();
+  const write = { eventId: "evt-2", exerciseId: refId, contentHash: hashes.get(refId)!, at: AT, ...action, ...fields } as DrillWrite;
+  return planDrill({ lesson: content, hashes, card: stored, write, now: NOW });
+}
+
+describe("planDrill (SPEC §10.5)", () => {
+  it("grades like a review and updates the exercise's existing item card, logged with source drill", () => {
+    const plan = drill(I02, { kind: "pick", option: 2 }, card(I02, { streak: 2 }))!;
+    expect(plan.grade).toBe("again");
+    expect(plan.card).toMatchObject({ id: CARD_ID, lapses: 1, streak: 0, lastResult: "again" });
+    expect(plan.log).toMatchObject({ id: "evt-2", cardId: CARD_ID, grade: "again", source: "drill" });
+    expect(plan.attempt).toMatchObject({ itemId: I02, lessonId: "a2.u01.l01", action: "review", correct: false });
+    expect(plan.resolves).toBe(false);
+  });
+
+  it("resolves the card's errors on its third non-again grade in a row", () => {
+    expect(drill(I02, { kind: "pick", option: 0 }, card(I02, { streak: 2 }))!.resolves).toBe(true);
+  });
+
+  it("creates no card for an exercise without one: only the review attempt is written", () => {
+    const plan = drill(E2, { kind: "rate", rating: "not_great" })!;
+    expect(plan.grade).toBe("again");
+    expect(plan.card).toBeUndefined();
+    expect(plan.log).toBeUndefined();
+    expect(plan.resolves).toBe(false);
+    expect(plan.attempt).toMatchObject({ id: "evt-2", itemId: E2, action: "review", correct: null });
+  });
+
+  it("ignores an answer for changed content or another card's exercise", () => {
+    expect(drill(I02, { kind: "pick", option: 0 }, undefined, { contentHash: "stale" })).toBeUndefined();
+    expect(drill(I02, { kind: "pick", option: 0 }, card(TEXT_GAP))).toBeUndefined();
+  });
+
+  it("validates the write the client sends: no card id or source, the drill fixes them", () => {
+    const write = { eventId: "6f1c2b3a-4d5e-4f60-8a7b-9c0d1e2f3a4b", exerciseId: I02, contentHash: "abc", at: AT, kind: "pick", option: 1 };
+    expect(drillWriteSchema.safeParse(write).success).toBe(true);
+    expect(drillWriteSchema.safeParse({ ...write, source: "hub" }).success).toBe(false);
+    expect(drillWriteSchema.safeParse({ ...write, kind: "grade" }).success).toBe(false);
   });
 });
