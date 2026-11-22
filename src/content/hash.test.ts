@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { exerciseHashes } from "./hash";
+import { readContentFile } from "./files";
 import { loadLesson } from "./load";
+import { lessonSchema } from "./schema";
 import { copyContent, editJson, LESSON_FILE } from "./test-content";
 
 const hashesOf = (dir?: string) => exerciseHashes(loadLesson("a2.u01.l01", dir)!);
+/** Hashes of lesson 1 as written in the file, vocab-link markup included (the loader would strip it). */
+const rawHashesOf = (dir: string) => exerciseHashes(readContentFile(dir, LESSON_FILE, lessonSchema));
 
 describe("exerciseHashes", () => {
   it("gives every exercise of the lesson a hash, speaking exchanges one each", () => {
@@ -39,7 +43,7 @@ describe("exerciseHashes", () => {
       lesson.steps[1].items[0].text = "{{g1}} [[valigia|v-valigia]], {{g2}} [[zaino|v-zaino]], {{g3}} ombrello e {{g4}} computer.";
       lesson.steps[4].items[0].exchanges[1].other = "Com'è andato il [[viaggio|v-viaggio]]?";
     });
-    expect(hashesOf(dir)).toEqual(hashesOf());
+    expect(rawHashesOf(dir)).toEqual(hashesOf());
   });
 
   it("still changes the hash when the linked word itself changes", () => {
@@ -47,7 +51,7 @@ describe("exerciseHashes", () => {
     editJson(dir, LESSON_FILE, (lesson) => {
       lesson.steps[1].items[0].text = "{{g1}} [[valigie|v-valigia]], {{g2}} zaino, {{g3}} ombrello e {{g4}} computer.";
     });
-    expect(hashesOf(dir).get("a2.u01.l01.s02.i01")).not.toBe(hashesOf().get("a2.u01.l01.s02.i01"));
+    expect(rawHashesOf(dir).get("a2.u01.l01.s02.i01")).not.toBe(hashesOf().get("a2.u01.l01.s02.i01"));
   });
 
   it("keeps lesson 1's hashes as they were when its progress was stored", () => {

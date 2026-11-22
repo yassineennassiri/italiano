@@ -119,11 +119,12 @@ function ItemInteraction({ item, notes, renderNotes }: { item: Item; notes: Reac
   }
 }
 
+/** In place of an item whose type has no component yet; its notes wait for the component too. */
 function UnbuiltItem() {
   return <p className="rounded-lg border-2 border-dashed border-line bg-tint px-4 py-6 text-center text-muted">{ui.lesson.unbuiltItem}</p>;
 }
 
-/** One item: its interaction (or a placeholder card, for types without a component yet) and its notes. */
+/** One item: its interaction and its notes, or a placeholder card for types without a component yet. */
 function ItemSlot({ item, errorTags }: { item: Item; errorTags: ReadonlyMap<string, ErrorTag> }) {
   const renderNotes = (notes?: Note[]) =>
     notes && (

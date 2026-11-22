@@ -10,7 +10,7 @@
   "objectives": [
     "descrivere una casa: le stanze e gli oggetti",
     "scegliere l'articolo indeterminativo giusto: un, uno, una, un'",
-    "riconoscere i nomi dal genere difficile: il problema, la mano, la chiave",
+    "riconoscere i nomi di genere difficile: il problema, la mano, la chiave",
     "dire che cosa c'è e che cosa non c'è"
   ],
   "scene": {
@@ -26,7 +26,7 @@
       { "id": "L2",  "speaker": "adam", "it": "Al quinto piano? C'è un ascensore?", "en": "On the fifth floor? Is there a lift?" },
       { "id": "L3",  "speaker": "pina", "it": "No, caro, ci sono solo le [[scale|v-scala]]. Nei caruggi è normale!", "en": "No, dear, there are only the stairs. That's normal in the caruggi!" },
       { "id": "L4",  "speaker": "adam", "it": "Va bene, è un buon esercizio.", "en": "That's fine, it's good exercise." },
-      { "id": "L5",  "speaker": "pina", "it": "Ecco la [[chiave|v-chiave]]. Attenzione, la porta è un po' difficile.", "en": "Here's the key. Careful, the door is a bit tricky." },
+      { "id": "L5",  "speaker": "pina", "it": "Ecco la [[chiave|v-chiave]]. Attenzione, la porta è un po' dura.", "en": "Here's the key. Careful, the door is a bit stiff." },
       { "id": "L6",  "speaker": "pina", "it": "Allora: questa è la [[cucina|v-cucina]], con un [[frigorifero|v-frigorifero]] e una [[lavatrice|v-lavatrice]].", "en": "So: this is the kitchen, with a fridge and a washing machine." },
       { "id": "L7",  "speaker": "adam", "it": "E c'è anche un [[bagno|v-bagno]]?", "en": "And is there a bathroom too?" },
       { "id": "L8",  "speaker": "pina", "it": "Certo: un bagno piccolo, con una doccia. E qui c'è una [[camera da letto|v-camera]] con un [[armadio|v-armadio]].", "en": "Of course: a small bathroom, with a shower. And here there's a bedroom with a wardrobe." },
@@ -108,9 +108,9 @@
             { "id": "e1", "other": "L'appartamento è al quinto piano, senza ascensore. Va bene per Lei?", "me": "Sì, va bene: è un buon esercizio!",
               "notes": [{ "kind": "tip", "text_en": "Signora Pina still uses Lei. Keep answering formally." }] },
             { "id": "e2", "other": "Questa è la cucina. Che cosa c'è, secondo Lei?", "me": "C'è un frigorifero e c'è una lavatrice." },
-            { "id": "e3", "other": "E nella camera da letto?", "me": "C'è un armadio, ma non c'è uno specchio.", "hint": "Usa un, uno o una davanti a ogni oggetto." }
+            { "id": "e3", "other": "E nella camera da letto?", "me": "C'è un armadio, e nell'armadio c'è uno specchio.", "hint": "Usa un, uno o una davanti a ogni oggetto." }
           ],
-          "error_tags": ["article.lo", "register.lei"]
+          "error_tags": ["article.lo", "article.indefinite_apostrophe"]
         }
       ]
     },
@@ -121,7 +121,7 @@
       "items": [
         {
           "id": "a2.u01.l02.s04.i01", "type": "text_gap", "layout": "full",
-          "prompt": "Pina scrive una lista per il nuovo inquilino. C'è anche un [[problema|v-problema]] con la [[luce|v-luce]]…",
+          "prompt": "Pina scrive una lista per il nuovo inquilino.",
           "text": "Per Adam:\n{{g1}} chiave per il portone\n{{g2}} problema con la luce in cucina\n{{g3}} bicchiere per l'acqua\n{{g4}} mano di vernice per la porta\n{{g5}} armadio nuovo\n{{g6}} specchio per il bagno",
           "gaps": [
             { "id": "g1", "answer": "una" },
@@ -188,7 +188,7 @@
       "id": "a2.u01.l02.s07",
       "title": "Le regole del palazzo",
       "instruction": "Leggi le regole del palazzo e rispondi alle domande.",
-      "reading": "# Le regole del palazzo\n\nBenvenuti! Il palazzo è antico: ha cinque piani, una [[scala|v-scala]] di pietra e un tetto di [[ardesia|v-ardesia]].\n\n## Per gli inquilini\n\n- La [[chiave|v-chiave]] del portone apre anche la cantina.\n- La [[lavatrice|v-lavatrice]] è in cucina: non usarla dopo le dieci di sera.\n- Sull'[[altana|v-altana]] c'è un filo per i panni: è di tutti.\n- Un [[problema|v-problema]] con la [[luce|v-luce]] o con l'acqua? Suonare alla signora Pina, interno 1.\n\nGrazie e buona permanenza!",
+      "reading": "# Le regole del palazzo\n\nBenvenuti! Il palazzo è antico: ha cinque piani, una [[scala|v-scala]] di pietra e un tetto di [[ardesia|v-ardesia]].\n\n## Per gli inquilini\n\n- La [[chiave|v-chiave]] del portone apre anche la cantina.\n- La [[lavatrice|v-lavatrice]] è in cucina. Si prega di non usarla dopo le dieci di sera.\n- Sull'[[altana|v-altana]] c'è un filo per i panni: è di tutti.\n- Un [[problema|v-problema]] con la [[luce|v-luce]] o con l'acqua? Suonare alla signora Pina, interno 1.\n\nGrazie e buona permanenza!",
       "items": [
         {
           "id": "a2.u01.l02.s07.i01", "type": "single_choice",
@@ -252,7 +252,7 @@
           "id": "a2.u01.l02.s09.i01", "type": "word_bank",
           "prompt": "Adam scrive alla sua famiglia.",
           "text": "Ciao a tutti! L'appartamento è piccolo ma bello. C'è {{g1}} [[cucina|v-cucina]] con {{g2}} frigorifero, {{g3}} bagno e {{g4}} camera da letto. Dalla finestra vedo {{g5}} altana. C'è solo {{g6}} problema: cinque piani di scale!",
-          "bank": ["una", "un", "un", "una", "un'", "un", "uno"],
+          "bank": ["un", "uno", "una", "un'", "un", "una", "un"],
           "gaps": [
             { "id": "g1", "answer": "una" },
             { "id": "g2", "answer": "un" },
@@ -275,10 +275,10 @@
         {
           "id": "a2.u01.l02.s10.i01", "type": "word_order", "layout": "lines",
           "tiles": [
-            "Pina: Ecco la chiave. Attenzione, la porta è un po' difficile.",
+            "Pina: Ecco la chiave. Attenzione, la porta è un po' dura.",
             "Pina: Allora: questa è la cucina, con un frigorifero e una lavatrice.",
             "Adam: E c'è anche un bagno?",
-            "Pina: Certo: un bagno piccolo, con una doccia."
+            "Pina: Certo: un bagno piccolo, con una doccia. E qui c'è una camera da letto con un armadio."
           ],
           "solvable": true
         }
@@ -292,10 +292,10 @@
         {
           "id": "a2.u01.l02.s11.i01", "type": "parla",
           "task": "Un amico ti chiama e ti chiede com'è il tuo appartamento a Genova. Descrivi le stanze e che cosa c'è dentro, e raccontagli il problema con la luce.",
-          "example": "L'appartamento è al quinto piano, senza ascensore. C'è una cucina con un frigorifero e una lavatrice, c'è un bagno piccolo e una camera da letto con un armadio. Dalla finestra vedo un'altana e i tetti di ardesia. Però c'era un problema: in cucina la luce non funzionava…",
+          "example": "L'appartamento è al quinto piano, senza ascensore. C'è una cucina con un frigorifero e una lavatrice, c'è un bagno piccolo e una camera da letto con un armadio, e nell'armadio c'è uno specchio. Dalla finestra vedo un'altana e i tetti di ardesia. Però c'era un problema: in cucina la luce non funzionava…",
           "checklist": [
             "Usa un, uno, una e un' almeno una volta ciascuno",
-            "Usa almeno un nome dal genere difficile: il problema, la mano, la chiave o la luce",
+            "Usa almeno un nome di genere difficile: il problema, la mano, la chiave o la luce",
             "Descrivi almeno tre cose con c'è o ci sono"
           ],
           "error_tags": ["article.indefinite_apostrophe", "gender.noun_ending"]
@@ -361,6 +361,6 @@
   "culture": {
     "title": "Stairs and slate: living in the caruggi",
     "image": "images/a2/u01/l02/culture-ardesia.webp",
-    "md": "The buildings of Genoa's old town are tall and narrow, squeezed along the caruggi, and many of them have no lift. Five or six floors of **scale** are part of daily life, and the flats at the top get the most light and the best view.\n\nFrom up there you look out over a sea of grey roofs covered in **ardesia**, slate quarried in the hills of eastern Liguria, around the Val Fontanabuona. Slate is so much part of the region that the coastal town of Lavagna gave its name to the Italian word for blackboard, *la lavagna*. In the old palazzi it is used for steps and for the carved doorways above the main door, the *portone*.\n\nOn many roofs you will spot an **altana**, a small terrace built on top of the building, where people hang their washing and catch the sea breeze."
+    "md": "The buildings of Genoa's old town are tall and narrow, squeezed along the caruggi, and many of them have no lift. Five or six floors of **scale** are part of daily life, and the flats at the top get the most light and the best view.\n\nFrom up there you look out over a sea of grey roofs covered in **ardesia**, slate quarried in the hills of eastern Liguria, around the Val Fontanabuona. Slate is so much part of the region that the coastal town of Lavagna gave its name to the Italian word for blackboard, *la lavagna*. In the old palazzi it is used for steps and for the carved panels above the doorways, the *sovrapporte*.\n\nOn many roofs you will spot an **altana**, a small terrace built on top of the building, where people hang their washing and catch the sea breeze."
   }
 }

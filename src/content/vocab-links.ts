@@ -4,8 +4,8 @@
  * Until the popovers exist, links show as their plain word.
  */
 
-/** A vocab link; group 1 is the shown word, group 2 the vocab id. Global, so use it with `replace` / `matchAll`. */
-export const VOCAB_LINK = /\[\[([^|\]]+)\|([^\]]+)\]\]/g;
+/** A vocab link; group 1 is the shown word. */
+const VOCAB_LINK = /\[\[([^|\]]+)\|([^\]]+)\]\]/g;
 
 /** The text with every `[[word|v-id]]` replaced by `word`. */
 export function plainVocabLinks(text: string): string {

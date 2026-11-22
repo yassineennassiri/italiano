@@ -140,6 +140,12 @@ function checkGapMarkers(item: { text: string; gaps: { id: string }[] }, ctx: Is
   });
 }
 
+/** One correct option out of several (single_choice, image_choice, audio_choice). */
+const choiceFields = {
+  options: z.array(z.string().min(1)).min(2),
+  answer: z.number().int(),
+};
+
 const itemVariants = z.discriminatedUnion("type", [
   z.strictObject({
     ...itemBase,
@@ -180,14 +186,12 @@ const itemVariants = z.discriminatedUnion("type", [
   z.strictObject({
     ...itemBase,
     type: z.enum(["single_choice", "image_choice"]),
-    options: z.array(z.string().min(1)).min(2),
-    answer: z.number().int(),
+    ...choiceFields,
   }),
   z.strictObject({
     ...itemBase,
     type: z.literal("audio_choice"),
-    options: z.array(z.string().min(1)).min(2),
-    answer: z.number().int(),
+    ...choiceFields,
     /** The scene lines 🔊 plays; without it (and without `prompt_audio`) there is no 🔊. */
     clip: clipSchema.optional(),
   }),

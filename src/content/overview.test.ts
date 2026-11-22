@@ -63,8 +63,8 @@ describe("levelOverview", () => {
   });
 });
 
-/** A content copy with a second lesson: unit 2's first lesson, a copy of the example under another id and slug. */
-function withSecondLesson(): string {
+/** A content copy with a lesson in unit 2: a copy of lesson 1 under another id and slug. */
+function withUnit2Lesson(): string {
   const dir = copyContent();
   const lesson = JSON.parse(readFileSync(path.join(dir, LESSON_FILE), "utf8"));
   Object.assign(lesson, { id: "a2.u02.l01", slug: "una-casa" });
@@ -81,12 +81,12 @@ function withSecondLesson(): string {
 describe("finishTarget", () => {
   it("goes to the next lesson's intro, in the same unit and across units", () => {
     expect(finishTarget("a2.u01.l01")).toEqual({ href: "/a2/la-casa-della-signora-pina/info", levelCompleted: false });
-    expect(finishTarget("a2.u01.l02", withSecondLesson())).toEqual({ href: "/a2/una-casa/info", levelCompleted: false });
+    expect(finishTarget("a2.u01.l02", withUnit2Lesson())).toEqual({ href: "/a2/una-casa/info", levelCompleted: false });
   });
 
   it("goes to the level overview with Livello completato after the level's last lesson", () => {
     expect(finishTarget("a2.u01.l02")).toEqual({ href: "/a2?completato=1", levelCompleted: true });
-    expect(finishTarget("a2.u02.l01", withSecondLesson())).toEqual({ href: "/a2?completato=1", levelCompleted: true });
+    expect(finishTarget("a2.u02.l01", withUnit2Lesson())).toEqual({ href: "/a2?completato=1", levelCompleted: true });
   });
 });
 
@@ -97,7 +97,7 @@ describe("continueHref (Continua da dove eri)", () => {
 
   it("goes back into the most recently played lesson, completed or not: the lesson route resumes at the last step", () => {
     const recentFirst = [{ lessonId: "a2.u02.l01" }, { lessonId: "a2.u01.l01" }];
-    expect(continueHref(recentFirst, withSecondLesson())).toBe("/a2/una-casa");
+    expect(continueHref(recentFirst, withUnit2Lesson())).toBe("/a2/una-casa");
   });
 
   it("skips lessons the content no longer has", () => {
