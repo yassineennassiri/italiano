@@ -16,6 +16,7 @@ import {
   type SavedEntry,
   settleLocal,
 } from "./merge";
+import type { NewCorrectionWrite } from "@/review/error-card";
 import type { ReviewWrite } from "@/review/plan";
 import type { CorrectionWrite, ExerciseWrite, FinishWrite, ResetWrite, VisitWrite } from "./plan";
 import type { CorrectionResponse, ResetResponse, WriteResponse } from "./store";
@@ -30,7 +31,9 @@ export type ProgressWrite =
   | { type: "finish"; finish: FinishWrite }
   | { type: "reset"; reset: ResetWrite }
   /** A review answer: the session shows its own entries, so this tab's lesson entries don't change. */
-  | { type: "review"; review: ReviewWrite };
+  | { type: "review"; review: ReviewWrite }
+  /** Aggiungi una correzione: an error_log row and its error card; no lesson entry changes. */
+  | { type: "newCorrection"; newCorrection: NewCorrectionWrite };
 
 type Rejected = { result: "rejected" };
 
@@ -104,6 +107,7 @@ export class LocalProgress {
       case "visit":
       case "finish":
       case "review":
+      case "newCorrection":
         return;
     }
     this.changed();
@@ -141,6 +145,7 @@ export class LocalProgress {
       case "visit":
       case "finish":
       case "review":
+      case "newCorrection":
         return;
     }
     this.changed();

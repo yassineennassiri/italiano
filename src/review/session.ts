@@ -1,15 +1,16 @@
 /**
  * A review session's cards (SPEC §10.5): each due card with its current
  * content, an item card's exercise to show in the normal item UI, a vocab
- * card's entry to show as a flip card. Server-side: it reads the content files.
+ * card's entry to show as a flip card, an error card's correction with its
+ * tags' explanations. Server-side: it reads the content files.
  */
 import { exerciseHashes } from "@/content/hash";
 import { lessonIdOfExercise } from "@/content/ids";
-import { loadLesson } from "@/content/load";
+import { type ErrorTag, loadErrorTags, loadLesson } from "@/content/load";
 import type { Item, Lesson, Step, VocabEntry } from "@/content/schema";
 import { findExercise } from "@/items/engine";
 import { shuffledIndexes } from "@/items/shuffle";
-import { countByKind, type SessionCardKind } from "./kinds";
+import { type CardKind, countByKind } from "./kinds";
 import type { DueCard } from "./store";
 import { findVocabEntry } from "./vocab-card";
 
@@ -31,11 +32,24 @@ export type ItemSessionCard = {
 /** A vocab card as the session shows it: its entry's current content, and the lesson it comes from. */
 export type VocabSessionCard = { kind: "vocab"; cardId: string; lesson: Lesson; entry: VocabEntry };
 
+/**
+ * An error card as the session shows it: the wrong version, the version to
+ * type, and behind *Info* the English explanation of each of its tags and the note.
+ */
+export type ErrorSessionCard = {
+  kind: "error";
+  cardId: string;
+  given: string;
+  expected: string;
+  note: string | null;
+  tags: { id: string; explanation: string }[];
+};
+
 /** A card as the session shows it. */
-export type SessionCard = ItemSessionCard | VocabSessionCard;
+export type SessionCard = ItemSessionCard | VocabSessionCard | ErrorSessionCard;
 
 /** What a review session shows: how many cards are due, in all and by kind, and the session's cards. */
-export type DueSession = { total: number; counts: Record<SessionCardKind, number>; cards: SessionCard[] };
+export type DueSession = { total: number; counts: Record<CardKind, number>; cards: SessionCard[] };
 
 /**
  * The due cards whose exercise or vocab entry the content still has, so a
@@ -55,8 +69,20 @@ export function dueSession(due: readonly DueCard[], random: () => number): DueSe
 /** The due cards with their current content, in order; cards whose content is gone are left out. */
 function showableCards(due: readonly DueCard[]): SessionCard[] {
   const lessons = new Map<string, Lesson | undefined>();
+  let errorTags: ReadonlyMap<string, ErrorTag> | undefined;
   const cards: SessionCard[] = [];
-  for (const { id, kind, refId } of due) {
+  for (const card of due) {
+    const { id, kind, refId } = card;
+    if (card.kind === "error") {
+      errorTags ??= new Map(loadErrorTags().map((tag) => [tag.id, tag]));
+      const { given, expected, note } = card.correction;
+      const tags = card.correction.errorTags.flatMap((tag) => {
+        const found = errorTags!.get(tag);
+        return found ? [{ id: tag, explanation: found.explanation_en }] : [];
+      });
+      cards.push({ kind: "error", cardId: id, given, expected, note, tags });
+      continue;
+    }
     if (kind === "vocab") {
       const found = findVocabEntry(refId);
       if (found) cards.push({ kind, cardId: id, ...found });
@@ -71,7 +97,7 @@ function showableCards(due: readonly DueCard[]): SessionCard[] {
     if (!lesson || !exercise || !step) continue;
     const { item, exchange } = exercise;
     cards.push({
-      kind,
+      kind: "item",
       cardId: id,
       exerciseId: refId,
       contentHash: exerciseHashes(lesson).get(refId)!,

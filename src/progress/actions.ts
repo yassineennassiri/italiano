@@ -6,8 +6,9 @@
  */
 import { db } from "@/db";
 import { PROFILE_ID } from "@/db/schema";
+import { newCorrectionWriteSchema } from "@/review/error-card";
 import { reviewWriteSchema } from "@/review/plan";
-import { saveReviewWrite } from "@/review/store";
+import { saveNewCorrection, saveReviewWrite } from "@/review/store";
 import { correctionWriteSchema, exerciseWriteSchema, finishWriteSchema, resetWriteSchema, visitWriteSchema } from "./plan";
 import {
   type CorrectionResponse,
@@ -63,4 +64,11 @@ export async function recordReview(input: unknown): Promise<ActionResponse> {
   const parsed = reviewWriteSchema.safeParse(input);
   if (!parsed.success) return { result: "rejected" };
   return saveReviewWrite(db(), PROFILE_ID, parsed.data);
+}
+
+/** Aggiungi una correzione: a manual error_log row and its error card, due tomorrow (SPEC §10.5). */
+export async function recordNewCorrection(input: unknown): Promise<ActionResponse> {
+  const parsed = newCorrectionWriteSchema.safeParse(input);
+  if (!parsed.success) return { result: "rejected" };
+  return saveNewCorrection(db(), PROFILE_ID, parsed.data);
 }

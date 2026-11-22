@@ -8,21 +8,24 @@ import { applyAction, type Exercise, type ExerciseAction } from "@/items/engine"
 import { type ExerciseEntry, NEW_ENTRY } from "@/items/entry";
 import { progressQueue, submitReview } from "@/progress/client";
 import { reviewGrade } from "@/review/item-card";
-import { countByKind, type SessionCardKind } from "@/review/kinds";
-import type { ItemSessionCard, VocabSessionCard } from "@/review/session";
+import { rewriteGrade } from "@/review/error-card";
+import { type CardKind, countByKind } from "@/review/kinds";
+import type { ErrorSessionCard, ItemSessionCard, VocabSessionCard } from "@/review/session";
 import { type Grade, grades } from "@/review/sm2";
 import { ui } from "@/ui-it";
 import { ACCENT_CLASS } from "./accent-link";
+import { ErrorCard } from "./error-card";
 import { ExerciseProgress } from "./step-progress";
 import { VocabFlipCard } from "./vocab-flip-card";
 
 /**
  * What the session needs of a card: to write an item card's review (its item
- * UI comes as a slot), or to show a vocab card and write its grade.
+ * UI comes as a slot), or to show a vocab or error card and write its grade.
  */
 export type ReviewCardView =
   | Pick<ItemSessionCard, "kind" | "cardId" | "exerciseId" | "contentHash">
-  | (Pick<VocabSessionCard, "kind" | "cardId" | "entry"> & { source: string });
+  | (Pick<VocabSessionCard, "kind" | "cardId" | "entry"> & { source: string })
+  | ErrorSessionCard;
 
 
 /**
@@ -30,7 +33,8 @@ export type ReviewCardView =
  * its item in the normal item UI (`slots`, rendered on the server); the
  * first answer grades it and queues its review write, and the item then
  * behaves as in a lesson, but nothing more is written. A vocab card is a flip
- * card: its grade button queues the write and moves on. The lesson's own
+ * card: its grade button queues the write and moves on. An error card asks
+ * for the corrected sentence; its first Check or Soluzione grades it. The lesson's own
  * progress is never read or changed. A summary closes the session, with
  * *Altri 20* when more cards are due.
  */
@@ -41,7 +45,7 @@ export function ReviewSession({
   sessionSize,
 }: {
   cards: ReviewCardView[];
-  /** Each item card's item UI; null for a vocab card. */
+  /** Each item card's item UI; null for a vocab or error card. */
   slots: ReactNode[];
   /** More cards are due than this session holds. */
   more: boolean;
@@ -51,7 +55,7 @@ export function ReviewSession({
   const router = useRouter();
   const [index, setIndex] = useState(0);
   const [entries, setEntries] = useState<ReadonlyMap<string, ExerciseEntry>>(new Map());
-  const [graded, setGraded] = useState<ReadonlyMap<string, { kind: SessionCardKind; grade: Grade }>>(new Map());
+  const [graded, setGraded] = useState<ReadonlyMap<string, { kind: CardKind; grade: Grade }>>(new Map());
   const done = index >= cards.length;
   const card = cards[index];
 
@@ -113,6 +117,29 @@ export function ReviewSession({
     );
   }
 
+  const last = index === cards.length - 1;
+  const nextButton = (
+    <div className="mt-10 bg-tint py-8 text-center">
+      <button type="button" disabled={!graded.has(card.cardId)} className={`${ACCENT_CLASS} disabled:opacity-40`} onClick={() => setIndex(index + 1)}>
+        {last ? ui.review.finish : ui.review.next}
+      </button>
+    </div>
+  );
+
+  if (card.kind === "error") {
+    const answer = (text: string | null) => {
+      setGraded((before) => new Map(before).set(card.cardId, { kind: "error", grade: rewriteGrade(text, card.expected) }));
+      submitReview({ eventId: crypto.randomUUID(), cardId: card.cardId, at: new Date().toISOString(), source: "hub", kind: "rewrite", text });
+    };
+    return (
+      <>
+        {counter}
+        <ErrorCard key={card.cardId} card={card} autoFocus={index > 0} onAnswer={answer} />
+        {nextButton}
+      </>
+    );
+  }
+
   const entry = (exerciseId: string) => entries.get(exerciseId) ?? NEW_ENTRY;
   const dispatch = (exercise: Exercise, action: ExerciseAction) => {
     const outcome = applyAction(exercise, entry(exercise.id), action);
@@ -130,7 +157,6 @@ export function ReviewSession({
       ...action,
     });
   };
-  const last = index === cards.length - 1;
 
   return (
     <>
@@ -138,11 +164,7 @@ export function ReviewSession({
       <ExerciseProgress key={card.cardId} entry={entry} dispatch={dispatch}>
         {slots[index]}
       </ExerciseProgress>
-      <div className="mt-10 bg-tint py-8 text-center">
-        <button type="button" disabled={!graded.has(card.cardId)} className={`${ACCENT_CLASS} disabled:opacity-40`} onClick={() => setIndex(index + 1)}>
-          {last ? ui.review.finish : ui.review.next}
-        </button>
-      </div>
+      {nextButton}
     </>
   );
 }

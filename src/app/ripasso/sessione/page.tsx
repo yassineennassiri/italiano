@@ -15,7 +15,7 @@ import { ui } from "@/ui-it";
 
 export const metadata: Metadata = { title: ui.review.pageTitle };
 
-/** A review session (SPEC §10.5): up to 20 due vocab and item cards, shuffled, one at a time. */
+/** A review session (SPEC §10.5): up to 20 due vocab, item and error cards, shuffled, one at a time. */
 export default function ReviewSessionPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -58,11 +58,16 @@ async function Session() {
     <ReviewSession
       // A new session (Altri 20) starts from its first card.
       key={randomUUID()}
-      cards={cards.map((card) =>
-        card.kind === "item"
-          ? { kind: card.kind, cardId: card.cardId, exerciseId: card.exerciseId, contentHash: card.contentHash }
-          : { kind: card.kind, cardId: card.cardId, entry: card.entry, source: ui.review.source(card.lesson.title, ui.lesson.vocabulary) },
-      )}
+      cards={cards.map((card) => {
+        switch (card.kind) {
+          case "item":
+            return { kind: card.kind, cardId: card.cardId, exerciseId: card.exerciseId, contentHash: card.contentHash };
+          case "vocab":
+            return { kind: card.kind, cardId: card.cardId, entry: card.entry, source: ui.review.source(card.lesson.title, ui.lesson.vocabulary) };
+          case "error":
+            return card;
+        }
+      })}
       slots={slots}
       more={total > cards.length}
       sessionSize={SESSION_SIZE}
