@@ -260,6 +260,28 @@ export type RipassoChoice = { items: string[]; chosenAt: Date | null };
 
 const NO_RIPASSO: RipassoChoice = { items: [], chosenAt: null };
 
+/** The stored choice, and whether `inject_review` lets the step show at all. */
+async function readRipasso(db: Db, userId: string, lessonId: string) {
+  const [[owner], [stored]] = await db.batch([
+    db.select({ settings: profile.settings }).from(profile).where(eq(profile.id, userId)),
+    db
+      .select({ items: lessonProgress.reviewItems, chosenAt: lessonProgress.reviewChosenAt })
+      .from(lessonProgress)
+      .where(and(eq(lessonProgress.userId, userId), eq(lessonProgress.lessonId, lessonId))),
+  ]);
+  return { on: injectsReview(owner?.settings), stored: stored?.items ? { items: stored.items, chosenAt: stored.chosenAt } : undefined };
+}
+
+/**
+ * The visit's Ripasso personale step as stored, without ever choosing one:
+ * for the Results page, where a reload after Finish has cleared the choice
+ * must not start a new visit.
+ */
+export async function loadStoredRipasso(db: Db, userId: string, lessonId: string): Promise<RipassoChoice> {
+  const { on, stored } = await readRipasso(db, userId, lessonId);
+  return on && stored ? stored : NO_RIPASSO;
+}
+
 /**
  * The lesson's Ripasso personale step (SPEC §10.5, ADR-0005): the stored
  * choice, or on the first visit up to 3 due item cards chosen now and stored
@@ -267,18 +289,13 @@ const NO_RIPASSO: RipassoChoice = { items: [], chosenAt: null };
  * stays until Finish or Azzera clears it, so the step count is the same on
  * every reload and both computers: when both choose at once, the first
  * stored choice wins. With `inject_review` off there is no step and nothing
- * is chosen. `updated_at` is left alone: choosing is not playing.
+ * is chosen. An existing row's `updated_at` is left alone (choosing is not
+ * playing); a lesson never opened gets its row here, as its first step visit would.
  */
 export async function loadRipassoChoice(db: Db, userId: string, lesson: Lesson, now: Date): Promise<RipassoChoice> {
-  const [[owner], [stored]] = await db.batch([
-    db.select({ settings: profile.settings }).from(profile).where(eq(profile.id, userId)),
-    db
-      .select({ items: lessonProgress.reviewItems, chosenAt: lessonProgress.reviewChosenAt })
-      .from(lessonProgress)
-      .where(and(eq(lessonProgress.userId, userId), eq(lessonProgress.lessonId, lesson.id))),
-  ]);
-  if (!injectsReview(owner?.settings)) return NO_RIPASSO;
-  if (stored?.items) return { items: stored.items, chosenAt: stored.chosenAt };
+  const { on, stored } = await readRipasso(db, userId, lesson.id);
+  if (!on) return NO_RIPASSO;
+  if (stored) return stored;
 
   const items = chooseReviewItems({ lesson, due: await loadDueCards(db, userId, now), load: loadLesson });
   const chosenNow = sql`${lessonProgress.reviewItems} is null`;
@@ -297,14 +314,14 @@ export async function loadRipassoChoice(db: Db, userId: string, lesson: Lesson, 
 }
 
 /** An exercise of the step: its item card, and the first answer given to it in this visit, if any. */
-export type RipassoCard = { exerciseId: string; cardId: string; answer?: { answer: unknown; correct: boolean | null } };
+export type RipassoExerciseRow = { exerciseId: string; cardId: string; answer?: { answer: unknown; correct: boolean | null } };
 
 /**
  * The step's exercises in the chosen order, each with its item card and its
  * first answer since the choice: a `review` attempt whose review_log row has
  * source `ripasso_personale`. Exercises without a card are left out.
  */
-export async function loadRipassoCards(db: Db, userId: string, choice: RipassoChoice): Promise<RipassoCard[]> {
+export async function loadRipassoCards(db: Db, userId: string, choice: RipassoChoice): Promise<RipassoExerciseRow[]> {
   if (choice.items.length === 0) return [];
   const since = new Date((choice.chosenAt ?? new Date(0)).getTime() - CLOCK_SKEW_MS);
   const [cards, answers] = await db.batch([
@@ -328,7 +345,7 @@ export async function loadRipassoCards(db: Db, userId: string, choice: RipassoCh
       .orderBy(asc(exerciseAttempt.createdAt)),
   ]);
   const cardIds = new Map(cards.map((card) => [card.refId, card.id]));
-  const firstAnswers = new Map<string, RipassoCard["answer"]>();
+  const firstAnswers = new Map<string, RipassoExerciseRow["answer"]>();
   for (const { itemId, answer, correct } of answers) if (!firstAnswers.has(itemId)) firstAnswers.set(itemId, { answer, correct });
   return choice.items.flatMap((exerciseId) => {
     const cardId = cardIds.get(exerciseId);

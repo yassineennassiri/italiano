@@ -151,10 +151,13 @@ export type StepLayout = {
 
 type StepsShape = { steps: readonly { items: readonly { type: string }[] }[] };
 
+/** The lesson's own steps, with no Ripasso personale step. */
+const ownSteps = (lesson: { steps: readonly unknown[] }): StepLayout => ({ lessonSteps: lesson.steps.length });
+
 /** The lesson's step numbering, with the Ripasso personale step when `ripasso` is true. */
 export function stepLayout(lesson: StepsShape, ripasso: boolean): StepLayout {
   const lessonSteps = lesson.steps.length;
-  if (!ripasso) return { lessonSteps };
+  if (!ripasso) return ownSteps(lesson);
   const parla = lesson.steps.findIndex((step) => step.items.some((item) => item.type === "parla"));
   return { lessonSteps, ripassoNumber: parla === -1 ? lessonSteps + 1 : parla + 1 };
 }
@@ -182,7 +185,7 @@ export type StepPage<S> = {
 export function stepPage<S>(
   lesson: LessonRef & { steps: readonly S[] },
   segment: string,
-  layout: StepLayout = { lessonSteps: lesson.steps.length },
+  layout: StepLayout = ownSteps(lesson),
 ): StepPage<S> | undefined {
   const total = stepTotal(layout);
   const number = pageNumber(segment, total);
@@ -212,7 +215,7 @@ export function parseStepLocation(location: string | null): number | undefined {
 export function resumeHref(
   lesson: LessonRef & PagedLesson,
   lastLocation: string | null,
-  layout: StepLayout = { lessonSteps: lesson.steps.length },
+  layout: StepLayout = ownSteps(lesson),
 ): string {
   const number = parseStepLocation(lastLocation);
   return number !== undefined && number <= stepTotal(layout)

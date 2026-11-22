@@ -16,8 +16,9 @@ import {
   loadItemCardRefs,
   loadRipassoCards,
   loadRipassoChoice,
+  loadStoredRipasso,
   loadTopErrorTags,
-  type RipassoCard,
+  type RipassoExerciseRow,
   type RipassoChoice,
 } from "@/review/store";
 import type { TopTag } from "@/review/top-tags";
@@ -95,13 +96,17 @@ export async function readDrillSources(): Promise<{ progress: ProgressSummary[];
 
 /**
  * How this visit numbers the lesson's steps: with its Ripasso personale step
- * when it has one, chosen on the first visit (ADR-0005). Without the
+ * when it has one (ADR-0005). With `choose`, opening the lesson (a step page,
+ * the resume redirect) chooses the step on the first visit, which writes the
+ * choice; without it (Results) only the stored choice counts. Without the
  * database there is no step.
  */
-export async function readStepLayout(lesson: Lesson): Promise<{ layout: StepLayout; choice: RipassoChoice }> {
+export async function readStepLayout(lesson: Lesson, { choose }: { choose: boolean }): Promise<{ layout: StepLayout; choice: RipassoChoice }> {
   await connection();
   try {
-    const choice = await loadRipassoChoice(db(), PROFILE_ID, lesson, new Date());
+    const choice = choose
+      ? await loadRipassoChoice(db(), PROFILE_ID, lesson, new Date())
+      : await loadStoredRipasso(db(), PROFILE_ID, lesson.id);
     return { layout: stepLayout(lesson, choice.items.length > 0), choice };
   } catch (error) {
     console.error("Could not load the Ripasso personale step; the lesson opens without it.", error);
@@ -110,7 +115,7 @@ export async function readStepLayout(lesson: Lesson): Promise<{ layout: StepLayo
 }
 
 /** The Ripasso personale step's exercises with their cards and answers; `loaded` is false when the database couldn't be read. */
-export async function readRipassoCards(choice: RipassoChoice): Promise<{ cards: RipassoCard[]; loaded: boolean }> {
+export async function readRipassoCards(choice: RipassoChoice): Promise<{ cards: RipassoExerciseRow[]; loaded: boolean }> {
   await connection();
   try {
     return { cards: await loadRipassoCards(db(), PROFILE_ID, choice), loaded: true };

@@ -17,6 +17,6 @@ async function ResumeLesson({ params }: { params: Promise<LessonRouteParams> }):
   const lesson = await lessonFromParams(params);
   const lastLocation = await readLastLocation(lesson.id);
   // A step number counts the visit's Ripasso personale step, if it has one (ADR-0005).
-  const layout = parseStepLocation(lastLocation) === undefined ? undefined : (await readStepLayout(lesson)).layout;
+  const layout = parseStepLocation(lastLocation) === undefined ? undefined : (await readStepLayout(lesson, { choose: true })).layout;
   redirect(resumeHref(lesson, lastLocation, layout));
 }

@@ -47,7 +47,7 @@ export default function StepRoute({ params }: PageProps<"/[level]/[lesson]/eserc
 
 async function StepView({ params }: Pick<PageProps<"/[level]/[lesson]/esercizi/[n]">, "params">) {
   const lesson = await lessonFromParams(params);
-  const { layout, choice } = await readStepLayout(lesson);
+  const { layout, choice } = await readStepLayout(lesson, { choose: true });
   const page = stepPage(lesson, (await params).n, layout) ?? notFound();
   const errorTags = new Map(loadErrorTags().map((tag) => [tag.id, tag]));
   return page.kind === "ripasso" ? (

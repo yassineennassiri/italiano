@@ -16,7 +16,7 @@ export default function ResultsPage({ params }: PageProps<"/[level]/[lesson]/ris
 
 async function Results({ params }: { params: Promise<LessonRouteParams> }) {
   const lesson = await lessonFromParams(params);
-  const [{ saved, loaded }, { layout }] = await Promise.all([readLessonEntries(lesson), readStepLayout(lesson)]);
+  const [{ saved, loaded }, { layout }] = await Promise.all([readLessonEntries(lesson), readStepLayout(lesson, { choose: false })]);
   return (
     <ResultsScreen
       lesson={{ id: lesson.id, slug: lesson.slug }}

@@ -70,18 +70,18 @@ export function RipassoProgress({
     return { ...found, state: { ...found.state, points: 0 } };
   };
   const dispatch = (exercise: Exercise, action: ExerciseAction) => {
-    const card = exercises.find(({ exerciseId }) => exerciseId === exercise.id);
-    const outcome = card && applyAction(exercise, entry(exercise.id), action);
-    if (!card || !outcome) return;
+    const chosen = exercises.find(({ exerciseId }) => exerciseId === exercise.id);
+    const outcome = chosen && applyAction(exercise, entry(exercise.id), action);
+    if (!chosen || !outcome) return;
     const first = !entries.has(exercise.id);
     answered.set(key(exercise.id), outcome.entry);
     setEntries((before) => new Map(before).set(exercise.id, outcome.entry));
     if (!first) return;
     submitReview({
       eventId: crypto.randomUUID(),
-      cardId: card.cardId,
-      exerciseId: card.exerciseId,
-      contentHash: card.contentHash,
+      cardId: chosen.cardId,
+      exerciseId: chosen.exerciseId,
+      contentHash: chosen.contentHash,
       at: new Date().toISOString(),
       source: "ripasso_personale",
       ...action,

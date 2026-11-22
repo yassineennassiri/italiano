@@ -243,7 +243,7 @@ export const ui = {
       title: "Ripasso personale",
       instruction: "Questi esercizi vengono dai tuoi errori nelle altre lezioni. Non danno punti: servono a ripassare.",
     },
-        /** SPEC §6.2; the nouns agree with the total, the points with their count. */
+    /** SPEC §6.2; the nouns agree with the total, the points with their count. */
     footerCounter: ({ completed, total, points }: { completed: number; total: number; points: number }) =>
       `${completed} di ${total} ${total === 1 ? "esercizio completato" : "esercizi completati"}. ` +
       `${points} ${points === 1 ? "punto" : "punti"}.`,

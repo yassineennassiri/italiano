@@ -14,7 +14,7 @@ import { migrateDatabase } from "@/db/migrate";
 import { errorLog, exerciseAttempt, itemState, lessonProgress, profile, reviewCard, reviewLog } from "@/db/schema";
 import { saveFinish, saveReset } from "@/progress/store";
 import type { ReviewWrite } from "./plan";
-import { loadRipassoCards, loadRipassoChoice, saveReviewWrite } from "./store";
+import { loadRipassoCards, loadRipassoChoice, loadStoredRipasso, saveReviewWrite } from "./store";
 
 loadLocalEnv();
 const db = connect(databaseUrl("dev"));
@@ -109,6 +109,18 @@ describe("loadRipassoChoice", () => {
     expect(await storedChoice(user)).toEqual([L1_LO]);
     await saveReset(db, user, { scope: "lesson", lessonId: lesson.id, at: NOW.toISOString() }, NOW);
     expect(await storedChoice(user)).toBeNull();
+  });
+});
+
+describe("loadStoredRipasso (the Results page)", () => {
+  it("reads the stored choice without ever choosing, so a Results reload after Finish adds no step", async () => {
+    const user = await newUser();
+    await dueCard(user, L1_LO, 1);
+    expect(await loadStoredRipasso(db, user, lesson.id)).toEqual({ items: [], chosenAt: null });
+    expect(await storedChoice(user)).toBeUndefined();
+
+    await loadRipassoChoice(db, user, lesson, NOW);
+    expect((await loadStoredRipasso(db, user, lesson.id)).items).toEqual([L1_LO]);
   });
 });
 
