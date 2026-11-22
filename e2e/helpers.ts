@@ -1,8 +1,16 @@
 /** Helpers shared by the e2e specs. */
 import { expect, type Locator, type Page, type Request } from "@playwright/test";
+import { ui } from "@/ui-it";
 
 /** The example lesson, A2.1.1. */
 export const LESSON = "/a2/benvenuto-a-genova";
+
+/** Text on the page that is shown: Next keeps the pages navigated away from in the DOM, hidden. */
+export const shownText = (page: Page, text: string | RegExp) => page.getByText(text, { exact: typeof text === "string" }).filter({ visible: true });
+
+/** The step footer's counter shows `completed` of `total` exercises and `points` (SPEC §6.2). */
+export const expectCounter = (page: Page, completed: number, total: number, points: number) =>
+  expect(shownText(page, ui.lesson.footerCounter({ completed, total, points }))).toBeVisible();
 
 /** Waits until React has hydrated the element, so a click isn't lost on a freshly loaded page. */
 export async function hydrated(locator: Locator): Promise<void> {

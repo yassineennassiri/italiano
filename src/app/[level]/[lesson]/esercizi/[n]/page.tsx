@@ -7,18 +7,19 @@ import { MediaFrame } from "@/components/media-frame";
 import { MultiSelectItem } from "@/components/multi-select-item";
 import { NoteRow } from "@/components/note-row";
 import { ParlaItem } from "@/components/parla-item";
-import { StepReading } from "@/components/step-reading";
 import { ScenePlayer } from "@/components/scene-player";
 import { ScriptToggle } from "@/components/script-toggle";
 import { SingleChoiceItem } from "@/components/single-choice-item";
 import { SpeakRateItem } from "@/components/speak-rate-item";
 import { StepCounterText, StepProgress } from "@/components/step-progress";
 import { StepInstruction } from "@/components/step-instruction";
+import { StepReading } from "@/components/step-reading";
 import { TextGapItem } from "@/components/text-gap-item";
 import { WordOrderItem } from "@/components/word-order-item";
 import { exerciseHashes } from "@/content/hash";
 import { type ErrorTag, loadErrorTags, loadLessonBySlug } from "@/content/load";
 import { stepLocation, stepPage } from "@/content/lesson-nav";
+import { readingLayout } from "@/content/reading";
 import type { Item, Lesson, Note, Step } from "@/content/schema";
 import { stepScript } from "@/content/script";
 import { readLessonEntries } from "@/progress/read";
@@ -61,7 +62,7 @@ async function StepView({ params }: Pick<PageProps<"/[level]/[lesson]/esercizi/[
           <h1 className="mt-2 text-2xl font-bold text-brand">{step.title}</h1>
           <StepInstruction instruction={step.instruction} instructionEn={step.instruction_en} />
           {script && <ScriptToggle lines={script} />}
-          {step.reading && <StepReading md={step.reading} intro={step.items.some((item) => item.type === "image_choice")} />}
+          {step.reading && <StepReading md={step.reading} layout={readingLayout(step)} />}
           <div className="mt-8 space-y-10">
             {step.items.map((item) => (
               <ItemSlot key={item.id} item={item} errorTags={errorTags} />

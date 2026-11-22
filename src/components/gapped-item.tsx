@@ -7,7 +7,7 @@ import { type ExerciseEntry, isLocked } from "@/items/entry";
 import { currentValues, type GapMode, type GapView, gapLooks, type GappedItem, type GapsAnswer, type GapValues } from "@/items/gaps";
 import { ui } from "@/ui-it";
 import { FeedbackIcon, ItemControls } from "./item-controls";
-import { MediaFrame } from "./media-frame";
+import { ItemImage } from "./media-frame";
 import { ItemPrompt } from "./prompt-bubble";
 import { useExercise } from "./step-progress";
 
@@ -78,7 +78,7 @@ export function GappedItemLayout({
       <div className="grid gap-4 md:grid-cols-2 md:items-start">
         <div className="space-y-4">
           <ItemPrompt item={item} />
-          {item.image && <MediaFrame src={item.image} alt={ui.lesson.itemImageAlt} fit="contain" />}
+          <ItemImage src={item.image} />
         </div>
         <div>{children}</div>
       </div>

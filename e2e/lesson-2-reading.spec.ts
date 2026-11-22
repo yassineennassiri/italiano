@@ -9,7 +9,7 @@
  */
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import { ui } from "@/ui-it";
-import { hydrated, nextRefresh } from "./helpers";
+import { expectCounter, hydrated, nextRefresh, shownText } from "./helpers";
 
 const LESSON_2 = "/a2/la-casa-della-signora-pina";
 
@@ -19,8 +19,6 @@ const option = (scope: Locator, text: string) =>
   scope.getByRole("button", { name: new RegExp(`^${text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}( |$)`) });
 // Next keeps the pages navigated away from in the DOM, hidden: lookups match only what is shown.
 const shown = (locator: Locator) => locator.filter({ visible: true });
-const expectCounter = (page: Page, completed: number, total: number, points: number) =>
-  expect(shown(page.getByText(ui.lesson.footerCounter({ completed, total, points }), { exact: true }))).toBeVisible();
 
 /** The top of an element on the page, to check what sits above what. */
 const top = async (locator: Locator) => (await locator.boundingBox())!.y;
@@ -48,21 +46,21 @@ test("a reading step shows its document on a tinted panel above its questions", 
   expect(await top(reading)).toBeLessThan(await top(item(page, "s07.i01")));
 
   // Its questions are single_choice items.
-  const washer = item(page, "s07.i01");
-  await hydrated(option(washer, "In cucina."));
-  await option(washer, "In cucina.").click();
+  const whereIsTheWasher = item(page, "s07.i01");
+  await hydrated(option(whereIsTheWasher, "In cucina."));
+  await option(whereIsTheWasher, "In cucina.").click();
   await expectCounter(page, 1, 3, 1);
-  await expect(shown(page.getByText(ui.lesson.unbuiltItem))).toHaveCount(0);
+  await expect(shownText(page, ui.lesson.unbuiltItem)).toHaveCount(0);
 });
 
 test("image_choice items play like single_choice under an intro paragraph", async ({ page }) => {
   await page.goto(`${LESSON_2}/esercizi/8`);
 
-  const intro = shown(page.getByText(/^Nell'appartamento di Adam ci sono tante cose nuove/));
+  const intro = shownText(page, /^Nell'appartamento di Adam ci sono tante cose nuove/);
   await expect(intro).toBeVisible();
-  await expect(page.locator("article.bg-tint").filter({ visible: true })).toHaveCount(0);
+  await expect(shown(page.locator("article.bg-tint"))).toHaveCount(0);
   expect(await top(intro)).toBeLessThan(await top(item(page, "s08.i01")));
-  await expect(shown(page.getByText(ui.lesson.unbuiltItem))).toHaveCount(0);
+  await expect(shownText(page, ui.lesson.unbuiltItem)).toHaveCount(0);
 
   // The prompt bubble sits above the image.
   const mirror = item(page, "s08.i01");
@@ -77,11 +75,11 @@ test("image_choice items play like single_choice under an intro paragraph", asyn
   await expect(option(mirror, "Un armadio.")).toBeDisabled();
 
   // Wrong: the other option stays open, and the right retry scores nothing.
-  const washer = item(page, "s08.i02");
-  await option(washer, "Un frigorifero.").click();
+  const washingMachine = item(page, "s08.i02");
+  await option(washingMachine, "Un frigorifero.").click();
   await expectCounter(page, 2, 3, 1);
-  await expect(option(washer, "Una lavatrice.")).toBeEnabled();
-  await option(washer, "Una lavatrice.").click();
-  await expect(option(washer, "Una lavatrice.")).toBeDisabled();
+  await expect(option(washingMachine, "Una lavatrice.")).toBeEnabled();
+  await option(washingMachine, "Una lavatrice.").click();
+  await expect(option(washingMachine, "Una lavatrice.")).toBeDisabled();
   await expectCounter(page, 2, 3, 1);
 });

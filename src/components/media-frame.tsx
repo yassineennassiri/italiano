@@ -1,6 +1,7 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { mediaUrl } from "@/content/media-url";
+import { ui } from "@/ui-it";
 
 /** A wide 16:9 frame for a content image (the scene poster, a step image), with optional overlays. */
 export function MediaFrame({
@@ -27,4 +28,9 @@ export function MediaFrame({
       {children}
     </div>
   );
+}
+
+/** An item's image, left of its text or under its prompt (SPEC §5.2.1, §5.2.6); nothing when it has none. */
+export function ItemImage({ src }: { src?: string }) {
+  return src ? <MediaFrame src={src} alt={ui.lesson.itemImageAlt} fit="contain" /> : null;
 }

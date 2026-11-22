@@ -4,9 +4,8 @@ import type { ReactNode } from "react";
 import type { Item } from "@/content/schema";
 import { type ExerciseEntry, isLocked } from "@/items/entry";
 import { optionLooks, type SingleChoiceAnswer } from "@/items/single-choice";
-import { ui } from "@/ui-it";
 import { ItemControls } from "./item-controls";
-import { MediaFrame } from "./media-frame";
+import { ItemImage } from "./media-frame";
 import { OptionButton } from "./option-button";
 import { ItemPrompt } from "./prompt-bubble";
 import { useExercise } from "./step-progress";
@@ -25,7 +24,7 @@ export function SingleChoiceItem({ item, notes }: { item: Extract<Item, { option
       <div className="grid gap-4 md:grid-cols-2 md:items-start">
         <div className="space-y-4">
           <ItemPrompt item={item} />
-          {item.image && <MediaFrame src={item.image} alt={ui.lesson.itemImageAlt} fit="contain" />}
+          <ItemImage src={item.image} />
         </div>
         <div>
           <ul className="space-y-2">

@@ -1,15 +1,15 @@
 import { type DocumentBlock, parseDocument } from "@/content/markdown";
+import type { ReadingLayout } from "@/content/reading";
 import { InlineText } from "./prose";
 
 /**
- * A step's `reading` (SPEC §4.2 item 6). Above `image_choice` items it is a
- * plain intro paragraph (SPEC §5.2.6); otherwise it is a document on a tinted
- * panel: heading, subheads, paragraphs and lists (SPEC §5.2.7). Italian, like
- * the page.
+ * A step's `reading` (SPEC §4.2 item 6): a plain intro paragraph, or a
+ * document on a tinted panel with its heading, subheads, paragraphs and lists
+ * (SPEC §5.2.7). Italian, like the page.
  */
-export function StepReading({ md, intro }: { md: string; intro: boolean }) {
+export function StepReading({ md, layout }: { md: string; layout: ReadingLayout }) {
   const blocks = parseDocument(md).map((block, index) => <ReadingBlock key={index} block={block} />);
-  if (intro) return <div className="mt-6 space-y-3 text-lg leading-relaxed text-brand">{blocks}</div>;
+  if (layout === "intro") return <div className="mt-6 space-y-3 text-lg leading-relaxed text-brand">{blocks}</div>;
   return <article className="mt-6 space-y-4 rounded-lg bg-tint px-6 py-6 leading-relaxed text-brand">{blocks}</article>;
 }
 

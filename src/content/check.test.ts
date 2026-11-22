@@ -18,6 +18,16 @@ describe("checkContent", () => {
     ]);
   });
 
+  it("reports an image_choice item without its image", () => {
+    const dir = copyContent();
+    const lesson2 = "levels/a2/units/01-arrivo-a-genova/lessons/02-la-casa-della-signora-pina.json";
+    editJson(dir, lesson2, (lesson) => {
+      // steps[7] is "Che cos'è?", three image_choice items.
+      delete lesson.steps[7].items[0].image;
+    });
+    expect(checkContent(dir)).toEqual([`${lesson2}: steps[7].items[0].image: an image_choice item needs an image`]);
+  });
+
   it("reports a choice answer index outside the options", () => {
     const dir = copyContent();
     editJson(dir, LESSON_FILE, (lesson) => {

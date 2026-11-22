@@ -16,15 +16,10 @@
  */
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import { ui } from "@/ui-it";
-import { hydrated, LESSON } from "./helpers";
+import { expectCounter, hydrated, LESSON, shownText } from "./helpers";
 
 const item = (page: Page, id: string) => page.locator(`section[data-item-id="a2.u01.l01.${id}"]`);
 const option = (scope: Locator, name: string) => scope.getByRole("button", { name, exact: true });
-// Next keeps the pages navigated away from in the DOM, hidden: text lookups match only what is shown.
-const shownText = (page: Page, text: string | RegExp) => page.getByText(text, { exact: typeof text === "string" }).filter({ visible: true });
-/** The step footer's counter shows `completed` of `total` exercises and `points` (SPEC §6.2). */
-const expectCounter = (page: Page, completed: number, total: number, points: number) =>
-  expect(shownText(page, ui.lesson.footerCounter({ completed, total, points }))).toBeVisible();
 
 /** The lesson card's status circle says exactly this, e.g. *Completata · 57%*. */
 const expectCardStatus = (card: Locator, status: string) => expect(card.getByText(status, { exact: true })).toHaveCount(1);

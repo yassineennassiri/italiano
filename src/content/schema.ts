@@ -241,8 +241,12 @@ export const itemSchema = itemVariants.superRefine((item, ctx) => {
         }
       });
       break;
-    case "single_choice":
     case "image_choice":
+      // The image is the question (SPEC §5.2.6).
+      if (!item.image) report(ctx, ["image"], "an image_choice item needs an image");
+      checkAnswerIndex(item.answer, item.options, ["answer"], ctx);
+      break;
+    case "single_choice":
     case "audio_choice":
       checkAnswerIndex(item.answer, item.options, ["answer"], ctx);
       break;
