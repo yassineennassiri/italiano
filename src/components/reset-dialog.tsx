@@ -74,12 +74,22 @@ export function useResetDialog({ target, title, onClose }: { target: ResetTarget
   return { open: () => dialogRef.current?.showModal(), dialog };
 }
 
-/** The level overview's *Azzera* button with its dialog (SPEC §3.3). */
+/**
+ * The level overview's *Azzera* button with its dialog (SPEC §3.3). Focus goes
+ * back to the button explicitly: where a click doesn't focus a button (Firefox
+ * and Safari on macOS), the browser's own restore would leave it on the page.
+ */
 export function LevelResetButton({ levelId, levelTitle }: { levelId: string; levelTitle: string }) {
-  const reset = useResetDialog({ target: { scope: "level", levelId }, title: levelTitle });
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const reset = useResetDialog({
+    target: { scope: "level", levelId },
+    title: levelTitle,
+    onClose: () => buttonRef.current?.focus(),
+  });
   return (
     <>
       <button
+        ref={buttonRef}
         type="button"
         onClick={reset.open}
         className="rounded-full border-2 border-brand px-4 py-1 text-sm font-bold text-brand hover:bg-tint"

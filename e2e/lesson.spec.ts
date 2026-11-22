@@ -16,15 +16,7 @@
  */
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import { ui } from "@/ui-it";
-
-const LESSON = "/a2/benvenuto-a-genova";
-
-/** Waits until React has hydrated the element, so a click isn't lost on a freshly loaded page. */
-async function hydrated(locator: Locator): Promise<void> {
-  await expect
-    .poll(() => locator.evaluate((element) => Object.keys(element).some((key) => key.startsWith("__reactFiber"))))
-    .toBe(true);
-}
+import { hydrated, LESSON } from "./helpers";
 
 const item = (page: Page, id: string) => page.locator(`section[data-item-id="a2.u01.l01.${id}"]`);
 const option = (scope: Locator, name: string) => scope.getByRole("button", { name, exact: true });

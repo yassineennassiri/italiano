@@ -1,6 +1,7 @@
 /**
- * `npm run test:e2e`: the happy path through the example lesson (issue #18),
- * locally only, against the Neon `dev` branch (ADR-0001, SPEC §12). It starts
+ * `npm run test:e2e`: the happy path through the example lesson (issue #18)
+ * and focus return from the Azzera dialogs (issue #36), against the Neon `dev`
+ * branch only (ADR-0001, SPEC §12). It starts
  * `npm run dev:test` on port 3001, or reuses one that is already running;
  * `e2e/global-setup.ts` refuses to go on unless the app says it uses `dev`.
  * `npm run dev` shares `.next/` with it, so stop that first.
@@ -12,7 +13,7 @@ const PORT = 3001;
 export default defineConfig({
   testDir: "e2e",
   globalSetup: "./e2e/global-setup.ts",
-  // One lesson, one profile: tests would fight over the same rows.
+  // One profile: tests that write progress would fight over the same rows.
   workers: 1,
   fullyParallel: false,
   forbidOnly: true,
