@@ -36,6 +36,7 @@ const writeFields = {
 
 /** A vocab card graded with one of the flip card's four buttons (SPEC §10.5). */
 const vocabWriteSchema = z.strictObject({ kind: z.literal("grade"), grade: z.enum(grades), ...cardFields });
+/** A vocab card's grade as the client sends it. */
 export type VocabReviewWrite = z.infer<typeof vocabWriteSchema>;
 
 /**

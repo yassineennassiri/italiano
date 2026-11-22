@@ -54,8 +54,10 @@ export function vocabCardRef(lessonId: string, vocabId: string): string {
 
 /** A vocab card's lesson and vocab entry: `a2.u01.l01.v-ombrello` → `a2.u01.l01`, `v-ombrello`. */
 export function parseVocabCardRef(refId: string): { lessonId: string; vocabId: string } | undefined {
-  const match = /^((?:a2|b1|b2)\.u\d{2}\.l\d{2})\.(.+)$/.exec(refId);
-  return match ? { lessonId: match[1], vocabId: match[2] } : undefined;
+  const parts = refId.split(".");
+  const lessonId = parts.slice(0, 3).join(".");
+  const vocabId = parts.slice(3).join(".");
+  return LESSON_ID_PATTERN.test(lessonId) && vocabId !== "" ? { lessonId, vocabId } : undefined;
 }
 
 /** The lesson a grammar page id belongs to: `a2.u01.l01.gr2` → `a2.u01.l01`. */

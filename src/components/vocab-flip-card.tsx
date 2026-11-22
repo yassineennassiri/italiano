@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import type { VocabEntry } from "@/content/schema";
 import { type Grade, grades } from "@/review/sm2";
 import { ui } from "@/ui-it";
+import { ACCENT_CLASS } from "./accent-link";
 import { VocabTerm } from "./vocab-list";
 
-const BUTTON_CLASS = "inline-block rounded-full bg-accent px-8 py-2 font-bold text-foreground hover:brightness-95";
 
 /**
  * A vocab card in a review session (SPEC §10.5): the front shows the English
@@ -51,7 +51,7 @@ export function VocabFlipCard({
             <VocabTerm entry={entry} className="justify-center text-left text-xl" />
           </div>
         ) : (
-          <button ref={flip} type="button" className={`${BUTTON_CLASS} mt-8`} onClick={() => setFlipped(true)}>
+          <button ref={flip} type="button" className={`${ACCENT_CLASS} mt-8`} onClick={() => setFlipped(true)}>
             {ui.review.flip}
           </button>
         )}
@@ -59,7 +59,7 @@ export function VocabFlipCard({
       {flipped && (
         <div className="mt-10 flex flex-wrap justify-center gap-3 bg-tint py-8">
           {grades.map((grade) => (
-            <button key={grade} type="button" className={BUTTON_CLASS} onClick={() => onGrade(grade)}>
+            <button key={grade} type="button" className={ACCENT_CLASS} onClick={() => onGrade(grade)}>
               {ui.review.grade[grade]}
             </button>
           ))}

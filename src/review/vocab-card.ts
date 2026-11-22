@@ -11,15 +11,18 @@ import { type CardRow, type GradedCard, gradeCard, gradedAt, type ReviewLogRow, 
 import type { VocabReviewWrite } from "./plan";
 import { NEW_SCHEDULE } from "./sm2";
 
-export type { VocabReviewWrite };
-
 /**
- * A new card for each of the lesson's vocab entries, due the next day. The
- * store inserts them only where the card doesn't exist yet, so finishing
- * again keeps the cards and their schedules.
+ * A new card for each of the lesson's vocab entries, due the day after `at`,
+ * when the learner finished. The store inserts them only where the card
+ * doesn't exist yet, so finishing again keeps the cards and their schedules.
  */
-export function newVocabCards(lesson: Pick<Lesson, "id" | "vocab">, now: Date, newId: () => string = () => crypto.randomUUID()): CardRow[] {
-  const due = dueAt(now, 1);
+export function newVocabCards(
+  lesson: Pick<Lesson, "id" | "vocab">,
+  at: Date,
+  now: Date,
+  newId: () => string = () => crypto.randomUUID(),
+): CardRow[] {
+  const due = dueAt(at, 1);
   return lesson.vocab.map((entry) => ({
     id: newId(),
     kind: "vocab",

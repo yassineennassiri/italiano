@@ -11,6 +11,7 @@ import { loadCourse, loadLesson } from "@/content/load";
 import type { Lesson } from "@/content/schema";
 import type { Db } from "@/db/connect";
 import { errorLog, exerciseAttempt, itemState, lessonProgress, reviewLog } from "@/db/schema";
+import { gradedAt } from "@/review/item-card";
 import { insertNewCards, itemCard, upsertCard } from "@/review/store";
 import { newVocabCards } from "@/review/vocab-card";
 import type { SavedEntry } from "./merge";
@@ -216,7 +217,8 @@ export async function saveFinish(db: Db, userId: string, write: FinishWrite, now
   const state = await readLessonState(db, userId, write.lessonId);
   if (!state) return { result: "ignored" };
   const writes: BatchItem<"pg">[] = [upsertProgress(db, userId, planFinish({ ...state, now }))];
-  const cards = newVocabCards(state.lesson, now);
+  // Due the day after the learner finished, even when the write arrives later.
+  const cards = newVocabCards(state.lesson, write.at === undefined ? now : gradedAt(write.at, now), now);
   if (cards.length > 0) writes.push(insertNewCards(db, userId, cards));
   await db.batch(writes as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
   return { result: "saved" };

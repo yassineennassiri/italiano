@@ -200,6 +200,15 @@ describe("vocab cards from finishing a lesson", () => {
   });
 });
 
+describe("vocab cards from a Finish synced late", () => {
+  it("are due the day after the learner finished, not the day after the write arrived", async () => {
+    const user = await newUser();
+    await saveFinish(db, user, { lessonId: LESSON, at: NOW.toISOString() }, days(3));
+    const cards = await db.select().from(reviewCard).where(and(eq(reviewCard.userId, user), eq(reviewCard.kind, "vocab")));
+    expect(cards.map((card) => card.dueAt)).toEqual(cards.map(() => TOMORROW));
+  });
+});
+
 describe("saveReviewWrite for a vocab card", () => {
   const grade = (cardId: string, given: "again" | "good", at: Date): ReviewWrite => ({
     eventId: randomUUID(),

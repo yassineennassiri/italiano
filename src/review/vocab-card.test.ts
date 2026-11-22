@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { loadLesson } from "@/content/load";
-import { reviewWriteSchema } from "./plan";
-import { newVocabCards, planVocabReview, type VocabReviewWrite } from "./vocab-card";
+import { reviewWriteSchema, type VocabReviewWrite } from "./plan";
+import { newVocabCards, planVocabReview } from "./vocab-card";
 
 /** 11:00 in Genoa on 20 November; the next day starts at 23:00 UTC. */
 const NOW = new Date("2026-11-20T10:00:00.000Z");
@@ -12,7 +12,7 @@ describe("newVocabCards (finishing a lesson, SPEC §10.5)", () => {
 
   it("makes one new card per vocab entry, named by lesson and vocab id, due the next day", () => {
     let next = 0;
-    const cards = newVocabCards(lesson, NOW, () => `card-${next++}`);
+    const cards = newVocabCards(lesson, NOW, NOW, () => `card-${next++}`);
     expect(cards).toHaveLength(lesson.vocab.length);
     expect(cards.map((card) => card.refId)).toContain("a2.u01.l01.v-ombrello");
     expect(new Set(cards.map((card) => card.id)).size).toBe(cards.length);

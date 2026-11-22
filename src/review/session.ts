@@ -9,7 +9,7 @@ import { loadLesson } from "@/content/load";
 import type { Item, Lesson, Step, VocabEntry } from "@/content/schema";
 import { findExercise } from "@/items/engine";
 import { shuffledIndexes } from "@/items/shuffle";
-import type { SessionCardKind } from "./kinds";
+import { countByKind, type SessionCardKind } from "./kinds";
 import type { DueCard } from "./store";
 import { findVocabEntry } from "./vocab-card";
 
@@ -31,6 +31,7 @@ export type ItemSessionCard = {
 /** A vocab card as the session shows it: its entry's current content, and the lesson it comes from. */
 export type VocabSessionCard = { kind: "vocab"; cardId: string; lesson: Lesson; entry: VocabEntry };
 
+/** A card as the session shows it. */
 export type SessionCard = ItemSessionCard | VocabSessionCard;
 
 /** What a review session shows: how many cards are due, in all and by kind, and the session's cards. */
@@ -46,7 +47,7 @@ export function dueSession(due: readonly DueCard[], random: () => number): DueSe
   const session = cards.slice(0, SESSION_SIZE);
   return {
     total: cards.length,
-    counts: { vocab: cards.filter((card) => card.kind === "vocab").length, item: cards.filter((card) => card.kind === "item").length },
+    counts: countByKind(cards),
     cards: shuffledIndexes(session.length, random).map((index) => session[index]),
   };
 }

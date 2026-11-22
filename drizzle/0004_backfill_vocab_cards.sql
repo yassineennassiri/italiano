@@ -2,7 +2,8 @@
 -- completed gets one vocab card per vocab entry, due at the next midnight in
 -- Genoa. The database doesn't have the content, so the entries are listed
 -- here as the content had them when this migration was written. Cards that
--- exist already keep their schedule. Runs once, with the migration.
+-- exist already keep their schedule. Runs once, with the migration; lessons
+-- finished from now on get their cards from the Finish write instead.
 INSERT INTO "review_card" ("id", "user_id", "kind", "ref_id", "due_at", "interval_days", "ease", "reps", "lapses", "streak")
 SELECT gen_random_uuid(), "lesson_progress"."user_id", 'vocab', "vocab"."ref_id",
   (date_trunc('day', now() AT TIME ZONE 'Europe/Rome') + interval '1 day') AT TIME ZONE 'Europe/Rome',

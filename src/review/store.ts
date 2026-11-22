@@ -64,6 +64,7 @@ export async function loadDueCards(db: Db, userId: string, now: Date): Promise<D
     .from(reviewCard)
     .where(and(eq(reviewCard.userId, userId), inArray(reviewCard.kind, sessionCardKinds), lte(reviewCard.dueAt, now)))
     .orderBy(asc(reviewCard.dueAt), asc(reviewCard.id));
+  // The query only selects the session kinds.
   return rows as DueCard[];
 }
 
@@ -91,8 +92,10 @@ export async function saveReviewWrite(db: Db, userId: string, write: ReviewWrite
   return { result: "saved" };
 }
 
+/** A non-empty batch of writes. */
 type Writes = [BatchItem<"pg">, ...BatchItem<"pg">[]];
-type ReadCard = StoredCard & { kind: CardKind };
+/** A stored card with its kind, which decides how a review write applies to it. */
+type CardWithKind = StoredCard & { kind: CardKind };
 
 /** The card's new schedule and its review_log row. */
 const gradedWrites = (db: Db, userId: string, graded: { card: GradedCard; log: ReviewLogRow }): Writes => [
@@ -103,12 +106,12 @@ const gradedWrites = (db: Db, userId: string, graded: { card: GradedCard; log: R
   db.insert(reviewLog).values({ ...graded.log, userId }),
 ];
 
-function vocabReviewWrites(db: Db, userId: string, card: ReadCard, write: VocabReviewWrite, now: Date): Writes | undefined {
+function vocabReviewWrites(db: Db, userId: string, card: CardWithKind, write: VocabReviewWrite, now: Date): Writes | undefined {
   if (card.kind !== "vocab" || !findVocabEntry(card.refId)) return undefined;
   return gradedWrites(db, userId, planVocabReview({ card, write, now }));
 }
 
-function itemReviewWrites(db: Db, userId: string, card: ReadCard, write: ItemReviewWrite, now: Date): Writes | undefined {
+function itemReviewWrites(db: Db, userId: string, card: CardWithKind, write: ItemReviewWrite, now: Date): Writes | undefined {
   const lessonId = lessonIdOfExercise(write.exerciseId);
   const lesson = lessonId === undefined ? undefined : loadLesson(lessonId);
   if (card.kind !== "item" || !lesson) return undefined;

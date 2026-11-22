@@ -820,7 +820,7 @@ For `item` cards, `ref_id` is an **exercise** id: an item id, or an exchange id 
 | Speaking exchange: *Bene* / *Non tanto bene* | *good* / *again* |
 | Vocab card: the learner presses *Ancora · Difficile · Bene · Facile* | *again* · *hard* · *good* · *easy* |
 
-A review **never touches the lesson's `item_state`** or its %: it writes `review_log`, an `exercise_attempt` row with action `review`, and the card's new schedule. A wrong review answer writes no new error_log row; the card's lapse already records it. If an item's content changed since the card was made, the review shows the current content.
+A review **never touches the lesson's `item_state`** or its %: it writes `review_log`, an `exercise_attempt` row with action `review`, and the card's new schedule. A vocab card has no exercise behind it, so its grade writes only `review_log` and the schedule. A wrong review answer writes no new error_log row; the card's lapse already records it. If an item's content changed since the card was made, the review shows the current content.
 
 **Card kinds.**
 - **`vocab`**: finishing a lesson creates one per vocab entry, first due the next day. The card is a flip card. The front shows the English meaning, with no gender dot. I say the Italian aloud and flip. The back shows the term with article and plural, the forms line and 🔊. Then I press one of the four grade buttons. The vocab trainer (M4) adds typed and listening modes on the same cards.

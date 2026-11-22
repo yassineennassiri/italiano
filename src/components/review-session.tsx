@@ -8,10 +8,11 @@ import { applyAction, type Exercise, type ExerciseAction } from "@/items/engine"
 import { type ExerciseEntry, NEW_ENTRY } from "@/items/entry";
 import { progressQueue, submitReview } from "@/progress/client";
 import { reviewGrade } from "@/review/item-card";
-import type { SessionCardKind } from "@/review/kinds";
+import { countByKind, type SessionCardKind } from "@/review/kinds";
 import type { ItemSessionCard, VocabSessionCard } from "@/review/session";
 import { type Grade, grades } from "@/review/sm2";
 import { ui } from "@/ui-it";
+import { ACCENT_CLASS } from "./accent-link";
 import { ExerciseProgress } from "./step-progress";
 import { VocabFlipCard } from "./vocab-flip-card";
 
@@ -23,7 +24,6 @@ export type ReviewCardView =
   | Pick<ItemSessionCard, "kind" | "cardId" | "exerciseId" | "contentHash">
   | (Pick<VocabSessionCard, "kind" | "cardId" | "entry"> & { source: string });
 
-const BUTTON_CLASS = "inline-block rounded-full bg-accent px-8 py-2 font-bold text-foreground hover:brightness-95";
 
 /**
  * A review session (SPEC §10.5): the cards one at a time. An item card shows
@@ -64,11 +64,11 @@ export function ReviewSession({
   if (done) {
     const answers = [...graded.values()];
     const counts = grades.map((grade) => [grade, answers.filter((answer) => answer.grade === grade).length] as const);
-    const kinds = { vocab: answers.filter((answer) => answer.kind === "vocab").length, item: answers.filter((answer) => answer.kind === "item").length };
+
     return (
       <section className="mt-6 rounded-lg bg-tint px-6 py-8 text-center">
         <h2 className="text-2xl font-bold text-brand">{ui.review.summaryHeading}</h2>
-        <p className="mt-3">{ui.review.summaryCount(kinds)}</p>
+        <p className="mt-3">{ui.review.summaryCount(countByKind(answers))}</p>
         <ul className="mt-4 flex flex-wrap justify-center gap-x-6 gap-y-1">
           {counts
             .filter(([, count]) => count > 0)
@@ -78,7 +78,7 @@ export function ReviewSession({
         </ul>
         <div className="mt-6 flex flex-wrap justify-center gap-4">
           {more && (
-            <button type="button" className={BUTTON_CLASS} onClick={() => void leave(() => router.refresh())}>
+            <button type="button" className={ACCENT_CLASS} onClick={() => void leave(() => router.refresh())}>
               {ui.review.more(sessionSize)}
             </button>
           )}
@@ -139,7 +139,7 @@ export function ReviewSession({
         {slots[index]}
       </ExerciseProgress>
       <div className="mt-10 bg-tint py-8 text-center">
-        <button type="button" disabled={!graded.has(card.cardId)} className={`${BUTTON_CLASS} disabled:opacity-40`} onClick={() => setIndex(index + 1)}>
+        <button type="button" disabled={!graded.has(card.cardId)} className={`${ACCENT_CLASS} disabled:opacity-40`} onClick={() => setIndex(index + 1)}>
           {last ? ui.review.finish : ui.review.next}
         </button>
       </div>

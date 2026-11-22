@@ -55,8 +55,11 @@ export type VisitWrite = z.infer<typeof visitWriteSchema>;
 export const correctionWriteSchema = z.strictObject({ lessonId: z.string().min(1), at: z.iso.datetime() });
 export type CorrectionWrite = z.infer<typeof correctionWriteSchema>;
 
-/** Reaching the Finish screen, which completes the lesson. */
-export const finishWriteSchema = z.strictObject({ lessonId: z.string().min(1) });
+/**
+ * Reaching the Finish screen, which completes the lesson. `at` is when, on the
+ * learner's computer; writes queued before it existed have none.
+ */
+export const finishWriteSchema = z.strictObject({ lessonId: z.string().min(1), at: z.iso.datetime().optional() });
 export type FinishWrite = z.infer<typeof finishWriteSchema>;
 
 export type StoredItemRow = Pick<

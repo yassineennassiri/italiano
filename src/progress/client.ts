@@ -138,7 +138,7 @@ export function submitReset(target: ResetTarget): void {
 
 /** The Finish screen was reached: queues the write that completes the lesson. */
 export function submitFinish(lessonId: string): void {
-  progressQueue.enqueue({ type: "finish", finish: { lessonId } });
+  progressQueue.enqueue({ type: "finish", finish: { lessonId, at: new Date().toISOString() } });
 }
 
 /** A review answer (SPEC §10.5): queued like every other write, so it waits offline and survives a reload. */
