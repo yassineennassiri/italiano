@@ -336,6 +336,9 @@ export function planFinish({
     ...progressRow(lesson, progress, counts, now),
     status: "completed",
     completedAt: progress?.completedAt ?? now,
+    // The next visit chooses its Ripasso personale step again (ADR-0005).
+    reviewItems: null,
+    reviewChosenAt: null,
   };
 }
 
@@ -360,10 +363,13 @@ export type ResetPlan = {
   attempts: Row<typeof exerciseAttempt>[];
   /**
    * What each lesson's `lesson_progress` becomes: not started, with no %, start,
-   * completion or resume point. `updated_at` stays, so Home's *Continua da dove
+   * completion, resume point or Ripasso personale choice. `updated_at` stays, so Home's *Continua da dove
    * eri* still goes where the learner last was.
    */
-  progress: Pick<typeof lessonProgressTable.$inferInsert, "status" | "lastLocation" | "lastPercent" | "bestPercent" | "startedAt" | "completedAt">;
+  progress: Pick<
+    typeof lessonProgressTable.$inferInsert,
+    "status" | "lastLocation" | "lastPercent" | "bestPercent" | "startedAt" | "completedAt" | "reviewItems" | "reviewChosenAt"
+  >;
 };
 
 /**
@@ -397,6 +403,16 @@ export function planReset({
         correct: null,
         createdAt: new Date(at),
       })),
-    progress: { status: "not_started", lastLocation: null, lastPercent: null, bestPercent: null, startedAt: null, completedAt: null },
+    progress: {
+      status: "not_started",
+      lastLocation: null,
+      lastPercent: null,
+      bestPercent: null,
+      startedAt: null,
+      completedAt: null,
+      // The next visit chooses its Ripasso personale step again (ADR-0005).
+      reviewItems: null,
+      reviewChosenAt: null,
+    },
   };
 }

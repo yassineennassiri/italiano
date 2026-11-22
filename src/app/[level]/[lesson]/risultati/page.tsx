@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { ResultsScreen } from "@/components/lesson-results";
 import { reviewPages, reviewStartHref } from "@/content/lesson-nav";
-import { readLessonEntries } from "@/progress/read";
+import { readLessonEntries, readStepLayout } from "@/progress/read";
 import { lessonShape } from "@/scoring/lesson";
 import { type LessonRouteParams, lessonFromParams } from "../lesson-params";
 
@@ -16,7 +16,7 @@ export default function ResultsPage({ params }: PageProps<"/[level]/[lesson]/ris
 
 async function Results({ params }: { params: Promise<LessonRouteParams> }) {
   const lesson = await lessonFromParams(params);
-  const { saved, loaded } = await readLessonEntries(lesson);
+  const [{ saved, loaded }, { layout }] = await Promise.all([readLessonEntries(lesson), readStepLayout(lesson, { choose: false })]);
   return (
     <ResultsScreen
       lesson={{ id: lesson.id, slug: lesson.slug }}
@@ -25,6 +25,7 @@ async function Results({ params }: { params: Promise<LessonRouteParams> }) {
       loaded={loaded}
       reviewPages={reviewPages(lesson)}
       continueHref={reviewStartHref(lesson)}
+      layout={layout}
     />
   );
 }

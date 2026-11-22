@@ -48,6 +48,7 @@ describe("planReview (SPEC §10.5, ADR-0004)", () => {
       createdAt: new Date(AT),
     });
     expect(plan.attempt).toMatchObject({ itemId: I02, lessonId: "a2.u01.l01", action: "review", answer: { picks: [0] }, correct: true });
+    expect(plan.attempt.id).toBe(plan.log.id);
     expect(plan.resolves).toBe(false);
   });
 

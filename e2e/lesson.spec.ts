@@ -13,8 +13,15 @@
  *   s05  three exchanges rated Bene               self-rated, no points
  *   s06  Parla! rated Bene                        self-rated, no points
  * → 4 / 7 = 57%, and 5 of 6 steps complete (s04 is not).
+ *
+ * The profile's review cards are deleted first: a due item card from another
+ * lesson would add a Ripasso personale step before Parla! (ADR-0005).
  */
 import { expect, type Locator, type Page, test } from "@playwright/test";
+import { eq } from "drizzle-orm";
+import { connect } from "@/db/connect";
+import { databaseUrl, loadLocalEnv } from "@/db/env";
+import { PROFILE_ID, reviewCard, reviewLog } from "@/db/schema";
 import { ui } from "@/ui-it";
 import { expectCounter, hydrated, LESSON, shownText } from "./helpers";
 
@@ -29,8 +36,13 @@ async function next(page: Page, path: string): Promise<void> {
   await expect(page).toHaveURL(`${LESSON}/${path}`);
 }
 
+loadLocalEnv();
+const db = connect(databaseUrl("dev"));
+
 test("plays A2.1.1 to the Finish screen and the overview shows it completed with the same %", async ({ page }) => {
-  // Reset our own data: Azzera for the whole level.
+  // Reset our own data: no review cards, then Azzera for the whole level, which also clears the Ripasso personale choice.
+  await db.delete(reviewLog).where(eq(reviewLog.userId, PROFILE_ID));
+  await db.delete(reviewCard).where(eq(reviewCard.userId, PROFILE_ID));
   await page.goto("/a2");
   const card = page.getByRole("link", { name: /Benvenuto a Genova!/ });
   const azzera = page.getByRole("button", { name: ui.reset.levelButton, exact: true });

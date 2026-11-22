@@ -462,6 +462,11 @@ describe("planFinish (reaching the Finish screen)", () => {
     });
     expect(finish).toMatchObject({ status: "completed", lastPercent: 14, bestPercent: 86, completedAt: earlier, startedAt: earlier });
   });
+
+  it("clears the Ripasso personale choice, so the next visit chooses again (ADR-0005)", () => {
+    const finish = planFinish({ lesson, hashes, rows: [rightI01], progress: { status: "in_progress" }, now: NOW });
+    expect(finish).toMatchObject({ reviewItems: null, reviewChosenAt: null });
+  });
 });
 
 describe("planReset (Azzera)", () => {
@@ -478,7 +483,16 @@ describe("planReset (Azzera)", () => {
         { itemId: "a2.u01.l01.s01.i01", lessonId: "a2.u01.l01", contentVersion: 3, action: "reset", answer: null, result: null, correct: null, createdAt: new Date(AT) },
         { itemId: "a2.u01.l01.s05.i01.e2", lessonId: "a2.u01.l01", contentVersion: 3, action: "reset", answer: null, result: null, correct: null, createdAt: new Date(AT) },
       ],
-      progress: { status: "not_started", lastLocation: null, lastPercent: null, bestPercent: null, startedAt: null, completedAt: null },
+      progress: {
+        status: "not_started",
+        lastLocation: null,
+        lastPercent: null,
+        bestPercent: null,
+        startedAt: null,
+        completedAt: null,
+        reviewItems: null,
+        reviewChosenAt: null,
+      },
     });
   });
 
