@@ -60,6 +60,8 @@ export const ui = {
       saved: "Salvato",
       pending: "In attesa",
       offline: "Offline: non salvato",
+      /** A failed write waits in IndexedDB, so a reload keeps it. */
+      stored: "Offline: salvato su questo computer",
     } satisfies Record<SyncStatus, string>,
   },
 

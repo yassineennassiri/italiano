@@ -38,3 +38,14 @@ describe("ui.level.levelStatus", () => {
     expect(ui.level.levelStatus("not_started", 0)).toBe("Livello: Non iniziato · 0%");
   });
 });
+
+describe("ui.footer.sync (SPEC §3.1, §8)", () => {
+  it("says where a waiting write is kept", () => {
+    expect(ui.footer.sync).toEqual({
+      saved: "Salvato",
+      pending: "In attesa",
+      offline: "Offline: non salvato",
+      stored: "Offline: salvato su questo computer",
+    });
+  });
+});
