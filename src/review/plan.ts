@@ -1,17 +1,20 @@
 /**
  * Planning a review write (SPEC §10.5, ADR-0004): from the card, the current
  * content and the learner's answer, the rows to write. The answer is graded
- * here, against the content, not trusted from the client. A review never
- * writes `item_state` or the error log: the card's new schedule, a
- * `review_log` row and an `exercise_attempt` row with action `review`.
+ * here, against the content, not trusted from the client. A review writes
+ * the card's new schedule, a `review_log` row and an `exercise_attempt` row
+ * with action `review`. It never writes `item_state` and never adds an
+ * error_log row; a third non-*again* grade in a row only marks the card's
+ * rows resolved.
  */
 import { z } from "zod";
 import type { Lesson } from "@/content/schema";
-import type { exerciseAttempt, reviewLog } from "@/db/schema";
-import { reviewSources } from "@/db/schema";
+import type { exerciseAttempt } from "@/db/schema";
+import { sessionSources } from "@/db/schema";
 import { NEW_ENTRY } from "@/items/entry";
 import { applyAction, checkActionSchema, findExercise, pickActionSchema, rateActionSchema, solveActionSchema } from "@/items/engine";
-import { type CardRow, gradeCard, RESOLVE_STREAK, reviewGrade, type StoredCard } from "./item-card";
+import type { Row } from "@/progress/plan";
+import { type GradedCard, gradeCard, gradedAt, RESOLVE_STREAK, type ReviewLogRow, reviewGrade, type StoredCard } from "./item-card";
 import type { Grade } from "./sm2";
 
 const writeFields = {
@@ -24,7 +27,7 @@ const writeFields = {
   contentHash: z.string().min(1),
   /** When the learner answered, on their computer. */
   at: z.iso.datetime(),
-  source: z.enum(reviewSources),
+  source: z.enum(sessionSources),
 };
 
 /** One review answer as the client sends it: the first answer given to the card in this session. */
@@ -36,12 +39,11 @@ export const reviewWriteSchema = z.discriminatedUnion("kind", [
 ]);
 export type ReviewWrite = z.infer<typeof reviewWriteSchema>;
 
-type Row<T extends { $inferInsert: object }> = Omit<T["$inferInsert"], "userId">;
-
+/** The rows one review answer writes, and its grade. */
 export type ReviewPlan = {
   grade: Grade;
-  card: Omit<CardRow, "kind" | "refId">;
-  log: Row<typeof reviewLog>;
+  card: GradedCard;
+  log: ReviewLogRow;
   attempt: Row<typeof exerciseAttempt>;
   /** The grade completes a streak of 3: the card's unresolved error_log rows become resolved (§10.4). */
   resolves: boolean;
@@ -57,7 +59,7 @@ export function planReview({
 }: {
   lesson: Lesson;
   hashes: ReadonlyMap<string, string>;
-  card: StoredCard & { refId: string };
+  card: StoredCard;
   write: ReviewWrite;
   now: Date;
 }): ReviewPlan | undefined {
@@ -68,22 +70,11 @@ export function planReview({
   if (!outcome) return undefined;
 
   const grade = reviewGrade(outcome);
-  const graded = gradeCard(card, grade, now);
-  const at = new Date(write.at);
+  const at = gradedAt(write.at, now);
+  const graded = gradeCard({ card, grade, source: write.source, eventId: write.eventId, at, now });
   return {
     grade,
-    card: graded,
-    log: {
-      id: write.eventId,
-      cardId: card.id,
-      grade,
-      intervalBefore: card.intervalDays,
-      intervalAfter: graded.intervalDays!,
-      easeBefore: card.ease,
-      easeAfter: graded.ease!,
-      source: write.source,
-      createdAt: at,
-    },
+    ...graded,
     attempt: {
       itemId: card.refId,
       lessonId: lesson.id,
@@ -94,6 +85,6 @@ export function planReview({
       correct: outcome.correct,
       createdAt: at,
     },
-    resolves: graded.streak! >= RESOLVE_STREAK,
+    resolves: graded.card.streak >= RESOLVE_STREAK,
   };
 }

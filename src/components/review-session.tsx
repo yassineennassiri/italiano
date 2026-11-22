@@ -8,12 +8,13 @@ import { applyAction, type Exercise, type ExerciseAction } from "@/items/engine"
 import { type ExerciseEntry, NEW_ENTRY } from "@/items/entry";
 import { progressQueue, submitReview } from "@/progress/client";
 import { reviewGrade } from "@/review/item-card";
+import type { SessionCard } from "@/review/session";
 import { type Grade, grades } from "@/review/sm2";
 import { ui } from "@/ui-it";
 import { ExerciseProgress } from "./step-progress";
 
 /** What the session needs to write a card's review. */
-export type ReviewCardView = { cardId: string; exerciseId: string; contentHash: string };
+export type ReviewCardView = Pick<SessionCard, "cardId" | "exerciseId" | "contentHash">;
 
 const BUTTON_CLASS = "inline-block rounded-full bg-accent px-8 py-2 font-bold text-foreground hover:brightness-95";
 
@@ -25,7 +26,19 @@ const BUTTON_CLASS = "inline-block rounded-full bg-accent px-8 py-2 font-bold te
  * read or changed. A summary closes the session, with *Altri 20* when more
  * cards are due.
  */
-export function ReviewSession({ cards, slots, more }: { cards: ReviewCardView[]; slots: ReactNode[]; more: boolean }) {
+export function ReviewSession({
+  cards,
+  slots,
+  more,
+  sessionSize,
+}: {
+  cards: ReviewCardView[];
+  slots: ReactNode[];
+  /** More cards are due than this session holds. */
+  more: boolean;
+  /** How many cards a session holds, for *Altri 20*. */
+  sessionSize: number;
+}) {
   const router = useRouter();
   const [index, setIndex] = useState(0);
   const [entries, setEntries] = useState<ReadonlyMap<string, ExerciseEntry>>(new Map());
@@ -55,7 +68,7 @@ export function ReviewSession({ cards, slots, more }: { cards: ReviewCardView[];
         <div className="mt-6 flex flex-wrap justify-center gap-4">
           {more && (
             <button type="button" className={BUTTON_CLASS} onClick={() => void leave(() => router.refresh())}>
-              {ui.review.more}
+              {ui.review.more(sessionSize)}
             </button>
           )}
           <Link

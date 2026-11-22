@@ -10,7 +10,7 @@ export type Grade = (typeof grades)[number];
 
 /** A card's SM-2 state, as `review_card` stores it. */
 export type Schedule = {
-  /** The interval before fuzz; 0 for a card never reviewed. */
+  /** The interval before fuzz. */
   intervalDays: number;
   ease: number;
   /** Non-*again* reviews since the last lapse. */
@@ -18,7 +18,11 @@ export type Schedule = {
   lapses: number;
 };
 
-export const NEW_SCHEDULE: Schedule = { intervalDays: 0, ease: 2.5, reps: 0, lapses: 0 };
+/**
+ * A new card: made by a mistake (or the backfill), due in 1 day, never
+ * reviewed. The backfill migration writes the same values in SQL.
+ */
+export const NEW_SCHEDULE: Schedule = { intervalDays: 1, ease: 2.5, reps: 0, lapses: 0 };
 
 const MIN_EASE = 1.3;
 const MAX_INTERVAL = 180;
@@ -31,7 +35,8 @@ const round2 = (value: number) => Math.round(value * 100) / 100;
  * The schedule after a grade, and in how many days the card is due again: the
  * interval with ±5 % fuzz, seeded by the card id and its reps so tests are
  * deterministic, as whole days between 1 and 180. The fuzz only moves the due
- * day; the stored interval stays exact.
+ * day; the stored interval stays exact, so it never drifts. Rounded to whole
+ * days, the fuzz only shows from intervals of about 10 days.
  */
 export function sm2(cardId: string, before: Schedule, grade: Grade): Schedule & { dueInDays: number } {
   const goodInterval = before.reps === 0 ? 1 : before.reps === 1 ? 6 : before.intervalDays * before.ease;

@@ -138,9 +138,16 @@ export const errorLog = pgTable(
   (t) => [oneOf("error_log_source_check", t.source, errorSources)],
 );
 
+/** The three kinds of review card (CONTEXT.md): vocab, item, error. */
 export const cardKinds = ["vocab", "item", "error"] as const;
-/** Where a review was answered (§10.5). */
-export const reviewSources = ["hub", "drill", "ripasso_personale"] as const;
+/** Where a review session answers a card (§10.5). */
+export const sessionSources = ["hub", "drill", "ripasso_personale"] as const;
+/**
+ * What graded the card in a `review_log` row: a session, or `lesson`, a lesson
+ * answer that graded an existing card *again* (§10.5). Logging those too
+ * keeps the history complete for a later FSRS fit (ADR-0004).
+ */
+export const reviewSources = [...sessionSources, "lesson"] as const;
 
 /**
  * §10.5: a spaced-repetition card, scheduled with SM-2 (ADR-0004). For `item`

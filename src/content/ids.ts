@@ -40,7 +40,8 @@ export function exchangeExerciseId(itemId: string, exchangeId: string): string {
 
 /** The lesson an exercise id belongs to: `a2.u01.l01.s05.i01.e2` → `a2.u01.l01`. */
 export function lessonIdOfExercise(exerciseId: string): string | undefined {
-  return /^((?:a2|b1|b2)\.u\d{2}\.l\d{2})\.s\d+\./.exec(exerciseId)?.[1];
+  const lessonId = /^(.+?\.l\d{2})\.s\d+\./.exec(exerciseId)?.[1];
+  return lessonId !== undefined && LESSON_ID_PATTERN.test(lessonId) ? lessonId : undefined;
 }
 
 /** The lesson a grammar page id belongs to: `a2.u01.l01.gr2` → `a2.u01.l01`. */

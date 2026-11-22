@@ -73,6 +73,13 @@ describe("planReview (SPEC §10.5, ADR-0004)", () => {
     expect(review(I02, { kind: "pick", option: 2 }, { streak: 2 })!).toMatchObject({ resolves: false, card: { streak: 0 } });
   });
 
+  it("schedules an answer synced late from when it was given", () => {
+    // Answered offline at 09:00 in Genoa on 19 November, synced on 21 November.
+    const plan = review(I02, { kind: "pick", option: 0, at: "2026-11-19T08:00:00.000Z" })!;
+    expect(plan.card.dueAt).toEqual(new Date("2026-11-19T23:00:00Z"));
+    expect(plan.log.createdAt).toEqual(new Date("2026-11-19T08:00:00.000Z"));
+  });
+
   it("plans nothing for content that changed since, another exercise, or an action that does nothing", () => {
     expect(review(I02, { kind: "pick", option: 0, contentHash: "stale" })).toBeUndefined();
     expect(review(I02, { kind: "pick", option: 0, exerciseId: TEXT_GAP })).toBeUndefined();

@@ -4,16 +4,14 @@
  * branch. The HTTP driver has no interactive transactions, so each write is
  * read-plan-write: one batch of reads, a pure plan (`plan.ts`), one batch of writes.
  */
-import { and, asc, count, desc, eq, inArray, lte, max, min } from "drizzle-orm";
+import { and, desc, eq, inArray, max, min } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
 import { exerciseHashes } from "@/content/hash";
-import { lessonIdOfExercise } from "@/content/ids";
 import { loadCourse, loadLesson } from "@/content/load";
 import type { Lesson } from "@/content/schema";
 import type { Db } from "@/db/connect";
-import { errorLog, exerciseAttempt, itemState, lessonProgress, reviewCard, reviewLog } from "@/db/schema";
-import type { CardRow } from "@/review/item-card";
-import { planReview, type ReviewWrite } from "@/review/plan";
+import { errorLog, exerciseAttempt, itemState, lessonProgress, reviewLog } from "@/db/schema";
+import { itemCard, upsertCard } from "@/review/store";
 import type { SavedEntry } from "./merge";
 import {
   type CorrectionWrite,
@@ -76,30 +74,6 @@ const upsertProgress = (db: Db, userId: string, row: Row<typeof lessonProgress>)
     .insert(lessonProgress)
     .values({ ...row, userId })
     .onConflictDoUpdate({ target: [lessonProgress.userId, lessonProgress.lessonId], set: row });
-
-/** The fields of a stored card that grading reads. */
-const storedCardColumns = {
-  id: reviewCard.id,
-  refId: reviewCard.refId,
-  intervalDays: reviewCard.intervalDays,
-  ease: reviewCard.ease,
-  reps: reviewCard.reps,
-  lapses: reviewCard.lapses,
-  streak: reviewCard.streak,
-};
-
-const itemCard = (db: Db, userId: string, exerciseId: string) =>
-  db
-    .select(storedCardColumns)
-    .from(reviewCard)
-    .where(and(eq(reviewCard.userId, userId), eq(reviewCard.kind, "item"), eq(reviewCard.refId, exerciseId)));
-
-/** Creates the card, or regrades it when it exists: a concurrent create from the other computer keeps its id. */
-const upsertCard = (db: Db, userId: string, { id, kind, refId, ...schedule }: CardRow) =>
-  db
-    .insert(reviewCard)
-    .values({ id, kind, refId, ...schedule, userId })
-    .onConflictDoUpdate({ target: [reviewCard.userId, reviewCard.kind, reviewCard.refId], set: schedule });
 
 /** The stored entries that still fit the lesson's content, each with when it was saved. */
 function savedEntries(lesson: Lesson, rows: readonly (StoredItemRow & { updatedAt: Date })[]): Map<string, SavedEntry> {
@@ -195,63 +169,9 @@ export async function saveExerciseWrite(db: Db, userId: string, write: ExerciseW
   ];
   if (plan.errors.length > 0) writes.push(db.insert(errorLog).values(plan.errors.map((row) => ({ ...row, userId }))));
   if (plan.card) writes.push(upsertCard(db, userId, plan.card));
+  if (plan.cardLog) writes.push(db.insert(reviewLog).values({ ...plan.cardLog, userId }));
   await db.batch(writes as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
   return { result: "saved", saved: { entry: plan.entry, savedAt: now.toISOString() } };
-}
-
-/** The cards a review session can show: how many item cards are due, and the most overdue of them. */
-export type DueCards = { total: number; cards: { id: string; refId: string }[] };
-
-/** Item cards due by `now`, most overdue first, at most `limit` of them, and how many are due in all. */
-export async function loadDueCards(db: Db, userId: string, now: Date, limit: number): Promise<DueCards> {
-  const due = and(eq(reviewCard.userId, userId), eq(reviewCard.kind, "item"), lte(reviewCard.dueAt, now));
-  const [[{ total }], cards] = await db.batch([
-    db.select({ total: count() }).from(reviewCard).where(due),
-    db.select({ id: reviewCard.id, refId: reviewCard.refId }).from(reviewCard).where(due).orderBy(asc(reviewCard.dueAt), asc(reviewCard.id)).limit(limit),
-  ]);
-  return { total, cards };
-}
-
-/**
- * Applies one review answer (SPEC §10.5): grades it against the current
- * content, reschedules the card, and writes `review_log` and a `review`
- * attempt. A third non-*again* grade in a row resolves the card's error_log
- * rows. `item_state` and the lesson % are never touched. "ignored" for an
- * unknown card, changed content, or a retry of a write already applied.
- */
-export async function saveReviewWrite(db: Db, userId: string, write: ReviewWrite, now = new Date()): Promise<WriteResponse> {
-  const lessonId = lessonIdOfExercise(write.exerciseId);
-  const lesson = lessonId === undefined ? undefined : loadLesson(lessonId);
-  if (!lesson) return { result: "ignored" };
-  const [[card], [seen]] = await db.batch([
-    db
-      .select(storedCardColumns)
-      .from(reviewCard)
-      .where(and(eq(reviewCard.userId, userId), eq(reviewCard.id, write.cardId))),
-    db.select({ id: reviewLog.id }).from(reviewLog).where(eq(reviewLog.id, write.eventId)),
-  ]);
-  if (!card || seen) return { result: "ignored" };
-  const plan = planReview({ lesson, hashes: exerciseHashes(lesson), card, write, now });
-  if (!plan) return { result: "ignored" };
-
-  const writes: BatchItem<"pg">[] = [
-    db
-      .update(reviewCard)
-      .set(plan.card)
-      .where(and(eq(reviewCard.userId, userId), eq(reviewCard.id, card.id))),
-    db.insert(reviewLog).values({ ...plan.log, userId }),
-    db.insert(exerciseAttempt).values({ ...plan.attempt, userId }),
-  ];
-  if (plan.resolves) {
-    writes.push(
-      db
-        .update(errorLog)
-        .set({ resolved: true })
-        .where(and(eq(errorLog.userId, userId), eq(errorLog.itemId, card.refId), eq(errorLog.resolved, false))),
-    );
-  }
-  await db.batch(writes as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
-  return { result: "saved" };
 }
 
 /** A lesson-wide write's reads: the lesson, its stored rows and progress. Undefined for a lesson the content doesn't have. */

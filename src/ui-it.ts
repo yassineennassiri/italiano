@@ -284,10 +284,12 @@ export const ui = {
     summaryHeading: "Ripasso finito",
     summaryCount: (count: number) => `Hai ripassato ${count} ${count === 1 ? "esercizio" : "esercizi"}.`,
     /** How each answer went, as the summary counts them. */
-    grade: { again: "Da rivedere", hard: "Quasi", good: "Bene", easy: "Facile" } satisfies Record<Grade, string>,
+    /** The grades as SPEC §10.5 names them (the vocab cards' buttons, later). */
+    grade: { again: "Ancora", hard: "Difficile", good: "Bene", easy: "Facile" } satisfies Record<Grade, string>,
     /** One line of the summary: "Bene: 4". */
     gradeCount: (grade: Grade, count: number) => `${ui.review.grade[grade]}: ${count}`,
-    more: "Altri 20",
+    /** Another session: "Altri 20". */
+    more: (count: number) => `Altri ${count}`,
     backToHub: "Torna al ripasso",
   },
 

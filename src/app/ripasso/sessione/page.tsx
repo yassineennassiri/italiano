@@ -10,7 +10,7 @@ import { REVIEW_HUB_HREF } from "@/content/lesson-nav";
 import { loadErrorTags } from "@/content/load";
 import { readingLayout } from "@/content/reading";
 import { readDueCards } from "@/progress/read";
-import { SESSION_SIZE, sessionCards } from "@/review/session";
+import { dueSession, SESSION_SIZE } from "@/review/session";
 import { ui } from "@/ui-it";
 
 export const metadata: Metadata = { title: ui.review.pageTitle };
@@ -28,12 +28,12 @@ export default function ReviewSessionPage() {
 }
 
 async function Session() {
-  const due = await readDueCards(SESSION_SIZE);
-  const cards = sessionCards(due.cards, Math.random);
+  const { due, loaded } = await readDueCards();
+  const { total, cards } = dueSession(due, Math.random);
   if (cards.length === 0) {
     return (
       <p className="mt-6">
-        {due.loaded ? ui.review.nothingDue : ui.review.unreachable}{" "}
+        {loaded ? ui.review.nothingDue : ui.review.unreachable}{" "}
         <Link href={REVIEW_HUB_HREF} className="font-semibold text-brand underline">
           {ui.review.backToHub}
         </Link>
@@ -58,7 +58,8 @@ async function Session() {
       key={randomUUID()}
       cards={cards.map(({ cardId, exerciseId, contentHash }) => ({ cardId, exerciseId, contentHash }))}
       slots={slots}
-      more={due.total > due.cards.length}
+      more={total > cards.length}
+      sessionSize={SESSION_SIZE}
     />
   );
 }

@@ -556,10 +556,29 @@ describe("planExerciseWrite and item cards (SPEC §10.5)", () => {
     expect(planExerciseWrite({ ...input, action: rate(PARLA, "not_great") })!.card).toBeUndefined();
   });
 
-  it("grades an existing card again: due tomorrow, a lapse, and its streak back to 0", () => {
+  it("grades an existing card again: due tomorrow, a lapse, its streak back to 0, and a review_log row from the lesson", () => {
     const { input, hash } = base();
-    const card = { id: "card-1", intervalDays: 15, ease: 2.5, reps: 3, lapses: 0, streak: 3 };
+    const card = { id: "card-1", refId: I02, intervalDays: 15, ease: 2.5, reps: 3, lapses: 0, streak: 3 };
     const plan = planExerciseWrite({ ...input, card, newCardId: "unused", action: pick(2, { contentHash: hash }) })!;
     expect(plan.card).toEqual({ ...newCard, id: "card-1", ease: 2.3, lapses: 1, lastResult: "again" });
+    expect(plan.cardLog).toEqual({
+      id: "evt-1",
+      cardId: "card-1",
+      grade: "again",
+      intervalBefore: 15,
+      intervalAfter: 1,
+      easeBefore: 2.5,
+      easeAfter: 2.3,
+      source: "lesson",
+      createdAt: new Date(AT),
+    });
+  });
+
+  it("a new card logs no review, and counts tomorrow from when the learner answered, synced late or not", () => {
+    const { input, hash } = base();
+    // Answered offline on 18 November, synced on 20 November.
+    const plan = planExerciseWrite({ ...input, action: pick(2, { contentHash: hash, at: "2026-11-18T09:00:00.000Z" }) })!;
+    expect(plan.cardLog).toBeUndefined();
+    expect(plan.card?.dueAt).toEqual(new Date("2026-11-18T23:00:00Z"));
   });
 });

@@ -15,8 +15,9 @@ import { databaseUrl, loadLocalEnv } from "@/db/env";
 import { MIGRATIONS_DIR, migrateDatabase } from "@/db/migrate";
 import { errorLog, exerciseAttempt, itemState, lessonProgress, profile, reviewCard, reviewLog } from "@/db/schema";
 import type { ExerciseWrite } from "@/progress/plan";
-import { loadDueCards, loadLessonEntries, saveExerciseWrite, saveReviewWrite } from "@/progress/store";
+import { loadLessonEntries, saveExerciseWrite, saveReset } from "@/progress/store";
 import type { ReviewWrite } from "./plan";
+import { loadDueCards, saveReviewWrite } from "./store";
 
 loadLocalEnv();
 const db = connect(databaseUrl("dev"));
@@ -75,8 +76,22 @@ describe("item cards from lesson answers", () => {
 
     const [card] = await db.select().from(reviewCard).where(eq(reviewCard.userId, user));
     expect(card).toMatchObject({ kind: "item", refId: I01, dueAt: TOMORROW, intervalDays: 1, ease: 2.5, streak: 0 });
-    expect((await loadDueCards(db, user, NOW, 20)).total).toBe(0);
-    expect(await loadDueCards(db, user, TOMORROW, 20)).toEqual({ total: 1, cards: [{ id: card.id, refId: I01 }] });
+    expect(await loadDueCards(db, user, NOW)).toEqual([]);
+    expect(await loadDueCards(db, user, TOMORROW)).toEqual([{ id: card.id, refId: I01 }]);
+  });
+
+  it("a wrong first Check after Azzera grades the existing card again, and logs it with source lesson", async () => {
+    const user = await newUser();
+    await saveExerciseWrite(db, user, pick(2), NOW);
+    await saveReset(db, user, { scope: "lesson", lessonId: LESSON, at: days(1).toISOString() }, days(1));
+    const again = { ...pick(2), at: days(2).toISOString() };
+    await saveExerciseWrite(db, user, again, days(2));
+
+    const [card] = await db.select().from(reviewCard).where(eq(reviewCard.userId, user));
+    expect(card).toMatchObject({ lapses: 1, lastResult: "again", dueAt: new Date("2026-11-22T23:00:00.000Z") });
+    expect(await db.select().from(reviewLog).where(eq(reviewLog.userId, user))).toMatchObject([
+      { id: again.eventId, cardId: card.id, grade: "again", source: "lesson" },
+    ]);
   });
 
   it("a right first Check creates none", async () => {

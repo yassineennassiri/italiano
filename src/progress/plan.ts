@@ -19,7 +19,7 @@ import {
   rateActionSchema,
   solveActionSchema,
 } from "@/items/engine";
-import { type CardRow, openedCard, opensItemCard, type StoredCard } from "@/review/item-card";
+import { type CardRow, gradedAt, openedCard, opensItemCard, type ReviewLogRow, type StoredCard } from "@/review/item-card";
 import { applyEvent, type ExerciseState, isReopenable } from "@/scoring/exercise";
 import { bestPercent, lessonExercises, type LessonProgress, lessonProgress, type LessonStatus, lessonStatus, lessonStatuses } from "@/scoring/lesson";
 
@@ -79,6 +79,8 @@ export type ExerciseWritePlan = {
   progress: Row<typeof lessonProgressTable>;
   /** The exercise's item card, created or graded *again* (SPEC §10.5); absent when the answer opens none. */
   card?: CardRow;
+  /** The review_log row of an existing card graded *again* (source `lesson`). */
+  cardLog?: ReviewLogRow;
 };
 
 /** The stored entries that still fit the content: same hash, and an answer of the right shape. */
@@ -171,6 +173,9 @@ export function planExerciseWrite({
   entries.set(exerciseId, entry);
   const at = new Date(action.at);
   const counts = lessonProgress(lesson, statesOf(entries));
+  const opened = opensItemCard({ before, outcome, firstCheckWrong, exchange: exercise.exchange !== undefined })
+    ? openedCard({ existing: card, newId: newCardId, refId: exerciseId, eventId: action.eventId, at: gradedAt(action.at, now), now })
+    : undefined;
 
   return {
     entry,
@@ -211,9 +216,8 @@ export function planExerciseWrite({
           }))
         : [],
     progress: progressRow(lesson, progress, counts, now),
-    ...(opensItemCard({ before, outcome, firstCheckWrong, exchange: exercise.exchange !== undefined }) && {
-      card: openedCard(card, newCardId, exerciseId, now),
-    }),
+    ...(opened && { card: opened.card }),
+    ...(opened?.log && { cardLog: opened.log }),
   };
 }
 

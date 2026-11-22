@@ -9,7 +9,8 @@ import type { Lesson } from "@/content/schema";
 import { db } from "@/db";
 import { PROFILE_ID } from "@/db/schema";
 import type { SavedEntry } from "./merge";
-import { type DueCards, loadDueCards, loadLastLocation, loadLessonEntries, loadProgressSummaries, type ProgressSummary } from "./store";
+import { type DueCard, loadDueCards } from "@/review/store";
+import { loadLastLocation, loadLessonEntries, loadProgressSummaries, type ProgressSummary } from "./store";
 
 /** Every lesson's progress, most recently changed first; empty when the database is unreachable. */
 export async function readProgressSummaries(): Promise<ProgressSummary[]> {
@@ -44,13 +45,13 @@ export async function readLastLocation(lessonId: string): Promise<string | null>
   }
 }
 
-/** The item cards due now: how many, and up to `limit` of the most overdue; `loaded` is false when the database couldn't be read. */
-export async function readDueCards(limit: number): Promise<DueCards & { loaded: boolean }> {
+/** The item cards due now, most overdue first; `loaded` is false when the database couldn't be read. */
+export async function readDueCards(): Promise<{ due: DueCard[]; loaded: boolean }> {
   await connection();
   try {
-    return { ...(await loadDueCards(db(), PROFILE_ID, new Date(), limit)), loaded: true };
+    return { due: await loadDueCards(db(), PROFILE_ID, new Date()), loaded: true };
   } catch (error) {
     console.error("Could not load the due review cards.", error);
-    return { total: 0, cards: [], loaded: false };
+    return { due: [], loaded: false };
   }
 }

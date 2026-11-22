@@ -7,6 +7,7 @@
 import { db } from "@/db";
 import { PROFILE_ID } from "@/db/schema";
 import { reviewWriteSchema } from "@/review/plan";
+import { saveReviewWrite } from "@/review/store";
 import { correctionWriteSchema, exerciseWriteSchema, finishWriteSchema, resetWriteSchema, visitWriteSchema } from "./plan";
 import {
   type CorrectionResponse,
@@ -15,7 +16,6 @@ import {
   saveExerciseWrite,
   saveFinish,
   saveReset,
-  saveReviewWrite,
   saveVisit,
   type WriteResponse,
 } from "./store";

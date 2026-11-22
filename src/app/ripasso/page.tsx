@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { AccentLink } from "@/components/accent-link";
 import { REVIEW_SESSION_HREF } from "@/content/lesson-nav";
 import { readDueCards } from "@/progress/read";
+import { dueSession } from "@/review/session";
 import { ui } from "@/ui-it";
 
 export const metadata: Metadata = { title: ui.review.pageTitle };
@@ -25,7 +26,8 @@ export default function ReviewHubPage() {
 }
 
 async function DuePanel() {
-  const { total, loaded } = await readDueCards(0);
+  const { due, loaded } = await readDueCards();
+  const { total } = dueSession(due, Math.random);
   if (!loaded) return <p className="mt-3 text-bad">{ui.review.unreachable}</p>;
   if (total === 0) return <p className="mt-3">{ui.review.nothingDue}</p>;
   return (

@@ -9,8 +9,8 @@ function after(grades: readonly Grade[], from: Schedule = NEW_SCHEDULE, card = C
 }
 
 describe("sm2 (SPEC §10.5, ADR-0004)", () => {
-  it("starts a card with ease 2.5", () => {
-    expect(NEW_SCHEDULE).toEqual({ intervalDays: 0, ease: 2.5, reps: 0, lapses: 0 });
+  it("starts a card with ease 2.5, due in a day", () => {
+    expect(NEW_SCHEDULE).toEqual({ intervalDays: 1, ease: 2.5, reps: 0, lapses: 0 });
   });
 
   it("good goes 1 day, then 6 days, then interval × ease", () => {
@@ -31,8 +31,8 @@ describe("sm2 (SPEC §10.5, ADR-0004)", () => {
     expect(after(["good", "good", "easy"])).toMatchObject({ intervalDays: 19.5, ease: 2.65, reps: 3 });
   });
 
-  it("hard on a new card still waits at least a day", () => {
-    expect(after(["hard"]).intervalDays).toBe(1);
+  it("hard on a new card: 1 day × 1.2, due tomorrow", () => {
+    expect(after(["hard"])).toMatchObject({ intervalDays: 1.2, dueInDays: 1 });
   });
 
   it("never lets ease drop below 1.3", () => {
