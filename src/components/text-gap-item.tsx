@@ -10,13 +10,14 @@ import { GapFeedback, GappedItemLayout, GapText, useGappedItem } from "./gapped-
 /** text_gap, and audio_gap, whose gaps behave the same (SPEC §5.2.10). */
 type TypedGapContent = Extract<Item, { type: "text_gap" | "audio_gap" }>;
 
-type TextGap = TypedGapContent["gaps"][number];
+type TypedGap = TypedGapContent["gaps"][number];
 
 /** Inputs are sized to the answer (SPEC §5.2.2): the longest right answer, plus a character. */
-const widthOf = (gap: TextGap) => Math.max(2, ...[gap.answer, ...(gap.accept ?? [])].map((answer) => answer.length)) + 1;
+const widthOf = (gap: TypedGap) => Math.max(2, ...[gap.answer, ...(gap.accept ?? [])].map((answer) => answer.length)) + 1;
 
 /**
- * A `text_gap` item, default layout (SPEC §5.2.2): a text input per gap, sized
+ * A `text_gap` item, default layout (SPEC §5.2.2), or an `audio_gap` item
+ * (§5.2.10) with its own left column: a text input per gap, sized
  * to the answer. Enter checks the item and Tab moves between gaps; the
  * character helper inserts at the cursor of the gap last typed in. `aside`
  * replaces the left column (see `GappedItemLayout`).
