@@ -7,8 +7,8 @@
 import { db } from "@/db";
 import { PROFILE_ID } from "@/db/schema";
 import { newCorrectionWriteSchema } from "@/review/error-card";
-import { reviewWriteSchema } from "@/review/plan";
-import { saveNewCorrection, saveReviewWrite } from "@/review/store";
+import { drillWriteSchema, reviewWriteSchema } from "@/review/plan";
+import { saveDrillWrite, saveNewCorrection, saveReviewWrite } from "@/review/store";
 import { correctionWriteSchema, exerciseWriteSchema, finishWriteSchema, resetWriteSchema, visitWriteSchema } from "./plan";
 import {
   type CorrectionResponse,
@@ -64,6 +64,13 @@ export async function recordReview(input: unknown): Promise<ActionResponse> {
   const parsed = reviewWriteSchema.safeParse(input);
   if (!parsed.success) return { result: "rejected" };
   return saveReviewWrite(db(), PROFILE_ID, parsed.data);
+}
+
+/** A tag drill answer: grades the exercise's item card if it has one, and never creates one (SPEC §10.5). */
+export async function recordDrill(input: unknown): Promise<ActionResponse> {
+  const parsed = drillWriteSchema.safeParse(input);
+  if (!parsed.success) return { result: "rejected" };
+  return saveDrillWrite(db(), PROFILE_ID, parsed.data);
 }
 
 /** Aggiungi una correzione: a manual error_log row and its error card, due tomorrow (SPEC §10.5). */

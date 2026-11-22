@@ -9,7 +9,8 @@ import type { Lesson } from "@/content/schema";
 import { db } from "@/db";
 import { PROFILE_ID } from "@/db/schema";
 import type { SavedEntry } from "./merge";
-import { type DueCard, loadDueCards } from "@/review/store";
+import { type DueCard, loadDueCards, loadItemCardRefs, loadTopErrorTags } from "@/review/store";
+import type { TopTag } from "@/review/top-tags";
 import { loadLastLocation, loadLessonEntries, loadProgressSummaries, type ProgressSummary } from "./store";
 
 /** Every lesson's progress, most recently changed first; empty when the database is unreachable. */
@@ -53,5 +54,31 @@ export async function readDueCards(): Promise<{ due: DueCard[]; loaded: boolean 
   } catch (error) {
     console.error("Could not load the due review cards.", error);
     return { due: [], loaded: false };
+  }
+}
+
+/** The top 5 error tags of the last 30 days; `loaded` is false when the database couldn't be read. */
+export async function readTopErrorTags(): Promise<{ top: TopTag[]; loaded: boolean }> {
+  await connection();
+  try {
+    return { top: await loadTopErrorTags(db(), PROFILE_ID, new Date()), loaded: true };
+  } catch (error) {
+    console.error("Could not load the top error tags.", error);
+    return { top: [], loaded: false };
+  }
+}
+
+/**
+ * What a tag drill picks from: every lesson's progress, and the exercises
+ * that have an item card; `loaded` is false when the database couldn't be read.
+ */
+export async function readDrillSources(): Promise<{ progress: ProgressSummary[]; carded: Set<string>; loaded: boolean }> {
+  await connection();
+  try {
+    const [progress, carded] = await Promise.all([loadProgressSummaries(db(), PROFILE_ID), loadItemCardRefs(db(), PROFILE_ID)]);
+    return { progress, carded, loaded: true };
+  } catch (error) {
+    console.error("Could not load the lessons for a tag drill.", error);
+    return { progress: [], carded: new Set(), loaded: false };
   }
 }

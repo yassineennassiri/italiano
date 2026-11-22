@@ -19,6 +19,9 @@ export const REVIEW_HUB_HREF = "/ripasso";
 /** A review session of the hub's due cards. */
 export const REVIEW_SESSION_HREF = "/ripasso/sessione";
 
+/** A tag drill: exercises carrying the error tag, from completed lessons. */
+export const drillHref = (tag: string): string => `/ripasso/errori/${tag}`;
+
 type LessonRef = Pick<Lesson, "id" | "slug">;
 
 /** `/a2` for any a2 lesson. */

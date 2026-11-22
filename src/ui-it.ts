@@ -317,6 +317,20 @@ export const ui = {
     errorInput: "La versione corretta",
     /** The toggle that shows the tags' English explanations. */
     info: "Info",
+    /** The second panel of the hub (SPEC §10.5): the top error tags, each starting a tag drill. */
+    topTags: {
+      heading: "I miei errori più frequenti",
+      intro: (days: number) => `Gli errori non ancora risolti degli ultimi ${days} giorni. Scegline uno per esercitarti.`,
+      /** How many unresolved errors carry the tag: "3 errori". */
+      count: (count: number) => (count === 1 ? "1 errore" : `${count} errori`),
+      none: (days: number) => `Negli ultimi ${days} giorni non hai errori da ripassare.`,
+    },
+    /** A tag drill (SPEC §10.5). */
+    drill: {
+      /** Above the drill: the tag it practises. */
+      heading: (tag: string) => `Esercitazione: ${tag}`,
+      none: "Nelle lezioni completate non ci sono esercizi con questo errore.",
+    },
     /** The third panel of the hub (SPEC §10.5). */
     correction: {
       heading: "Aggiungi una correzione",

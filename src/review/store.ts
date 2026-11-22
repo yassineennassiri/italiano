@@ -3,7 +3,7 @@
  * `progress/store.ts`: one batch of reads, a pure plan (`plan.ts`), one
  * batch of writes. Takes the client as a parameter.
  */
-import { and, asc, eq, lte, sql } from "drizzle-orm";
+import { and, asc, eq, gte, lte, sql } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
 import { exerciseHashes } from "@/content/hash";
 import { lessonIdOfExercise } from "@/content/ids";
@@ -13,7 +13,8 @@ import { errorLog, exerciseAttempt, reviewCard, reviewLog } from "@/db/schema";
 import { type ErrorCardFields, getsErrorCard, type NewCorrectionWrite, planErrorReview, planNewCorrection } from "./error-card";
 import type { CardKind } from "./kinds";
 import type { CardRow, GradedCard, ReviewLogRow, StoredCard } from "./item-card";
-import { type ErrorReviewWrite, type ItemReviewWrite, planReview, type ReviewWrite, type VocabReviewWrite } from "./plan";
+import { type DrillWrite, type ErrorReviewWrite, type ItemReviewWrite, planDrill, planReview, type ReviewWrite, type VocabReviewWrite } from "./plan";
+import { RECENT_DAYS, type TopTag, topErrorTags } from "./top-tags";
 import { findVocabEntry, planVocabReview } from "./vocab-card";
 
 /** What a review write did. */
@@ -192,13 +193,62 @@ function itemReviewWrites(db: Db, userId: string, card: CardWithKind, write: Ite
   if (!plan) return undefined;
   const writes = gradedWrites(db, userId, plan);
   writes.push(db.insert(exerciseAttempt).values({ ...plan.attempt, userId }));
-  if (plan.resolves) {
-    writes.push(
-      db
-        .update(errorLog)
-        .set({ resolved: true })
-        .where(and(eq(errorLog.userId, userId), eq(errorLog.itemId, card.refId), eq(errorLog.resolved, false))),
-    );
-  }
+  if (plan.resolves) writes.push(resolveItemErrors(db, userId, card.refId));
   return writes;
 }
+
+/**
+ * *I miei errori più frequenti* (SPEC §10.5): the top 5 error tags by
+ * unresolved error_log rows from the last 30 days, so a tag drops off as the
+ * learner fixes it.
+ */
+export async function loadTopErrorTags(db: Db, userId: string, now: Date): Promise<TopTag[]> {
+  const since = new Date(now.getTime() - RECENT_DAYS * 86_400_000);
+  const rows = await db
+    .select({ errorTags: errorLog.errorTags })
+    .from(errorLog)
+    .where(and(eq(errorLog.userId, userId), eq(errorLog.resolved, false), gte(errorLog.createdAt, since)));
+  return topErrorTags(rows, loadErrorTags());
+}
+
+/** The exercises that have an item card, which a tag drill prefers. */
+export async function loadItemCardRefs(db: Db, userId: string): Promise<Set<string>> {
+  const rows = await db
+    .select({ refId: reviewCard.refId })
+    .from(reviewCard)
+    .where(and(eq(reviewCard.userId, userId), eq(reviewCard.kind, "item")));
+  return new Set(rows.map((row) => row.refId));
+}
+
+/**
+ * One answer in a tag drill (SPEC §10.5), graded like a review against the
+ * current content. With an item card, the card is rescheduled and logged
+ * with source `drill`, and a third non-*again* grade in a row resolves its
+ * error_log rows; without one, no card is made. Either way a `review` attempt
+ * is written; `item_state` and the lesson % are never touched, and no
+ * error_log row is added. "ignored" for an exercise the content doesn't
+ * have, changed content, or a retry of a write already applied.
+ */
+export async function saveDrillWrite(db: Db, userId: string, write: DrillWrite, now = new Date()): Promise<ReviewResponse> {
+  const lessonId = lessonIdOfExercise(write.exerciseId);
+  const lesson = lessonId === undefined ? undefined : loadLesson(lessonId);
+  if (!lesson) return { result: "ignored" };
+  const [[card], [seen]] = await db.batch([
+    itemCard(db, userId, write.exerciseId),
+    db.select({ id: exerciseAttempt.id }).from(exerciseAttempt).where(eq(exerciseAttempt.id, write.eventId)),
+  ]);
+  const plan = seen ? undefined : planDrill({ lesson, hashes: exerciseHashes(lesson), card, write, now });
+  if (!plan) return { result: "ignored" };
+  const writes: Writes = [db.insert(exerciseAttempt).values({ ...plan.attempt, userId })];
+  if (plan.card && plan.log) writes.push(...gradedWrites(db, userId, { card: plan.card, log: plan.log }));
+  if (plan.resolves) writes.push(resolveItemErrors(db, userId, write.exerciseId));
+  await db.batch(writes);
+  return { result: "saved" };
+}
+
+/** Marks the exercise's unresolved error_log rows resolved: its card's third non-*again* grade in a row (§10.4). */
+const resolveItemErrors = (db: Db, userId: string, exerciseId: string) =>
+  db
+    .update(errorLog)
+    .set({ resolved: true })
+    .where(and(eq(errorLog.userId, userId), eq(errorLog.itemId, exerciseId), eq(errorLog.resolved, false)));

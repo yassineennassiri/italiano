@@ -17,8 +17,8 @@ import { errorLog, exerciseAttempt, itemState, lessonProgress, profile, reviewCa
 import type { ExerciseWrite } from "@/progress/plan";
 import { loadLessonEntries, saveExerciseWrite, saveFinish, saveReset } from "@/progress/store";
 import type { NewCorrectionWrite } from "./error-card";
-import type { ReviewWrite } from "./plan";
-import { loadDueCards, saveNewCorrection, saveReviewWrite } from "./store";
+import type { DrillWrite, ReviewWrite } from "./plan";
+import { loadDueCards, loadItemCardRefs, loadTopErrorTags, saveDrillWrite, saveNewCorrection, saveReviewWrite } from "./store";
 
 loadLocalEnv();
 const db = connect(databaseUrl("dev"));
@@ -373,5 +373,72 @@ describe("saveReviewWrite for an error card", () => {
     const error = cards.find((card) => card.kind === "error")!;
     expect(await saveReviewWrite(db, user, rewrite(item.id, "Lui è arrivato.", days(1)), days(1))).toEqual({ result: "ignored" });
     expect(await saveReviewWrite(db, user, reviewPick(error.id, 0, days(1)), days(1))).toEqual({ result: "ignored" });
+  });
+});
+
+describe("loadTopErrorTags (I miei errori più frequenti)", () => {
+  it("counts only unresolved rows from the last 30 days, of this profile", async () => {
+    const user = await newUser();
+    const other = await newUser();
+    const row = (errorTags: string[], fields: Partial<typeof errorLog.$inferInsert> = {}) => ({ userId: user, source: "exercise" as const, errorTags, ...fields });
+    await db.insert(errorLog).values([
+      row(["article.lo"], { createdAt: days(-1) }),
+      row(["article.lo", "article.elision"], { createdAt: days(-29) }),
+      row(["article.lo"], { createdAt: days(-31) }),
+      row(["article.elision"], { createdAt: days(-2), resolved: true }),
+      row(["register.lei"], { createdAt: days(-3), userId: other }),
+    ]);
+    expect(await loadTopErrorTags(db, user, NOW)).toEqual([
+      { id: "article.lo", count: 2, explanation: expect.any(String) },
+      { id: "article.elision", count: 1, explanation: expect.any(String) },
+    ]);
+    expect(await loadTopErrorTags(db, other, days(60))).toEqual([]);
+  });
+});
+
+describe("saveDrillWrite (tag drills)", () => {
+  const drillPick = (option: number, at: Date): DrillWrite => ({ eventId: randomUUID(), exerciseId: I01, contentHash: HASH, at: at.toISOString(), kind: "pick", option });
+
+  it("grades the exercise's existing item card with source drill, without touching item_state or adding an error_log row", async () => {
+    const user = await newUser();
+    await saveExerciseWrite(db, user, pick(2), NOW);
+    const [before] = await db.select().from(reviewCard).where(eq(reviewCard.userId, user));
+    const state = await db.select().from(itemState).where(eq(itemState.userId, user));
+
+    const write = drillPick(0, days(1));
+    expect(await saveDrillWrite(db, user, write, days(1))).toEqual({ result: "saved" });
+    expect(await db.select().from(reviewCard).where(eq(reviewCard.userId, user))).toMatchObject([{ id: before.id, lastResult: "good", streak: 1 }]);
+    expect(await db.select().from(reviewLog).where(eq(reviewLog.userId, user))).toMatchObject([{ cardId: before.id, grade: "good", source: "drill" }]);
+    expect(await db.select().from(itemState).where(eq(itemState.userId, user))).toEqual(state);
+    expect(await db.select().from(errorLog).where(eq(errorLog.userId, user))).toHaveLength(1);
+    expect(await saveDrillWrite(db, user, write, days(1))).toEqual({ result: "ignored" });
+    expect(await db.select().from(reviewLog).where(eq(reviewLog.userId, user))).toHaveLength(1);
+  });
+
+  it("creates no card for an exercise without one, even for a wrong answer: it writes only the review attempt", async () => {
+    const user = await newUser();
+    const write = drillPick(2, NOW);
+    expect(await saveDrillWrite(db, user, write, NOW)).toEqual({ result: "saved" });
+    expect(await db.select().from(reviewCard).where(eq(reviewCard.userId, user))).toEqual([]);
+    expect(await db.select().from(errorLog).where(eq(errorLog.userId, user))).toEqual([]);
+    expect(await db.select().from(exerciseAttempt).where(eq(exerciseAttempt.userId, user))).toMatchObject([
+      { id: write.eventId, itemId: I01, action: "review", correct: false },
+    ]);
+    expect(await saveDrillWrite(db, user, write, NOW)).toEqual({ result: "ignored" });
+    expect(await db.select().from(exerciseAttempt).where(eq(exerciseAttempt.userId, user))).toHaveLength(1);
+  });
+
+  it("ignores an exercise the content doesn't have", async () => {
+    const user = await newUser();
+    expect(await saveDrillWrite(db, user, { ...drillPick(0, NOW), exerciseId: "a2.u01.l01.s99.i01" }, NOW)).toEqual({ result: "ignored" });
+  });
+});
+
+describe("loadItemCardRefs", () => {
+  it("lists the exercises that have an item card", async () => {
+    const user = await newUser();
+    await saveExerciseWrite(db, user, pick(2), NOW);
+    await saveNewCorrection(db, user, correction(), NOW);
+    expect(await loadItemCardRefs(db, user)).toEqual(new Set([I01]));
   });
 });

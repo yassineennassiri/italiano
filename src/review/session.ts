@@ -95,19 +95,30 @@ function showableCards(due: readonly DueCard[]): SessionCard[] {
     if (lessonId === undefined) continue;
     if (!lessons.has(lessonId)) lessons.set(lessonId, loadLesson(lessonId));
     const lesson = lessons.get(lessonId);
-    const exercise = lesson && findExercise(lesson, refId);
-    const step = exercise && lesson.steps.find((candidate) => candidate.items.includes(exercise.item));
-    if (!lesson || !exercise || !step) continue;
-    const { item, exchange } = exercise;
-    cards.push({
-      kind,
-      cardId: id,
-      exerciseId: refId,
-      contentHash: exerciseHashes(lesson).get(refId)!,
-      lesson,
-      step,
-      item: exchange && item.type === "speak_rate" ? { ...item, exchanges: [exchange] } : item,
-    });
+    const shown = lesson && shownExercise(lesson, refId);
+    if (shown) cards.push({ kind, cardId: id, ...shown });
   }
   return cards;
+}
+
+/** An exercise as a review or a drill shows it in the normal item UI. */
+export type ShownExercise = Omit<ItemSessionCard, "kind" | "cardId">;
+
+/**
+ * The exercise with its current content, step and lesson, for the item UI: for
+ * a speaking exchange, its item with only that exchange. Undefined when the
+ * lesson no longer has it. `hashes` saves recomputing the lesson's hashes per exercise.
+ */
+export function shownExercise(lesson: Lesson, exerciseId: string, hashes = exerciseHashes(lesson)): ShownExercise | undefined {
+  const exercise = findExercise(lesson, exerciseId);
+  const step = exercise && lesson.steps.find((candidate) => candidate.items.includes(exercise.item));
+  if (!exercise || !step) return undefined;
+  const { item, exchange } = exercise;
+  return {
+    exerciseId,
+    contentHash: hashes.get(exerciseId)!,
+    lesson,
+    step,
+    item: exchange && item.type === "speak_rate" ? { ...item, exchanges: [exchange] } : item,
+  };
 }

@@ -1,11 +1,12 @@
 /**
- * Planning a review write (SPEC §10.5, ADR-0004): from the card, the current
- * content and the learner's answer, the rows to write. The answer is graded
- * here, against the content, not trusted from the client. A review writes
- * the card's new schedule, a `review_log` row and an `exercise_attempt` row
- * with action `review`. It never writes `item_state` and never adds an
- * error_log row; a third non-*again* grade in a row only marks the card's
- * rows resolved.
+ * Planning a review write or a tag drill answer (SPEC §10.5, ADR-0004): from
+ * the card, the current content and the learner's answer, the rows to write.
+ * The answer is graded here, against the content, not trusted from the
+ * client. A review writes the card's new schedule, a `review_log` row and an
+ * `exercise_attempt` row with action `review`. A drill answer writes the same
+ * when its exercise has an item card, and only the attempt when it has none.
+ * Neither writes `item_state` or adds an error_log row; a third non-*again*
+ * grade in a row only marks the card's rows resolved.
  */
 import { z } from "zod";
 import type { Lesson } from "@/content/schema";
@@ -27,12 +28,23 @@ const cardFields = {
   source: z.enum(sessionSources),
 };
 
-const writeFields = {
-  ...cardFields,
-  /** The card's exercise: an item id, or an exchange id. */
+/** The exercise an answer is for, and the content it was given against. */
+const exerciseFields = {
+  /** An item id, or an exchange id. */
   exerciseId: z.string().min(1),
-  /** The content the answer was given against; a write for since-changed content is ignored. */
+  /** A write for since-changed content is ignored. */
   contentHash: z.string().min(1),
+};
+
+const writeFields = { ...cardFields, ...exerciseFields };
+
+/** What a drill answer carries besides the action: no card, since most drilled exercises have none. */
+const drillFields = {
+  /** Also the attempt's id (and with a card the review_log row's), so a retried write is applied once. */
+  eventId: z.uuid(),
+  /** When the learner answered, on their computer. */
+  at: z.iso.datetime(),
+  ...exerciseFields,
 };
 
 /** A vocab card graded with one of the flip card's four buttons (SPEC §10.5). */
@@ -88,20 +100,79 @@ export function planReview({
   write: ItemReviewWrite;
   now: Date;
 }): ReviewPlan | undefined {
-  if (write.exerciseId !== card.refId || hashes.get(card.refId) !== write.contentHash) return undefined;
-  const exercise = findExercise(lesson, card.refId);
-  // The review starts from a fresh entry: the lesson's own state is never read or written.
+  if (write.exerciseId !== card.refId) return undefined;
+  const answered = gradeAnswer(lesson, hashes, write, now);
+  if (!answered) return undefined;
+  const graded = gradeCard({ card, grade: answered.grade, source: write.source, eventId: write.eventId, at: answered.at, now });
+  return { grade: answered.grade, ...graded, attempt: answered.attempt, resolves: graded.card.streak >= RESOLVE_STREAK };
+}
+
+/**
+ * One answer in a tag drill (SPEC §10.5): the client names the exercise, not
+ * a card, since most drilled exercises have none; the source is always `drill`.
+ */
+export const drillWriteSchema = z.discriminatedUnion("kind", [
+  pickActionSchema.extend(drillFields),
+  checkActionSchema.extend(drillFields),
+  solveActionSchema.extend(drillFields),
+  rateActionSchema.extend(drillFields),
+]);
+export type DrillWrite = z.infer<typeof drillWriteSchema>;
+
+/**
+ * The rows one drill answer writes. Graded like a review; with an item card,
+ * the card is rescheduled and logged as in a review (`card`, `log`,
+ * `resolves`); without one, no card is made and only the attempt is written.
+ */
+export type DrillPlan = Pick<ReviewPlan, "grade" | "attempt" | "resolves"> & Partial<Pick<ReviewPlan, "card" | "log">>;
+
+/** The rows one drill answer writes, or undefined when it is for changed content, does nothing, or `card` is another exercise's. */
+export function planDrill({
+  lesson,
+  hashes,
+  card,
+  write,
+  now,
+}: {
+  lesson: Lesson;
+  hashes: ReadonlyMap<string, string>;
+  /** The exercise's item card, if it has one. */
+  card: StoredCard | undefined;
+  write: DrillWrite;
+  now: Date;
+}): DrillPlan | undefined {
+  if (card && card.refId !== write.exerciseId) return undefined;
+  const answered = gradeAnswer(lesson, hashes, write, now);
+  if (!answered) return undefined;
+  const { grade, at } = answered;
+  // The attempt's id is the eventId, as for a lesson answer, so a retry without a card is still applied once.
+  const attempt = { ...answered.attempt, id: write.eventId };
+  if (!card) return { grade, attempt, resolves: false };
+  const graded = gradeCard({ card, grade, source: "drill", eventId: write.eventId, at, now });
+  return { grade, ...graded, attempt, resolves: graded.card.streak >= RESOLVE_STREAK };
+}
+
+/**
+ * An answer graded against the exercise's current content, from a fresh
+ * entry: the lesson's own state is never read or written. Undefined when the
+ * content changed since the answer, or the answer does nothing.
+ */
+function gradeAnswer(
+  lesson: Lesson,
+  hashes: ReadonlyMap<string, string>,
+  write: DrillWrite | ItemReviewWrite,
+  now: Date,
+): { grade: Grade; attempt: Row<typeof exerciseAttempt>; at: Date } | undefined {
+  if (hashes.get(write.exerciseId) !== write.contentHash) return undefined;
+  const exercise = findExercise(lesson, write.exerciseId);
   const outcome = exercise && applyAction(exercise, NEW_ENTRY, write);
   if (!outcome) return undefined;
-
-  const grade = reviewGrade(outcome);
   const at = gradedAt(write.at, now);
-  const graded = gradeCard({ card, grade, source: write.source, eventId: write.eventId, at, now });
   return {
-    grade,
-    ...graded,
+    grade: reviewGrade(outcome),
+    at,
     attempt: {
-      itemId: card.refId,
+      itemId: write.exerciseId,
       lessonId: lesson.id,
       contentVersion: lesson.version,
       action: "review",
@@ -110,6 +181,5 @@ export function planReview({
       correct: outcome.correct,
       createdAt: at,
     },
-    resolves: graded.card.streak >= RESOLVE_STREAK,
   };
 }

@@ -2,13 +2,10 @@ import type { Metadata } from "next";
 import { randomUUID } from "node:crypto";
 import Link from "next/link";
 import { Suspense } from "react";
-import { ItemSlot, StepMedia } from "@/components/item-slot";
+import { ReviewItem } from "@/components/review-item";
 import { ReviewSession } from "@/components/review-session";
-import { StepInstruction } from "@/components/step-instruction";
-import { StepReading } from "@/components/step-reading";
 import { REVIEW_HUB_HREF } from "@/content/lesson-nav";
 import { loadErrorTags } from "@/content/load";
-import { readingLayout } from "@/content/reading";
 import { readDueCards } from "@/progress/read";
 import { dueSession, SESSION_SIZE } from "@/review/session";
 import { ui } from "@/ui-it";
@@ -42,17 +39,7 @@ async function Session() {
   }
   const errorTags = new Map(loadErrorTags().map((tag) => [tag.id, tag]));
   const slots = cards.map((card) =>
-    card.kind === "item" ? (
-      <div key={card.cardId} className="mx-auto max-w-3xl">
-        <p className="mt-2 text-sm text-muted">{ui.review.source(card.lesson.title, card.step.title)}</p>
-        <StepMedia step={card.step} lesson={card.lesson} />
-        <StepInstruction instruction={card.step.instruction} instructionEn={card.step.instruction_en} />
-        {card.step.reading && <StepReading md={card.step.reading} layout={readingLayout(card.step)} />}
-        <div className="mt-8">
-          <ItemSlot item={card.item} scene={card.lesson.scene} errorTags={errorTags} />
-        </div>
-      </div>
-    ) : null,
+    card.kind === "item" ? <ReviewItem key={card.cardId} shown={card} errorTags={errorTags} /> : null,
   );
   return (
     <ReviewSession
