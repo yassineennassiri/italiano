@@ -16,11 +16,25 @@ const BOX_CLASSES: Record<WordOrderView["look"], string> = {
   wrong: "border-solid border-bad",
 };
 
-/** One tile: a light pill in the tray, dark once placed in the answer box. */
-function Tile({ placed, disabled, onClick, children }: { placed: boolean; disabled: boolean; onClick: () => void; children: ReactNode }) {
+/** One tile: a light pill in the tray, dark once placed in the answer box. word_bank's bank shares it. */
+export function Tile({
+  tile,
+  placed,
+  disabled,
+  onClick,
+  children,
+}: {
+  /** The tile's index, for finding it again to move focus to it. */
+  tile?: number;
+  placed: boolean;
+  disabled: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
   return (
     <button
       type="button"
+      data-tile={tile}
       disabled={disabled}
       onClick={onClick}
       className={`rounded-full px-4 py-1.5 font-semibold disabled:cursor-default ${LOOK_CLASSES[placed ? "selected" : "idle"]}`}

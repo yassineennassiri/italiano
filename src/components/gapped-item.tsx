@@ -13,12 +13,19 @@ import { useExercise } from "./step-progress";
 
 type GappedContent = Extract<Item, { type: "dropdown" | "text_gap" }>;
 
+/** The items laid out with the text panel on the right: these, and word_bank. */
+type GappedLayoutContent = GappedContent | Extract<Item, { type: "word_bank" }>;
+
 /** The input classes for each gap look. */
 const GAP_INPUT_CLASSES: Partial<Record<GapView["look"], string>> = {
   idle: "border-brand bg-background text-brand",
   correct: "border-ok bg-ok text-white",
   wrong: "border-bad bg-bad text-white",
 };
+
+/** A gap's input, select or (word_bank) filled-gap button classes for its look. */
+export const gapClasses = (look: GapView["look"]) =>
+  `rounded-md border-2 px-1.5 py-0.5 font-semibold disabled:opacity-100 ${GAP_INPUT_CLASSES[look]}`;
 
 /**
  * One gapped item's state: its values (the last Check's, with this tab's edits
@@ -38,7 +45,7 @@ export function useGappedItem(item: GappedContent & GappedItem, mode: GapMode) {
       "aria-label": ui.lesson.gapLabel(number),
       value: values[gapId] ?? "",
       disabled: looks[gapId].disabled,
-      className: `rounded-md border-2 px-1.5 py-0.5 font-semibold disabled:opacity-100 ${GAP_INPUT_CLASSES[looks[gapId].look]}`,
+      className: gapClasses(looks[gapId].look),
     }),
     edit: (gapId: string, value: string) => setEdits((before) => ({ ...before, [gapId]: value })),
     check: () => {
@@ -65,7 +72,7 @@ export function GappedItemLayout({
   onCheck,
   children,
 }: {
-  item: Pick<GappedContent, "id" | "prompt" | "prompt_audio" | "image" | "solvable">;
+  item: Pick<GappedLayoutContent, "id" | "prompt" | "prompt_audio" | "image" | "solvable">;
   notes?: ReactNode;
   locked: boolean;
   onSolve: () => void;
