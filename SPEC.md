@@ -798,7 +798,7 @@ The `manual` source lets me paste corrections from voice sessions with my Italia
 | created_at, updated_at | timestamptz | |
 | UNIQUE | (user_id, kind, ref_id) | |
 
-For `item` cards, `ref_id` is an **exercise** id: an item id, or an exchange id for speaking items.
+For `item` cards, `ref_id` is an **exercise** id: an item id, or an exchange id for speaking items. For `vocab` cards it is the lesson id plus the vocab id, e.g. `a2.u01.l01.v-ombrello`, because vocab ids are only unique inside their lesson.
 
 **`review_log`** (append-only, never reset): `id` (the write's `eventId`), `user_id`, `card_id`, `grade`, `interval_before`, `interval_after`, `ease_before`, `ease_after`, `source` (`hub` · `drill` · `ripasso_personale` · `lesson`: a lesson answer that grades an existing item card *again*), `created_at`. Every review writes one row, so the scheduler can later be swapped for FSRS fitted to this history (ADR-0004).
 
@@ -820,7 +820,7 @@ For `item` cards, `ref_id` is an **exercise** id: an item id, or an exchange id 
 | Speaking exchange: *Bene* / *Non tanto bene* | *good* / *again* |
 | Vocab card: the learner presses *Ancora · Difficile · Bene · Facile* | *again* · *hard* · *good* · *easy* |
 
-A review **never touches the lesson's `item_state`** or its %: it writes `review_log`, an `exercise_attempt` row with action `review`, and the card's new schedule. A wrong review answer writes no new error_log row; the card's lapse already records it. If an item's content changed since the card was made, the review shows the current content.
+A review **never touches the lesson's `item_state`** or its %: it writes `review_log`, an `exercise_attempt` row with action `review`, and the card's new schedule. A vocab card has no exercise behind it, so its grade writes only `review_log` and the schedule. A wrong review answer writes no new error_log row; the card's lapse already records it. If an item's content changed since the card was made, the review shows the current content.
 
 **Card kinds.**
 - **`vocab`**: finishing a lesson creates one per vocab entry, first due the next day. The card is a flip card. The front shows the English meaning, with no gender dot. I say the Italian aloud and flip. The back shows the term with article and plural, the forms line and 🔊. Then I press one of the four grade buttons. The vocab trainer (M4) adds typed and listening modes on the same cards.

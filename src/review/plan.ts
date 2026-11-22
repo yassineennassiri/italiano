@@ -15,29 +15,44 @@ import { NEW_ENTRY } from "@/items/entry";
 import { applyAction, checkActionSchema, findExercise, pickActionSchema, rateActionSchema, solveActionSchema } from "@/items/engine";
 import type { Row } from "@/progress/plan";
 import { type GradedCard, gradeCard, gradedAt, RESOLVE_STREAK, type ReviewLogRow, reviewGrade, type StoredCard } from "./item-card";
-import type { Grade } from "./sm2";
+import { type Grade, grades } from "./sm2";
 
-const writeFields = {
+const cardFields = {
   /** Also the review_log row's id, so a retried write is applied once. */
   eventId: z.uuid(),
   cardId: z.uuid(),
-  /** The card's exercise: an item id, or an exchange id. */
-  exerciseId: z.string().min(1),
-  /** The content the answer was given against; a write for since-changed content is ignored. */
-  contentHash: z.string().min(1),
   /** When the learner answered, on their computer. */
   at: z.iso.datetime(),
   source: z.enum(sessionSources),
 };
 
-/** One review answer as the client sends it: the first answer given to the card in this session. */
+const writeFields = {
+  ...cardFields,
+  /** The card's exercise: an item id, or an exchange id. */
+  exerciseId: z.string().min(1),
+  /** The content the answer was given against; a write for since-changed content is ignored. */
+  contentHash: z.string().min(1),
+};
+
+/** A vocab card graded with one of the flip card's four buttons (SPEC §10.5). */
+const vocabWriteSchema = z.strictObject({ kind: z.literal("grade"), grade: z.enum(grades), ...cardFields });
+/** A vocab card's grade as the client sends it. */
+export type VocabReviewWrite = z.infer<typeof vocabWriteSchema>;
+
+/**
+ * One review answer as the client sends it: the first answer given to an
+ * item card in this session, or the grade given to a vocab card.
+ */
 export const reviewWriteSchema = z.discriminatedUnion("kind", [
   pickActionSchema.extend(writeFields),
   checkActionSchema.extend(writeFields),
   solveActionSchema.extend(writeFields),
   rateActionSchema.extend(writeFields),
+  vocabWriteSchema,
 ]);
 export type ReviewWrite = z.infer<typeof reviewWriteSchema>;
+/** A review answer to an item card. */
+export type ItemReviewWrite = Exclude<ReviewWrite, VocabReviewWrite>;
 
 /** The rows one review answer writes, and its grade. */
 export type ReviewPlan = {
@@ -60,7 +75,7 @@ export function planReview({
   lesson: Lesson;
   hashes: ReadonlyMap<string, string>;
   card: StoredCard;
-  write: ReviewWrite;
+  write: ItemReviewWrite;
   now: Date;
 }): ReviewPlan | undefined {
   if (write.exerciseId !== card.refId || hashes.get(card.refId) !== write.contentHash) return undefined;

@@ -23,6 +23,7 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
+import { cardKinds } from "../review/kinds";
 import { grades } from "../review/sm2";
 import { exerciseStatuses } from "../scoring/exercise";
 import { lessonStatuses } from "../scoring/lesson";
@@ -138,8 +139,6 @@ export const errorLog = pgTable(
   (t) => [oneOf("error_log_source_check", t.source, errorSources)],
 );
 
-/** The three kinds of review card (CONTEXT.md): vocab, item, error. */
-export const cardKinds = ["vocab", "item", "error"] as const;
 /** Where a review session answers a card (§10.5). */
 export const sessionSources = ["hub", "drill", "ripasso_personale"] as const;
 /**

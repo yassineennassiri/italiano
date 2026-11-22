@@ -13,4 +13,4 @@ Reviews are **graded by the app** wherever it can check the answer: a correct fi
 ## Consequences
 
 - Changing the scheduler later reshuffles every due date, so it should happen once, deliberately, using the review log.
-- A review writes `review_log` plus an `exercise_attempt` row with action `review`, never `item_state`.
+- A review writes `review_log` plus an `exercise_attempt` row with action `review`, never `item_state`. A vocab card has no exercise behind it, so its grade writes `review_log` only (issue #45).

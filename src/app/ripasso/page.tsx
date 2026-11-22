@@ -27,12 +27,12 @@ export default function ReviewHubPage() {
 
 async function DuePanel() {
   const { due, loaded } = await readDueCards();
-  const { total } = dueSession(due, Math.random);
+  const { total, counts } = dueSession(due, Math.random);
   if (!loaded) return <p className="mt-3 text-bad">{ui.review.unreachable}</p>;
   if (total === 0) return <p className="mt-3">{ui.review.nothingDue}</p>;
   return (
     <>
-      <p className="mt-3 text-lg">{ui.review.dueCount(total)}</p>
+      <p className="mt-3 text-lg">{ui.review.dueCount(counts)}</p>
       <AccentLink href={REVIEW_SESSION_HREF} className="mt-5">
         {ui.review.start}
       </AccentLink>

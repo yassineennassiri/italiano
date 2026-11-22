@@ -11,7 +11,9 @@ import { loadCourse, loadLesson } from "@/content/load";
 import type { Lesson } from "@/content/schema";
 import type { Db } from "@/db/connect";
 import { errorLog, exerciseAttempt, itemState, lessonProgress, reviewLog } from "@/db/schema";
-import { itemCard, upsertCard } from "@/review/store";
+import { gradedAt } from "@/review/item-card";
+import { insertNewCards, itemCard, upsertCard } from "@/review/store";
+import { newVocabCards } from "@/review/vocab-card";
 import type { SavedEntry } from "./merge";
 import {
   type CorrectionWrite,
@@ -206,11 +208,19 @@ export async function saveCorrection(db: Db, userId: string, write: CorrectionWr
   return { result: "saved", saved: { ...before, ...reopened } };
 }
 
-/** Reaching the Finish screen completes the lesson (SPEC §4.9). */
+/**
+ * Reaching the Finish screen completes the lesson (SPEC §4.9) and gives each
+ * of its vocab entries a card due tomorrow (§10.5). Cards that exist already
+ * are kept as they are, so finishing again makes no duplicates.
+ */
 export async function saveFinish(db: Db, userId: string, write: FinishWrite, now = new Date()): Promise<WriteResponse> {
   const state = await readLessonState(db, userId, write.lessonId);
   if (!state) return { result: "ignored" };
-  await upsertProgress(db, userId, planFinish({ ...state, now }));
+  const writes: BatchItem<"pg">[] = [upsertProgress(db, userId, planFinish({ ...state, now }))];
+  // Due the day after the learner finished, even when the write arrives later.
+  const cards = newVocabCards(state.lesson, write.at === undefined ? now : gradedAt(write.at, now), now);
+  if (cards.length > 0) writes.push(insertNewCards(db, userId, cards));
+  await db.batch(writes as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
   return { result: "saved" };
 }
 

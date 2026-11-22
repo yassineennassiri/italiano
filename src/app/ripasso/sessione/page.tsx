@@ -15,7 +15,7 @@ import { ui } from "@/ui-it";
 
 export const metadata: Metadata = { title: ui.review.pageTitle };
 
-/** A review session (SPEC §10.5): up to 20 due cards, shuffled, one at a time. */
+/** A review session (SPEC §10.5): up to 20 due vocab and item cards, shuffled, one at a time. */
 export default function ReviewSessionPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -41,22 +41,28 @@ async function Session() {
     );
   }
   const errorTags = new Map(loadErrorTags().map((tag) => [tag.id, tag]));
-  const slots = cards.map(({ cardId, lesson, step, item }) => (
-    <div key={cardId} className="mx-auto max-w-3xl">
-      <p className="mt-2 text-sm text-muted">{ui.review.source(lesson.title, step.title)}</p>
-      <StepMedia step={step} lesson={lesson} />
-      <StepInstruction instruction={step.instruction} instructionEn={step.instruction_en} />
-      {step.reading && <StepReading md={step.reading} layout={readingLayout(step)} />}
-      <div className="mt-8">
-        <ItemSlot item={item} scene={lesson.scene} errorTags={errorTags} />
+  const slots = cards.map((card) =>
+    card.kind === "item" ? (
+      <div key={card.cardId} className="mx-auto max-w-3xl">
+        <p className="mt-2 text-sm text-muted">{ui.review.source(card.lesson.title, card.step.title)}</p>
+        <StepMedia step={card.step} lesson={card.lesson} />
+        <StepInstruction instruction={card.step.instruction} instructionEn={card.step.instruction_en} />
+        {card.step.reading && <StepReading md={card.step.reading} layout={readingLayout(card.step)} />}
+        <div className="mt-8">
+          <ItemSlot item={card.item} scene={card.lesson.scene} errorTags={errorTags} />
+        </div>
       </div>
-    </div>
-  ));
+    ) : null,
+  );
   return (
     <ReviewSession
       // A new session (Altri 20) starts from its first card.
       key={randomUUID()}
-      cards={cards.map(({ cardId, exerciseId, contentHash }) => ({ cardId, exerciseId, contentHash }))}
+      cards={cards.map((card) =>
+        card.kind === "item"
+          ? { kind: card.kind, cardId: card.cardId, exerciseId: card.exerciseId, contentHash: card.contentHash }
+          : { kind: card.kind, cardId: card.cardId, entry: card.entry, source: ui.review.source(card.lesson.title, ui.lesson.vocabulary) },
+      )}
       slots={slots}
       more={total > cards.length}
       sessionSize={SESSION_SIZE}

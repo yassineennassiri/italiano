@@ -16,16 +16,7 @@ export function VocabList({ entries }: { entries: readonly VocabEntry[] }) {
     <ul className="divide-y divide-line border-y border-line">
       {entries.map((entry) => (
         <li key={entry.id} className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2 px-2 py-3 odd:bg-tint sm:grid-cols-[1fr_4rem_1fr]">
-          <div className="flex items-start gap-2">
-            <SpeakButton id={`vocab:${entry.id}`} clip={{ text: entry.it, audio: entry.audio }} />
-            <div className="min-w-0 pt-1.5">
-              <p className="font-semibold text-brand">
-                {entry.pos === "noun" && entry.plural ? ui.lesson.nounWithPlural(entry.it, entry.plural) : entry.it}
-                {entry.gender && <GenderDot gender={entry.gender} />}
-              </p>
-              {entry.forms && <p className="text-sm text-muted">{entry.forms}</p>}
-            </div>
-          </div>
+          <VocabTerm entry={entry} />
           <div className="row-span-2 sm:row-span-1">
             {entry.image && (
               <Image src={mediaUrl(entry.image)} alt={entry.it} width={64} height={64} className="size-16 rounded object-cover" />
@@ -37,6 +28,26 @@ export function VocabList({ entries }: { entries: readonly VocabEntry[] }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+/**
+ * 🔊 and the Italian term, a noun with its plural and gender dot, over the
+ * forms line: a vocabulary page row's left side, and a vocab card's back
+ * (SPEC §10.5).
+ */
+export function VocabTerm({ entry, className = "" }: { entry: VocabEntry; className?: string }) {
+  return (
+    <div className={`flex items-start gap-2 ${className}`}>
+      <SpeakButton id={`vocab:${entry.id}`} clip={{ text: entry.it, audio: entry.audio }} />
+      <div className="min-w-0 pt-1.5">
+        <p className="font-semibold text-brand">
+          {entry.pos === "noun" && entry.plural ? ui.lesson.nounWithPlural(entry.it, entry.plural) : entry.it}
+          {entry.gender && <GenderDot gender={entry.gender} />}
+        </p>
+        {entry.forms && <p className="text-sm text-muted">{entry.forms}</p>}
+      </div>
+    </div>
   );
 }
 
