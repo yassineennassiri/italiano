@@ -77,6 +77,34 @@ describe("the engine for word_order", () => {
   });
 });
 
+describe("the engine for image_choice", () => {
+  const lesson2 = loadLesson("a2.u01.l02")!;
+  const SPECCHIO = "a2.u01.l02.s08.i01";
+  const LAVATRICE = "a2.u01.l02.s08.i02";
+
+  it("checks a pick at once and scores a right first pick, as single_choice does", () => {
+    const item = findExercise(lesson2, SPECCHIO)!;
+    expect(item.item.type).toBe("image_choice");
+    const outcome = applyAction(item, NEW_ENTRY, { kind: "pick", option: 0 })!;
+    expect(outcome.entry.state).toEqual({ status: "checked_correct", firstCheckCorrect: true, points: 1 });
+  });
+
+  it("leaves the other option open after a wrong pick, and a right retry scores 0", () => {
+    const item = findExercise(lesson2, LAVATRICE)!;
+    const wrong = applyAction(item, NEW_ENTRY, { kind: "pick", option: 0 })!;
+    expect(wrong.entry.state).toEqual({ status: "checked_wrong", firstCheckCorrect: false, points: 0 });
+    expect(wrong.errors).toEqual([{ expected: "Una lavatrice.", given: "Un frigorifero." }]);
+    const retry = applyAction(item, wrong.entry, { kind: "pick", option: 1 })!;
+    expect(retry.entry.state).toEqual({ status: "checked_correct", firstCheckCorrect: false, points: 0 });
+  });
+
+  it("refuses Solve on an item that isn't solvable, and Controlla", () => {
+    const item = findExercise(lesson2, SPECCHIO)!;
+    expect(applyAction(item, NEW_ENTRY, { kind: "solve" })).toBeUndefined();
+    expect(applyAction(item, NEW_ENTRY, { kind: "check", answer: { picks: [0] } })).toBeUndefined();
+  });
+});
+
 describe("speaking exercises", () => {
   const E2 = "a2.u01.l01.s05.i01.e2";
   const PARLA = "a2.u01.l01.s06.i01";

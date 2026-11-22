@@ -1,7 +1,7 @@
 import { parseInline, parseMarkdown, type Span } from "@/content/markdown";
 
 /** Styled runs: **bold** as <strong>, *italic* as <em>. */
-function InlineText({ spans }: { spans: readonly Span[] }) {
+export function InlineText({ spans }: { spans: readonly Span[] }) {
   return spans.map((span, index) => {
     if (span.bold) return <strong key={index}>{span.text}</strong>;
     if (span.italic) return <em key={index}>{span.text}</em>;

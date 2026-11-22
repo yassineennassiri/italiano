@@ -7,6 +7,7 @@ import { MediaFrame } from "@/components/media-frame";
 import { MultiSelectItem } from "@/components/multi-select-item";
 import { NoteRow } from "@/components/note-row";
 import { ParlaItem } from "@/components/parla-item";
+import { StepReading } from "@/components/step-reading";
 import { ScenePlayer } from "@/components/scene-player";
 import { ScriptToggle } from "@/components/script-toggle";
 import { SingleChoiceItem } from "@/components/single-choice-item";
@@ -60,6 +61,7 @@ async function StepView({ params }: Pick<PageProps<"/[level]/[lesson]/esercizi/[
           <h1 className="mt-2 text-2xl font-bold text-brand">{step.title}</h1>
           <StepInstruction instruction={step.instruction} instructionEn={step.instruction_en} />
           {script && <ScriptToggle lines={script} />}
+          {step.reading && <StepReading md={step.reading} intro={step.items.some((item) => item.type === "image_choice")} />}
           <div className="mt-8 space-y-10">
             {step.items.map((item) => (
               <ItemSlot key={item.id} item={item} errorTags={errorTags} />
@@ -98,6 +100,7 @@ function StepMedia({ step, lesson }: { step: Step; lesson: Lesson }) {
 function ItemInteraction({ item, notes, renderNotes }: { item: Item; notes: ReactNode; renderNotes: (notes?: Note[]) => ReactNode }) {
   switch (item.type) {
     case "single_choice":
+    case "image_choice":
       return <SingleChoiceItem item={item} notes={notes} />;
     case "multi_select":
       return <MultiSelectItem item={item} notes={notes} />;
