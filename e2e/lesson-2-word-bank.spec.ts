@@ -19,7 +19,8 @@ const bank = (page: Page) => item(page).getByRole("group", { name: ui.lesson.wor
 /** The bank's tiles with this word, in the shown order. */
 const tiles = (page: Page, word: string) => bank(page).getByRole("button", { name: word, exact: true });
 const filledGap = (page: Page, number: number, word: string) => item(page).getByRole("button", { name: ui.lesson.filledGapLabel(number, word), exact: true });
-const emptyGap = (page: Page, number: number) => item(page).getByRole("img", { name: ui.lesson.gapLabel(number), exact: true });
+/** An empty gap: a dashed box whose only text is its (screen-reader) label. */
+const emptyGap = (page: Page, number: number) => item(page).locator(`span[data-gap="g${number}"]`, { hasText: ui.lesson.gapLabel(number) });
 /** The bank holds these words, in this order. */
 const expectBank = (page: Page, words: string[]) => expect(bank(page).getByRole("button")).toHaveText(words);
 

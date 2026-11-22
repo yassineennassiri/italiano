@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { loadLesson } from "@/content/load";
-import { NEW_ENTRY } from "./entry";
-import { checkWordBank, placeTile, returnTile, shuffledBank, solveWordBank, type WordBankDraft, type WordBankItem, wordBankView } from "./word-bank";
+import { type ExerciseEntry, NEW_ENTRY } from "./entry";
+import { type GapsAnswer, solveGaps } from "./gaps";
+import { checkWordBank, placeTile, returnTile, shuffledBank, type WordBankDraft, type WordBankItem, wordBankView } from "./word-bank";
 
 /**
  * Step 9 of lesson 2: six gaps (una, un, un, una, un', un) and the bank
@@ -18,7 +19,7 @@ describe("shuffledBank", () => {
 });
 
 /** The text in each gap, in gap order; null for an empty gap. */
-const texts = (draft: Parameters<typeof wordBankView>[2]) => Object.values(wordBankView(item, NEW_ENTRY, draft).gaps).map((gap) => gap.text);
+const texts = (draft: WordBankDraft) => Object.values(wordBankView(item, NEW_ENTRY, draft).gaps).map((gap) => gap.text);
 
 describe("placing a tile", () => {
   it("starts with every gap empty and every tile in the bank, shuffled", () => {
@@ -59,14 +60,14 @@ describe("returning a word", () => {
 
 describe("duplicates and distractors", () => {
   it("places each of several tiles with the same word, and leaves the distractor over once every gap is full", () => {
-    let draft = {};
+    let draft: WordBankDraft = {};
     for (const tile of [5, 4, 0, 2, 3, 6]) draft = placeTile(item, NEW_ENTRY, draft, tile);
     expect(texts(draft)).toEqual(["una", "un", "un", "una", "un'", "un"]);
     expect(wordBankView(item, NEW_ENTRY, draft).bank).toEqual([1]);
   });
 
   it("does nothing when every gap is full", () => {
-    let draft = {};
+    let draft: WordBankDraft = {};
     for (const tile of [5, 4, 0, 2, 3, 6]) draft = placeTile(item, NEW_ENTRY, draft, tile);
     expect(placeTile(item, NEW_ENTRY, draft, 1)).toBe(draft);
   });
@@ -78,7 +79,7 @@ describe("duplicates and distractors", () => {
 });
 
 /** Places the tiles in order into the first empty gaps, then checks the item. */
-function checkTiles(entry: Parameters<typeof checkWordBank>[1], draft: WordBankDraft, tiles: number[]) {
+function checkTiles(entry: ExerciseEntry<GapsAnswer>, draft: WordBankDraft, tiles: number[]) {
   for (const tile of tiles) draft = placeTile(item, entry, draft, tile);
   return checkWordBank(item, entry, wordBankView(item, entry, draft).values)!;
 }
@@ -136,7 +137,7 @@ describe("checking", () => {
 
 describe("solving and reloading", () => {
   it("fills every gap with its answer and leaves the distractor in the bank", () => {
-    const solved = solveWordBank(item, NEW_ENTRY)!;
+    const solved = solveGaps(item, NEW_ENTRY)!;
     const view = wordBankView(item, solved.entry, {});
     expect(Object.values(view.gaps).map((gap) => gap.text)).toEqual(["una", "un", "un", "una", "un'", "un"]);
     expect(view.bank).toEqual([1]);

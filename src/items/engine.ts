@@ -13,7 +13,7 @@ import { checkGapValues, type GappedItem, type GapsAnswer, gapsAnswerSchema, sol
 import { checkMultiSelect, type MultiSelectAnswer, type MultiSelectItem, multiSelectAnswerSchema, solveMultiSelect } from "./multi-select";
 import { NOTE_MAX_LENGTH, type Rating, type RatingAnswer, ratingAnswerSchema, ratingSchema, rateExchange, rateParla } from "./self-rating";
 import { pickOption, type SingleChoiceAnswer, type SingleChoiceItem, singleChoiceAnswerSchema, solveSingleChoice } from "./single-choice";
-import { checkWordBank, solveWordBank, type WordBankItem } from "./word-bank";
+import { checkWordBank, type WordBankItem } from "./word-bank";
 import { checkWordOrder, solveWordOrder, type WordOrderAnswer, wordOrderAnswerSchema, type WordOrderItem } from "./word-order";
 
 /** single_choice, image_choice and audio_choice: clicking an option checks it at once. */
@@ -114,7 +114,7 @@ const ENGINES: Partial<Record<Item["type"], AnyEngine>> = {
   word_bank: eraseTypes<WordBankItem, GapsAnswer>({
     answerSchema: gapsAnswerSchema,
     check: (item, entry, answer) => checkWordBank(item, entry, answer.values),
-    solve: solveWordBank,
+    solve: solveGaps,
   }),
   word_order: eraseTypes<WordOrderItem, WordOrderAnswer>({
     answerSchema: wordOrderAnswerSchema,

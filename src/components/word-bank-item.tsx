@@ -6,12 +6,16 @@ import type { ExerciseEntry } from "@/items/entry";
 import type { GapsAnswer } from "@/items/gaps";
 import { placeTile, returnTile, type WordBankDraft, wordBankView } from "@/items/word-bank";
 import { ui } from "@/ui-it";
-import { GAP_INPUT_CLASSES, GapFeedback, GappedItemLayout, GapText } from "./gapped-item";
+import { gapClasses, GapFeedback, GappedItemLayout, GapText } from "./gapped-item";
 import { useExercise } from "./step-progress";
 import { Tile } from "./word-order-item";
 
-/** Where focus goes after a move, read once after the render that made it. */
-type Refocus = { to: "bank"; index: number } | { to: "tile"; tile: number };
+/**
+ * Where focus goes after a move, read once after the render that made it: the
+ * tile now at a placed tile's place in the bank (or, once the bank is empty,
+ * the gap it filled), or the tile that came back to the bank.
+ */
+type Refocus = { to: "bank"; index: number; gapId: string } | { to: "tile"; tile: number };
 
 /**
  * A `word_bank` item (SPEC §5.2.9): the text panel with its gaps, and the bank
@@ -28,6 +32,7 @@ export function WordBankItem({ item, notes }: { item: Extract<Item, { type: "wor
   const view = wordBankView(item, current, draft);
 
   // A moved tile leaves the bank or comes back to it, so focus follows it (keyboard use, SPEC §5.1).
+  const itemRef = useRef<HTMLDivElement>(null);
   const bankRef = useRef<HTMLDivElement>(null);
   const refocus = useRef<Refocus | null>(null);
   useEffect(() => {
@@ -35,14 +40,18 @@ export function WordBankItem({ item, notes }: { item: Extract<Item, { type: "wor
     if (!moved) return;
     refocus.current = null;
     const tiles = [...(bankRef.current?.querySelectorAll<HTMLButtonElement>("button[data-tile]") ?? [])];
-    const target = moved.to === "tile" ? tiles.find((tile) => tile.dataset.tile === String(moved.tile)) : (tiles[Math.min(moved.index, tiles.length - 1)] ?? tiles.at(-1));
+    const target =
+      moved.to === "tile"
+        ? tiles.find((tile) => tile.dataset.tile === String(moved.tile))
+        : (tiles[Math.min(moved.index, tiles.length - 1)] ?? itemRef.current?.querySelector<HTMLButtonElement>(`button[data-gap="${moved.gapId}"]`));
     target?.focus();
   });
 
   const place = (tile: number, index: number) => {
     const next = placeTile(item, current, draft, tile);
     if (next === draft) return;
-    refocus.current = { to: "bank", index };
+    const gapId = Object.keys(next).find((id) => next[id] !== draft[id])!;
+    refocus.current = { to: "bank", index, gapId };
     setDraft(next);
   };
   const giveBack = (gapId: string) => {
@@ -64,43 +73,42 @@ export function WordBankItem({ item, notes }: { item: Extract<Item, { type: "wor
 
   return (
     <GappedItemLayout item={item} notes={notes} locked={view.locked} onSolve={solve} onCheck={check}>
-      <GapText
-        text={item.text}
-        gaps={item.gaps}
-        renderGap={(gap, number) => {
-          const { text, view: look } = view.gaps[gap.id];
-          return (
-            <>
-              {text === null ? (
-                <span
-                  role="img"
-                  aria-label={ui.lesson.gapLabel(number)}
-                  data-gap={gap.id}
-                  className="inline-block h-8 min-w-12 rounded-md border-2 border-dashed border-muted align-middle"
-                />
-              ) : (
-                <button
-                  type="button"
-                  data-gap={gap.id}
-                  aria-label={ui.lesson.filledGapLabel(number, text)}
-                  disabled={look.disabled}
-                  onClick={() => giveBack(gap.id)}
-                  className={`rounded-md border-2 px-1.5 py-0.5 font-semibold disabled:cursor-default disabled:opacity-100 ${GAP_INPUT_CLASSES[look.look]}`}
-                >
-                  {text}
-                </button>
-              )}
-              <GapFeedback view={look} />
-            </>
-          );
-        }}
-      />
-      <div ref={bankRef} role="group" aria-label={ui.lesson.wordBank} className="mt-4 flex min-h-10 flex-wrap justify-end gap-2">
-        {view.bank.map((tile, index) => (
-          <Tile key={tile} tile={tile} placed={false} disabled={view.locked} onClick={() => place(tile, index)}>
-            {item.bank[tile]}
-          </Tile>
-        ))}
+      <div ref={itemRef}>
+        <GapText
+          text={item.text}
+          gaps={item.gaps}
+          renderGap={(gap, number) => {
+            const { text, view: look } = view.gaps[gap.id];
+            return (
+              <>
+                {text === null ? (
+                  <span data-gap={gap.id} className="inline-block h-8 min-w-12 rounded-md border-2 border-dashed border-muted align-middle">
+                    <span className="sr-only">{ui.lesson.gapLabel(number)}</span>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    data-gap={gap.id}
+                    aria-label={ui.lesson.filledGapLabel(number, text)}
+                    disabled={look.disabled}
+                    onClick={() => giveBack(gap.id)}
+                    className={`disabled:cursor-default ${gapClasses(look.look)}`}
+                  >
+                    {text}
+                  </button>
+                )}
+                <GapFeedback view={look} />
+              </>
+            );
+          }}
+        />
+        <div ref={bankRef} role="group" aria-label={ui.lesson.wordBank} className="mt-4 flex min-h-10 flex-wrap justify-end gap-2">
+          {view.bank.map((tile, index) => (
+            <Tile key={tile} tile={tile} placed={false} disabled={view.locked} onClick={() => place(tile, index)}>
+              {item.bank[tile]}
+            </Tile>
+          ))}
+        </div>
       </div>
     </GappedItemLayout>
   );

@@ -7,7 +7,7 @@
  */
 import type { Item } from "@/content/schema";
 import { type ExerciseEntry, type ExerciseOutcome, isLocked } from "./entry";
-import { checkGapValues, currentValues, type GapMode, type GapsAnswer, type GapValues, type GapView, gapLooks, solveGaps } from "./gaps";
+import { checkGapValues, currentValues, type GapMode, type GapsAnswer, type GapValues, type GapView, gapLooks } from "./gaps";
 import { seededRandom, shuffledIndexes } from "./shuffle";
 
 export type WordBankItem = Pick<Extract<Item, { type: "word_bank" }>, "id" | "bank" | "gaps" | "solvable">;
@@ -26,15 +26,20 @@ const MODE: GapMode = { typed: false };
  */
 export type WordBankDraft = Readonly<Record<string, number | null>>;
 
+/** A filled gap: its word, and the bank index of its tile (null for a stored word the bank doesn't hold). */
+type PlacedWord = { tile: number | null; text: string };
+
+/** Gap id → its word, or null when it is empty. */
+type Placement = Record<string, PlacedWord | null>;
+
 /**
  * Which tile is in each gap: the last Check's values, given tiles of the same
- * text in the shown order, with the draft on top. A stored word the bank
- * doesn't hold (content changed since) shows in its gap with no tile.
+ * text in the shown order, with the draft on top.
  */
-function placementOf(item: WordBankItem, entry: Entry, draft: WordBankDraft): Record<string, { tile: number | null; text: string } | null> {
+function placementOf(item: WordBankItem, entry: Entry, draft: WordBankDraft, order: readonly number[]): Placement {
   const values = currentValues(entry, {});
   const used = new Set(Object.values(draft).filter((tile) => tile !== null));
-  const placement: Record<string, { tile: number | null; text: string } | null> = {};
+  const placement: Placement = {};
   for (const gap of item.gaps) {
     const drafted = draft[gap.id];
     if (drafted !== undefined) {
@@ -46,7 +51,7 @@ function placementOf(item: WordBankItem, entry: Entry, draft: WordBankDraft): Re
       placement[gap.id] = null;
       continue;
     }
-    const tile = shuffledBank(item).find((index) => !used.has(index) && item.bank[index] === text) ?? null;
+    const tile = order.find((index) => !used.has(index) && item.bank[index] === text) ?? null;
     if (tile !== null) used.add(tile);
     placement[gap.id] = { tile, text };
   }
@@ -66,13 +71,14 @@ export type WordBankView = {
 
 /** The view for an entry and the learner's draft. Moving a tile in or out of a red gap clears its red (SPEC §5.1). */
 export function wordBankView(item: WordBankItem, entry: Entry, draft: WordBankDraft): WordBankView {
-  const placement = placementOf(item, entry, draft);
+  const order = shuffledBank(item);
+  const placement = placementOf(item, entry, draft, order);
   const edits = Object.fromEntries(Object.keys(draft).map((gapId) => [gapId, placement[gapId]?.text ?? ""]));
   const looks = gapLooks(item, entry, edits, MODE);
   const placed = new Set(Object.values(placement).map((gap) => gap?.tile));
   return {
     gaps: Object.fromEntries(item.gaps.map((gap) => [gap.id, { text: placement[gap.id]?.text ?? null, view: looks[gap.id] }])),
-    bank: shuffledBank(item).filter((tile) => !placed.has(tile)),
+    bank: order.filter((tile) => !placed.has(tile)),
     values: Object.fromEntries(item.gaps.flatMap((gap) => (placement[gap.id] ? [[gap.id, placement[gap.id]!.text]] : []))),
     locked: isLocked(entry),
   };
@@ -94,7 +100,7 @@ export function returnTile(item: WordBankItem, entry: Entry, draft: WordBankDraf
 }
 
 /** Whether the bank holds these words: each one, as many times as it is used. Empty values are empty gaps. */
-export function fitsBank(bank: readonly string[], values: GapValues): boolean {
+function fitsBank(bank: readonly string[], values: GapValues): boolean {
   const left = new Map<string, number>();
   for (const word of bank) left.set(word, (left.get(word) ?? 0) + 1);
   return Object.values(values).every((word) => {
@@ -108,12 +114,11 @@ export function fitsBank(bank: readonly string[], values: GapValues): boolean {
 /**
  * Checks the words in the gaps, as for any gapped item, or undefined when the
  * Check does nothing: a locked item, a gap the item doesn't have, or words
- * that can't all come from the bank.
+ * that can't all come from the bank. Solve is the gapped items' `solveGaps`:
+ * content:check makes sure the bank holds every answer.
  */
 export function checkWordBank(item: WordBankItem, entry: Entry, values: GapValues): ExerciseOutcome<GapsAnswer> | undefined {
   const outcome = checkGapValues(item, entry, values, MODE);
   return outcome?.entry.answer && fitsBank(item.bank, outcome.entry.answer.values) ? outcome : undefined;
 }
 
-/** Solves the item, or undefined when it isn't solvable or is already locked. content:check makes sure the bank holds every answer. */
-export const solveWordBank = (item: WordBankItem, entry: Entry): ExerciseOutcome<GapsAnswer> | undefined => solveGaps(item, entry);
