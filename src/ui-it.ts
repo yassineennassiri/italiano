@@ -10,7 +10,7 @@ import type { Note, VocabEntry } from "@/content/schema";
 import type { SubtitleMode } from "@/audio/subtitles";
 import type { Rating } from "@/items/self-rating";
 import type { Grade } from "@/review/sm2";
-import { type SessionCardKind, sessionCardKinds } from "@/review/kinds";
+import { type CardKind, cardKinds } from "@/review/kinds";
 import type { ScoreBand } from "@/progress/results";
 import type { SyncStatus } from "@/progress/write-queue";
 import type { LessonStatus } from "@/scoring/lesson";
@@ -34,14 +34,15 @@ const reviewPageName: Record<ReviewPage, string> = {
 };
 
 /** Review cards of each kind a session shows, as its counts name them. */
-const cardKindName: Record<SessionCardKind, { one: string; many: string }> = {
+const cardKindName: Record<CardKind, { one: string; many: string }> = {
   vocab: { one: "parola", many: "parole" },
   item: { one: "esercizio", many: "esercizi" },
+  error: { one: "correzione", many: "correzioni" },
 };
 
 /** The counts of the kinds that have any, joined: "3 parole e 2 esercizi". */
-function kindCounts(counts: Readonly<Record<SessionCardKind, number>>): string {
-  const parts = sessionCardKinds.filter((kind) => counts[kind] > 0).map((kind) => ui.review.kindCount(kind, counts[kind]));
+function kindCounts(counts: Readonly<Record<CardKind, number>>): string {
+  const parts = cardKinds.filter((kind) => counts[kind] > 0).map((kind) => ui.review.kindCount(kind, counts[kind]));
   return parts.length > 1 ? `${parts.slice(0, -1).join(", ")} e ${parts.at(-1)}` : (parts[0] ?? ui.review.kindCount("item", 0));
 }
 
@@ -284,9 +285,9 @@ export const ui = {
     heading: "Ripasso",
     dueHeading: "Da ripassare oggi",
     /** A count of cards of one kind: "3 parole", "1 esercizio". */
-    kindCount: (kind: SessionCardKind, count: number) => `${count} ${count === 1 ? cardKindName[kind].one : cardKindName[kind].many}`,
+    kindCount: (kind: CardKind, count: number) => `${count} ${count === 1 ? cardKindName[kind].one : cardKindName[kind].many}`,
     /** The due counts by kind, the kinds with none left out: "3 parole e 2 esercizi da ripassare". */
-    dueCount: (counts: Readonly<Record<SessionCardKind, number>>) => `${kindCounts(counts)} da ripassare`,
+    dueCount: (counts: Readonly<Record<CardKind, number>>) => `${kindCounts(counts)} da ripassare`,
     nothingDue: "Oggi non hai niente da ripassare.",
     unreachable: "Il ripasso non è disponibile: il database non risponde.",
     start: "Inizia il ripasso",
@@ -298,7 +299,7 @@ export const ui = {
     finish: "Fine",
     summaryHeading: "Ripasso finito",
     /** The cards reviewed, by kind: "Hai ripassato 3 parole e 2 esercizi." */
-    summaryCount: (counts: Readonly<Record<SessionCardKind, number>>) => `Hai ripassato ${kindCounts(counts)}.`,
+    summaryCount: (counts: Readonly<Record<CardKind, number>>) => `Hai ripassato ${kindCounts(counts)}.`,
     /** A vocab card (SPEC §10.5): the front asks for the Italian, Gira turns it over. */
     vocabPrompt: "Come si dice in italiano?",
     flip: "Gira",
@@ -309,6 +310,23 @@ export const ui = {
     /** Another session: "Altri 20". */
     more: (count: number) => `Altri ${count}`,
     backToHub: "Torna al ripasso",
+    /** An error card (SPEC §10.5): the wrong version struck through, the corrected one to type. */
+    errorSource: "Una tua correzione",
+    errorGiven: "Hai detto:",
+    errorPrompt: "Scrivi la versione corretta.",
+    errorInput: "La versione corretta",
+    /** The toggle that shows the tags' English explanations. */
+    info: "Info",
+    /** The third panel of the hub (SPEC §10.5). */
+    correction: {
+      heading: "Aggiungi una correzione",
+      given: "Cosa hai detto",
+      expected: "Versione corretta",
+      tags: "Tipi di errore",
+      note: "Nota (facoltativa)",
+      save: "Salva la correzione",
+      saved: "Correzione salvata: la ripasserai domani.",
+    },
   },
 
   /** The status circle's tooltip, e.g. "Completata · 87%". */

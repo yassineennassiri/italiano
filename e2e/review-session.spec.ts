@@ -64,7 +64,7 @@ test("a wrong first Check comes back in a review session, which grades it withou
     .set({ dueAt: new Date(Date.now() - 60_000) })
     .where(and(eq(reviewCard.userId, PROFILE_ID), eq(reviewCard.id, card.id)));
   await page.reload();
-  await expect(shownText(page, ui.review.dueCount({ vocab: 0, item: 1 }))).toBeVisible();
+  await expect(shownText(page, ui.review.dueCount({ vocab: 0, item: 1, error: 0 }))).toBeVisible();
   await page.getByRole("link", { name: ui.review.start, exact: true }).click();
   await expect(page).toHaveURL("/ripasso/sessione");
   await expect(shownText(page, ui.review.counter(1, 1))).toBeVisible();
@@ -72,7 +72,7 @@ test("a wrong first Check comes back in a review session, which grades it withou
   await hydrated(right);
   await right.click();
   await page.getByRole("button", { name: ui.review.finish, exact: true }).click();
-  await expect(shownText(page, ui.review.summaryCount({ vocab: 0, item: 1 }))).toBeVisible();
+  await expect(shownText(page, ui.review.summaryCount({ vocab: 0, item: 1, error: 0 }))).toBeVisible();
   await expect(shownText(page, ui.review.gradeCount("good", 1))).toBeVisible();
 
   // Graded good and rescheduled: nothing left to review today.
@@ -103,7 +103,7 @@ test("finishing makes vocab cards, and a session mixes a flip card with an item 
   await db.insert(reviewCard).values({ id: randomUUID(), userId: PROFILE_ID, kind: "item", refId: I02, dueAt: past, intervalDays: 1, ease: 2.5 });
 
   await page.goto("/ripasso");
-  await expect(shownText(page, ui.review.dueCount({ vocab: 1, item: 1 }))).toBeVisible();
+  await expect(shownText(page, ui.review.dueCount({ vocab: 1, item: 1, error: 0 }))).toBeVisible();
   await page.getByRole("link", { name: ui.review.start, exact: true }).click();
   await expect(page).toHaveURL("/ripasso/sessione");
 
@@ -132,7 +132,7 @@ test("finishing makes vocab cards, and a session mixes a flip card with an item 
       await page.getByRole("button", { name: card === 1 ? ui.review.finish : ui.review.next, exact: true }).click();
     }
   }
-  await expect(shownText(page, ui.review.summaryCount({ vocab: 1, item: 1 }))).toBeVisible();
+  await expect(shownText(page, ui.review.summaryCount({ vocab: 1, item: 1, error: 0 }))).toBeVisible();
   await expect(shownText(page, ui.review.gradeCount("hard", 1))).toBeVisible();
 
   // The vocab card was graded hard and logged.

@@ -14,6 +14,7 @@ import { sessionSources } from "@/db/schema";
 import { NEW_ENTRY } from "@/items/entry";
 import { applyAction, checkActionSchema, findExercise, pickActionSchema, rateActionSchema, solveActionSchema } from "@/items/engine";
 import type { Row } from "@/progress/plan";
+import { MAX_TEXT } from "./error-card";
 import { type GradedCard, gradeCard, gradedAt, RESOLVE_STREAK, type ReviewLogRow, reviewGrade, type StoredCard } from "./item-card";
 import { type Grade, grades } from "./sm2";
 
@@ -40,8 +41,16 @@ const vocabWriteSchema = z.strictObject({ kind: z.literal("grade"), grade: z.enu
 export type VocabReviewWrite = z.infer<typeof vocabWriteSchema>;
 
 /**
+ * An error card's typed correction (SPEC §10.5): the sentence the learner
+ * typed, or null for Soluzione. The first Check or Soluzione grades the card.
+ */
+const errorWriteSchema = z.strictObject({ kind: z.literal("rewrite"), text: z.string().max(MAX_TEXT).nullable(), ...cardFields });
+/** An error card's answer as the client sends it. */
+export type ErrorReviewWrite = z.infer<typeof errorWriteSchema>;
+
+/**
  * One review answer as the client sends it: the first answer given to an
- * item card in this session, or the grade given to a vocab card.
+ * item card or an error card in this session, or the grade given to a vocab card.
  */
 export const reviewWriteSchema = z.discriminatedUnion("kind", [
   pickActionSchema.extend(writeFields),
@@ -49,10 +58,11 @@ export const reviewWriteSchema = z.discriminatedUnion("kind", [
   solveActionSchema.extend(writeFields),
   rateActionSchema.extend(writeFields),
   vocabWriteSchema,
+  errorWriteSchema,
 ]);
 export type ReviewWrite = z.infer<typeof reviewWriteSchema>;
 /** A review answer to an item card. */
-export type ItemReviewWrite = Exclude<ReviewWrite, VocabReviewWrite>;
+export type ItemReviewWrite = Exclude<ReviewWrite, VocabReviewWrite | ErrorReviewWrite>;
 
 /** The rows one review answer writes, and its grade. */
 export type ReviewPlan = {

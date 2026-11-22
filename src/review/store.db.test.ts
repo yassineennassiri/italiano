@@ -16,8 +16,9 @@ import { MIGRATIONS_DIR, migrateDatabase } from "@/db/migrate";
 import { errorLog, exerciseAttempt, itemState, lessonProgress, profile, reviewCard, reviewLog } from "@/db/schema";
 import type { ExerciseWrite } from "@/progress/plan";
 import { loadLessonEntries, saveExerciseWrite, saveFinish, saveReset } from "@/progress/store";
+import type { NewCorrectionWrite } from "./error-card";
 import type { ReviewWrite } from "./plan";
-import { loadDueCards, saveReviewWrite } from "./store";
+import { loadDueCards, saveNewCorrection, saveReviewWrite } from "./store";
 
 loadLocalEnv();
 const db = connect(databaseUrl("dev"));
@@ -264,5 +265,113 @@ describe("the vocab card backfill (drizzle/0004_backfill_vocab_cards.sql)", () =
       expect(hoursAhead).toBeGreaterThan(0);
       expect(hoursAhead).toBeLessThanOrEqual(24);
     }
+  });
+});
+
+const correction = (fields: Partial<NewCorrectionWrite> = {}): NewCorrectionWrite => ({
+  eventId: randomUUID(),
+  at: NOW.toISOString(),
+  given: "lui e arrivato",
+  expected: "Lui è arrivato.",
+  errorTags: ["spelling.accent", "verb.conjugation"],
+  note: "dal tutor",
+  ...fields,
+});
+
+const rewrite = (cardId: string, text: string | null, at: Date): ReviewWrite => ({
+  eventId: randomUUID(),
+  cardId,
+  at: at.toISOString(),
+  source: "hub",
+  kind: "rewrite",
+  text,
+});
+
+describe("saveNewCorrection (Aggiungi una correzione)", () => {
+  it("writes a manual error_log row with its tags and an error card due tomorrow; a retry adds nothing", async () => {
+    const user = await newUser();
+    const write = correction();
+    expect(await saveNewCorrection(db, user, write, NOW)).toEqual({ result: "saved" });
+    expect(await saveNewCorrection(db, user, write, NOW)).toEqual({ result: "ignored" });
+
+    expect(await db.select().from(errorLog).where(eq(errorLog.userId, user))).toMatchObject([
+      {
+        id: write.eventId,
+        source: "manual",
+        errorTags: ["spelling.accent", "verb.conjugation"],
+        given: "lui e arrivato",
+        expected: "Lui è arrivato.",
+        note: "dal tutor",
+        lessonId: null,
+        itemId: null,
+        resolved: false,
+      },
+    ]);
+    const cards = await db.select().from(reviewCard).where(eq(reviewCard.userId, user));
+    expect(cards).toMatchObject([{ kind: "error", refId: write.eventId, dueAt: TOMORROW, intervalDays: 1, ease: 2.5, streak: 0 }]);
+    expect(await loadDueCards(db, user, NOW)).toEqual([]);
+    expect(await loadDueCards(db, user, TOMORROW)).toEqual([
+      {
+        id: cards[0].id,
+        kind: "error",
+        refId: write.eventId,
+        correction: { given: "lui e arrivato", expected: "Lui è arrivato.", errorTags: ["spelling.accent", "verb.conjugation"], note: "dal tutor" },
+      },
+    ]);
+  });
+
+  it("ignores a correction with a tag error-tags.json doesn't have, and writes nothing", async () => {
+    const user = await newUser();
+    expect(await saveNewCorrection(db, user, correction({ errorTags: ["made.up"] }), NOW)).toEqual({ result: "ignored" });
+    expect(await db.select().from(errorLog).where(eq(errorLog.userId, user))).toEqual([]);
+    expect(await db.select().from(reviewCard).where(eq(reviewCard.userId, user))).toEqual([]);
+  });
+
+  it("a wrong first Check in a lesson logs given and expected but makes an item card, never an error card", async () => {
+    const user = await newUser();
+    await saveExerciseWrite(db, user, pick(2), NOW);
+    const cards = await db.select().from(reviewCard).where(eq(reviewCard.userId, user));
+    expect(cards.map((card) => card.kind)).toEqual(["item"]);
+  });
+});
+
+describe("saveReviewWrite for an error card", () => {
+  it("grades the typed correction, reschedules and logs it, and writes no attempt", async () => {
+    const user = await newUser();
+    await saveNewCorrection(db, user, correction(), NOW);
+    const [{ id }] = await db.select().from(reviewCard).where(eq(reviewCard.userId, user));
+
+    const write = rewrite(id, "Lui e arrivato.", days(1));
+    expect(await saveReviewWrite(db, user, write, days(1))).toEqual({ result: "saved" });
+    expect(await db.select().from(reviewCard).where(eq(reviewCard.userId, user))).toMatchObject([{ id, lastResult: "hard", streak: 1 }]);
+    expect(await db.select().from(reviewLog).where(eq(reviewLog.userId, user))).toMatchObject([
+      { id: write.eventId, cardId: id, grade: "hard", source: "hub" },
+    ]);
+    expect(await db.select().from(exerciseAttempt).where(eq(exerciseAttempt.userId, user))).toEqual([]);
+    expect(await saveReviewWrite(db, user, write, days(1))).toEqual({ result: "ignored" });
+  });
+
+  it("resolves the correction's row on the third non-again grade in a row", async () => {
+    const user = await newUser();
+    await saveNewCorrection(db, user, correction(), NOW);
+    const [{ id }] = await db.select().from(reviewCard).where(eq(reviewCard.userId, user));
+    await saveReviewWrite(db, user, rewrite(id, "Lui è arrivato.", days(1)), days(1));
+    await saveReviewWrite(db, user, rewrite(id, null, days(2)), days(2));
+    await saveReviewWrite(db, user, rewrite(id, "Lui è arrivato.", days(3)), days(3));
+    await saveReviewWrite(db, user, rewrite(id, "Lui è arrivato.", days(9)), days(9));
+    expect(await db.select({ resolved: errorLog.resolved }).from(errorLog).where(eq(errorLog.userId, user))).toEqual([{ resolved: false }]);
+    await saveReviewWrite(db, user, rewrite(id, "Lui è arrivato.", days(30)), days(30));
+    expect(await db.select({ resolved: errorLog.resolved }).from(errorLog).where(eq(errorLog.userId, user))).toEqual([{ resolved: true }]);
+  });
+
+  it("ignores a typed correction sent for an item card, and an item answer sent for an error card", async () => {
+    const user = await newUser();
+    await saveExerciseWrite(db, user, pick(2), NOW);
+    await saveNewCorrection(db, user, correction(), NOW);
+    const cards = await db.select().from(reviewCard).where(eq(reviewCard.userId, user));
+    const item = cards.find((card) => card.kind === "item")!;
+    const error = cards.find((card) => card.kind === "error")!;
+    expect(await saveReviewWrite(db, user, rewrite(item.id, "Lui è arrivato.", days(1)), days(1))).toEqual({ result: "ignored" });
+    expect(await saveReviewWrite(db, user, reviewPick(error.id, 0, days(1)), days(1))).toEqual({ result: "ignored" });
   });
 });
