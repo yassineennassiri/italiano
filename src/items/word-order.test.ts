@@ -172,7 +172,9 @@ describe("wordOrderView", () => {
 
 describe("the lines layout", () => {
   /** Step 10 of A2.1.2: four script lines of Pina and Adam, in order. */
-  const lines = loadLesson("a2.u01.l02")!.steps[9].items[0] as WordOrderItem;
+  const lines = loadLesson("a2.u01.l02")!
+    .steps.flatMap((step) => step.items)
+    .find((each) => each.id === "a2.u01.l02.s10.i01") as WordOrderItem;
   const [key, kitchen, bathroom, bedroom] = lines.tiles;
 
   it("shuffles the lines by the item id, never in the solved order", () => {

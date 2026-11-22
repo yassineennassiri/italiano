@@ -87,7 +87,7 @@ const sentence = (texts: readonly string[]) =>
     .replace(/(?<!\bpo)(['’]) /gi, "$1");
 
 /** Tiles as the error log shows them: words as a sentence, script lines kept apart with a slash. */
-const logged = (item: WordOrderItem, texts: readonly string[]) => (item.layout === "lines" ? texts.join(" / ") : sentence(texts));
+const errorLogText = (item: WordOrderItem, texts: readonly string[]) => (item.layout === "lines" ? texts.join(" / ") : sentence(texts));
 
 /** Whether the indexes are a placement of this item's tiles: each names a tile, and no tile is placed twice. */
 const isPlacement = (item: WordOrderItem, placed: readonly number[]) =>
@@ -106,7 +106,7 @@ export function checkWordOrder(item: WordOrderItem, entry: Entry, placed: readon
     entry: { state: applyEvent(entry.state, { type: "check", correct }), answer: { placed: [...placed] } },
     action: "check",
     correct,
-    errors: correct ? [] : [{ expected: logged(item, item.tiles), given: logged(item, placed.map((index) => item.tiles[index])) }],
+    errors: correct ? [] : [{ expected: errorLogText(item, item.tiles), given: errorLogText(item, placed.map((index) => item.tiles[index])) }],
   };
 }
 

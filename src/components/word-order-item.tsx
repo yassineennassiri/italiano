@@ -18,16 +18,26 @@ const BOX_CLASSES: Record<WordOrderView["look"], string> = {
 
 type Layout = NonNullable<Extract<Item, { type: "word_order" }>["layout"]>;
 
-/** A tile's shape: a pill around a word, or a full-width bar holding a whole script line. */
-const TILE_SHAPE: Record<Layout, string> = {
-  words: "rounded-full px-4 py-1.5 font-semibold",
-  lines: "w-full rounded-lg px-4 py-2 text-left font-medium",
-};
-
-/** How a group lays out its tiles: words wrap along a row, lines stack one under another. */
-const GROUP_FLOW: Record<Layout, string> = {
-  words: "flex-wrap",
-  lines: "flex-col",
+/**
+ * What changes between the layouts. Words: pills wrapping along a row, the
+ * prompt column on the left even when there is no prompt. Lines: full-width
+ * bars, one under another, in one column with any prompt above the box.
+ */
+const LAYOUTS: Record<Layout, { tile: string; flow: string; columns: string; trayLabel: string; promptColumn: boolean }> = {
+  words: {
+    tile: "rounded-full px-4 py-1.5 font-semibold",
+    flow: "flex-wrap",
+    columns: "md:grid-cols-2 md:items-start",
+    trayLabel: ui.lesson.tileTray,
+    promptColumn: true,
+  },
+  lines: {
+    tile: "w-full rounded-lg px-4 py-2 text-left font-medium",
+    flow: "flex-col",
+    columns: "",
+    trayLabel: ui.lesson.lineTray,
+    promptColumn: false,
+  },
 };
 
 /** One tile: light in the tray, dark once placed in the answer box. word_bank's bank shares it. */
@@ -53,7 +63,7 @@ export function Tile({
       data-tile={tile}
       disabled={disabled}
       onClick={onClick}
-      className={`${TILE_SHAPE[layout]} disabled:cursor-default ${LOOK_CLASSES[placed ? "selected" : "idle"]}`}
+      className={`${LAYOUTS[layout].tile} disabled:cursor-default ${LOOK_CLASSES[placed ? "selected" : "idle"]}`}
     >
       {children}
     </button>
@@ -77,6 +87,12 @@ export function WordOrderItem({ item, notes }: { item: Extract<Item, { type: "wo
   const [draft, setDraft] = useState<number[] | null>(null);
   const view = wordOrderView(item, entry as ExerciseEntry<WordOrderAnswer>, draft);
   const layout = item.layout ?? "words";
+  const { flow, columns, trayLabel, promptColumn } = LAYOUTS[layout];
+  const tileIn = (group: Group, tile: number, index: number) => (
+    <Tile key={tile} placed={group === "box"} disabled={view.locked} layout={layout} onClick={() => move(tile, group, index)}>
+      {item.tiles[tile]}
+    </Tile>
+  );
 
   // A moved tile leaves its group, so focus goes to the tile now in its place (keyboard use, SPEC §5.1).
   const boxRef = useRef<HTMLDivElement>(null);
@@ -108,9 +124,8 @@ export function WordOrderItem({ item, notes }: { item: Extract<Item, { type: "wo
 
   return (
     <>
-      <div className={`grid gap-4 ${layout === "words" ? "md:grid-cols-2 md:items-start" : ""}`}>
-        {/* The words layout keeps the left column even without a prompt; lines take the space. */}
-        {(layout === "words" || item.prompt) && <div><ItemPrompt item={item} /></div>}
+      <div className={`grid gap-4 ${columns}`}>
+        {(promptColumn || item.prompt) && <div><ItemPrompt item={item} /></div>}
         <div>
           <div
             role="group"
@@ -118,12 +133,8 @@ export function WordOrderItem({ item, notes }: { item: Extract<Item, { type: "wo
             data-look={view.look}
             className={`flex min-h-14 items-center gap-2 rounded-lg border-2 p-2 ${BOX_CLASSES[view.look]}`}
           >
-            <div ref={boxRef} className={`flex min-w-0 flex-1 gap-2 ${GROUP_FLOW[layout]}`}>
-              {view.placed.map((tile, index) => (
-                <Tile key={tile} placed disabled={view.locked} layout={layout} onClick={() => move(tile, "box", index)}>
-                  {item.tiles[tile]}
-                </Tile>
-              ))}
+            <div ref={boxRef} className={`flex min-w-0 flex-1 gap-2 ${flow}`}>
+              {view.placed.map((tile, index) => tileIn("box", tile, index))}
             </div>
             {view.look !== "idle" && (
               <span className={view.look === "correct" ? "text-ok" : "text-bad"}>
@@ -131,17 +142,8 @@ export function WordOrderItem({ item, notes }: { item: Extract<Item, { type: "wo
               </span>
             )}
           </div>
-          <div
-            ref={trayRef}
-            role="group"
-            aria-label={layout === "lines" ? ui.lesson.lineTray : ui.lesson.tileTray}
-            className={`mt-4 flex min-h-10 gap-2 ${GROUP_FLOW[layout]}`}
-          >
-            {view.tray.map((tile, index) => (
-              <Tile key={tile} placed={false} disabled={view.locked} layout={layout} onClick={() => move(tile, "tray", index)}>
-                {item.tiles[tile]}
-              </Tile>
-            ))}
+          <div ref={trayRef} role="group" aria-label={trayLabel} className={`mt-4 flex min-h-10 gap-2 ${flow}`}>
+            {view.tray.map((tile, index) => tileIn("tray", tile, index))}
           </div>
         </div>
       </div>
