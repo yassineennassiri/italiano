@@ -16,6 +16,10 @@ Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-
 
 Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
 
+### Workflow notes and setup
+
+Read `docs/agents/workflow-notes.md` before verifying in the browser, touching the database or merging: it covers one chat per issue, merging by hand, Neon `dev` vs `main`, and browser-pane traps. Setting up a new Claude account or computer: `docs/agents/setup.md`.
+
 ## Issue workflow
 When I run /implement #N:
 1. Sync main (git pull), then create a branch issue-N-short-name.
