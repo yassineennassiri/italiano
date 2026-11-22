@@ -20,6 +20,10 @@ Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agent
 
 Read `docs/agents/workflow-notes.md` before verifying in the browser, touching the database or merging: it covers one chat per issue, merging by hand, Neon `dev` vs `main`, and browser-pane traps. Setting up a new Claude account or computer: `docs/agents/setup.md`.
 
+### Project commands
+
+The project's slash commands are skills in `.claude/skills/`: `/implement`, `/tdd`, `/code-review`, `/pr`, `/roadmap`, `/grill-with-docs`, `/grilling`, `/domain-modeling` and `/to-tickets`. A session only knows the skills that existed when it started. If I type one of these and it isn't recognised, run `git pull`, then read `.claude/skills/<name>/SKILL.md` and follow it. Don't improvise a substitute.
+
 ## Issue workflow
 When I run /implement #N:
 1. Sync main (git pull), then create a branch issue-N-short-name.
