@@ -132,6 +132,63 @@ describe("AudioService", () => {
   });
 });
 
+describe("AudioService playing several clips (an audio_choice clip of scene lines)", () => {
+  it("plays them in order with a short gap between them, under one key the whole time", async () => {
+    vi.useFakeTimers();
+    const { speech, spoken, finish } = fakeSpeech([ITALIAN]);
+    const service = new AudioService({ speech, createAudio: fakeAudio().createAudio });
+    let result: string | undefined;
+    void service.play([{ text: "Al quinto piano?" }, { text: "No, caro." }], { key: "clip" }).then((value) => (result = value));
+    expect(spoken.map((utterance) => utterance.text)).toEqual(["Al quinto piano?"]);
+    finish();
+    await vi.advanceTimersByTimeAsync(300);
+    // Between the lines: still playing, nothing new said yet.
+    expect(service.playing()).toBe("clip");
+    expect(spoken).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(200);
+    expect(spoken.map((utterance) => utterance.text)).toEqual(["Al quinto piano?", "No, caro."]);
+    expect(service.playing()).toBe("clip");
+    finish();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(result).toBe("ended");
+    expect(service.playing()).toBeNull();
+  });
+
+  it("plays each clip's MP3 when it has one, and speaks the others", async () => {
+    vi.useFakeTimers();
+    const { speech, spoken, finish } = fakeSpeech([ITALIAN]);
+    const { createAudio, created } = fakeAudio();
+    const service = new AudioService({ speech, createAudio });
+    const done = service.play([{ text: "Uno", audio: "audio/uno.mp3" }, { text: "Due" }]);
+    await vi.advanceTimersByTimeAsync(0);
+    created[0].onended!();
+    await vi.advanceTimersByTimeAsync(400);
+    expect(spoken.map((utterance) => utterance.text)).toEqual(["Due"]);
+    finish();
+    expect(await done).toBe("ended");
+  });
+
+  it("says none of the remaining clips once stopped, also when stopped between two of them", async () => {
+    vi.useFakeTimers();
+    const { speech, spoken, finish } = fakeSpeech([ITALIAN]);
+    const service = new AudioService({ speech, createAudio: fakeAudio().createAudio });
+    const done = service.play([{ text: "Uno" }, { text: "Due" }, { text: "Tre" }], { key: "clip" });
+    finish();
+    await vi.advanceTimersByTimeAsync(100);
+    service.stop();
+    expect(await done).toBe("stopped");
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(spoken.map((utterance) => utterance.text)).toEqual(["Uno"]);
+    expect(service.playing()).toBeNull();
+  });
+
+  it("can play them only if it can play every one", () => {
+    expect(canPlayClip([{ text: "Uno", audio: "a.mp3" }, { text: "Due", audio: "b.mp3" }], "unavailable")).toBe(true);
+    expect(canPlayClip([{ text: "Uno", audio: "a.mp3" }, { text: "Due" }], "unavailable")).toBe(false);
+    expect(canPlayClip([{ text: "Uno" }, { text: "Due" }], "speech")).toBe(true);
+  });
+});
+
 describe("AudioService when things go wrong in a real browser", () => {
   it("falls back to the voice when an MP3 fails after it started", async () => {
     const { speech, spoken, finish } = fakeSpeech([ITALIAN]);

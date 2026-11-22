@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import { type ReactNode, type Ref, useEffect, useRef, useState } from "react";
-import { audioService, type Rate } from "@/audio/audio-service";
-import { estimateSceneSeconds, LINE_GAP_S, panelIndexAt } from "@/audio/scene-timeline";
+import type { Rate } from "@/audio/audio-service";
+import { estimateSceneSeconds, panelIndexAt } from "@/audio/scene-timeline";
 import { SUBTITLE_MODES, type SubtitleMode } from "@/audio/subtitles";
 import { mediaUrl } from "@/content/media-url";
 import type { Scene } from "@/content/schema";
 import { ui } from "@/ui-it";
 import { useAudio } from "./use-audio";
+import { useLinePlayback } from "./use-line-playback";
 
 /** The audio service's key for the line the player is saying. */
 const PLAYER_KEY = "scene-player";
@@ -99,10 +100,9 @@ function Choice<T extends string | number>({
 export function ScenePlayer({ scene, lessonTitle }: { scene: Scene; lessonTitle: string }) {
   const audio = useAudio();
   const [started, setStarted] = useState(false);
-  const [playing, setPlaying] = useState(false);
-  const [finished, setFinished] = useState(false);
-  const [line, setLine] = useState(0);
   const [rate, setRate] = useState<Rate>(1);
+  const playback = useLinePlayback(scene.lines, { key: PLAYER_KEY, rate, silentFallback: true });
+  const { line, playing } = playback;
   const [subtitles, setSubtitles] = useState<SubtitleMode>("off");
 
   const total = scene.lines.length;
@@ -122,40 +122,13 @@ export function ScenePlayer({ scene, lessonTitle }: { scene: Scene; lessonTitle:
   }, [started]);
   const panel = panelIndexAt(scene, line);
 
-  // Say the current line; when it ends, pause briefly and move on, or stop after the last.
-  useEffect(() => {
-    if (!playing) return;
-    let cancelled = false;
-    let gap: ReturnType<typeof setTimeout> | undefined;
-    const service = audioService();
-    const { it, audio: mp3 } = scene.lines[line];
-    void service.play({ text: it, audio: mp3 }, { rate, key: PLAYER_KEY, silentFallback: true }).then((result) => {
-      if (cancelled) return;
-      if (result !== "ended") return setPlaying(false); // Another clip (a 🔊 button) took over.
-      if (line + 1 >= scene.lines.length) {
-        setPlaying(false);
-        setFinished(true);
-        return;
-      }
-      gap = setTimeout(() => setLine(line + 1), LINE_GAP_S * 1000);
-    });
-    return () => {
-      cancelled = true;
-      clearTimeout(gap);
-      if (service.playing() === PLAYER_KEY) service.stop();
-    };
-  }, [playing, line, rate, scene.lines]);
-
   const goTo = (index: number) => {
     setStarted(true);
-    setFinished(false);
-    setLine(Math.min(total - 1, Math.max(0, index)));
+    playback.goTo(index);
   };
   const togglePlay = () => {
-    if (playing) return setPlaying(false);
-    if (finished) goTo(0);
     setStarted(true);
-    setPlaying(true);
+    playback.togglePlay();
   };
 
   return (
