@@ -169,3 +169,33 @@ describe("wordOrderView", () => {
     expect(wordOrderView(solvable, solved, null)).toEqual({ placed: [0, 1, 2, 3, 4, 5, 6], tray: [], look: "correct", locked: true });
   });
 });
+
+describe("the lines layout", () => {
+  /** Step 10 of A2.1.2: four script lines of Pina and Adam, in order. */
+  const lines = loadLesson("a2.u01.l02")!
+    .steps.flatMap((step) => step.items)
+    .find((each) => each.id === "a2.u01.l02.s10.i01") as WordOrderItem;
+  const [key, kitchen, bathroom, bedroom] = lines.tiles;
+
+  it("shuffles the lines by the item id, never in the solved order", () => {
+    // Pinned, so a change to the seeding (which would reshuffle the learner's lines) fails here.
+    expect(shuffledTiles(lines)).toEqual([2, 1, 3, 0]);
+  });
+
+  it("checks, scores and solves the lines as it does words", () => {
+    const right = checkWordOrder(lines, NEW_ENTRY, [0, 1, 2, 3])!;
+    expect(right.entry.state).toEqual({ status: "checked_correct", firstCheckCorrect: true, points: 1 });
+    const wrong = checkWordOrder(lines, NEW_ENTRY, [0, 2, 1, 3])!;
+    expect(wrong.entry.state).toEqual({ status: "checked_wrong", firstCheckCorrect: false, points: 0 });
+    expect(solveWordOrder(lines, wrong.entry)!.entry).toEqual({
+      state: { status: "solved", firstCheckCorrect: false, points: 0 },
+      answer: { placed: [0, 1, 2, 3] },
+    });
+  });
+
+  it("logs a wrong Check's lines one after another, kept apart with a slash", () => {
+    expect(checkWordOrder(lines, NEW_ENTRY, [0, 2, 1])!.errors).toEqual([
+      { expected: [key, kitchen, bathroom, bedroom].join(" / "), given: [key, bathroom, kitchen].join(" / ") },
+    ]);
+  });
+});
