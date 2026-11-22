@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { type ReactNode, Suspense } from "react";
 import { AccentLink } from "@/components/accent-link";
+import { AudioGapItem } from "@/components/audio-gap-item";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { ClipPlayer } from "@/components/clip-player";
 import { DropdownItem } from "@/components/dropdown-item";
@@ -128,6 +129,8 @@ function ItemInteraction({
       return <TextGapItem item={item} notes={notes} />;
     case "word_bank":
       return <WordBankItem item={item} notes={notes} />;
+    case "audio_gap":
+      return <AudioGapItem item={item} clip={clipLines(scene, item.clip)} notes={notes} />;
     case "word_order":
       return <WordOrderItem item={item} notes={notes} />;
     case "speak_rate": {

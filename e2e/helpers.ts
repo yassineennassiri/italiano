@@ -39,3 +39,59 @@ export function nextRefresh(page: Page): Promise<void> {
   });
   return ended.then(() => page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))));
 }
+
+/** Resets one lesson with the lesson menu's *Azzera*, from its intro page (e.g. `/a2/la-casa-della-signora-pina`). */
+export async function resetLesson(page: Page, lessonPath: string): Promise<void> {
+  await page.goto(`${lessonPath}/info`);
+  const menu = page.getByRole("button", { name: ui.lesson.openMenu, exact: true });
+  await hydrated(menu);
+  await menu.click();
+  await page.getByRole("button", { name: ui.reset.lessonButton, exact: true }).click();
+  const refreshed = nextRefresh(page);
+  await page.getByRole("dialog").getByRole("button", { name: ui.reset.confirm, exact: true }).click();
+  await refreshed;
+}
+
+/**
+ * Gives the page a stand-in Italian `speechSynthesis` that records what it is
+ * asked to say and ends each utterance quickly, so a test hears nothing and
+ * doesn't depend on the computer's voices. Read what it said with `spoken`.
+ * Call it before the first `goto`.
+ */
+export async function useStandInVoice(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const said: string[] = [];
+    (window as unknown as { spokenLines: string[] }).spokenLines = said;
+    const voice = { lang: "it-IT", name: "Voce di prova", default: true, localService: true, voiceURI: "test" };
+    class Utterance {
+      lang = "";
+      voice: unknown = null;
+      rate = 1;
+      onend: (() => void) | null = null;
+      onerror: ((event: { error: string }) => void) | null = null;
+      constructor(public text: string) {}
+    }
+    let current: Utterance | undefined;
+    const synthesis = {
+      getVoices: () => [voice],
+      speak: (utterance: Utterance) => {
+        current = utterance;
+        said.push(utterance.text);
+        setTimeout(() => {
+          if (current === utterance) utterance.onend?.();
+        }, 150);
+      },
+      cancel: () => {
+        const cancelled = current;
+        current = undefined;
+        cancelled?.onerror?.({ error: "canceled" });
+      },
+      addEventListener: () => {},
+    };
+    Object.defineProperty(window, "speechSynthesis", { value: synthesis, configurable: true });
+    Object.defineProperty(window, "SpeechSynthesisUtterance", { value: Utterance, configurable: true });
+  });
+}
+
+/** What the stand-in voice (`useStandInVoice`) was asked to say, in order. */
+export const spoken = (page: Page) => page.evaluate(() => (window as unknown as { spokenLines: string[] }).spokenLines);

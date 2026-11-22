@@ -11,7 +11,7 @@ import { ItemImage } from "./media-frame";
 import { ItemPrompt } from "./prompt-bubble";
 import { useExercise } from "./step-progress";
 
-type GappedContent = Extract<Item, { type: "dropdown" | "text_gap" }>;
+type GappedContent = Extract<Item, { type: "dropdown" | "text_gap" | "audio_gap" }>;
 
 /** The items laid out with the text panel on the right: these, and word_bank. */
 type GappedLayoutContent = GappedContent | Extract<Item, { type: "word_bank" }>;
@@ -62,7 +62,8 @@ export function useGappedItem(item: GappedContent & GappedItem, mode: GapMode) {
 /**
  * The default gapped-item layout (SPEC §5.2.1, §5.2.2): the prompt bubble and
  * an optional image on the left, the text panel on the right, then the notes
- * and Soluzione / Controlla.
+ * and Soluzione / Controlla. `aside` replaces the left column (audio_gap's
+ * prompt and mini player, SPEC §5.2.10).
  */
 export function GappedItemLayout({
   item,
@@ -70,6 +71,7 @@ export function GappedItemLayout({
   locked,
   onSolve,
   onCheck,
+  aside,
   children,
 }: {
   item: Pick<GappedLayoutContent, "id" | "prompt" | "prompt_audio" | "image" | "solvable">;
@@ -77,6 +79,8 @@ export function GappedItemLayout({
   locked: boolean;
   onSolve: () => void;
   onCheck: () => void;
+  /** The left column, in place of the prompt bubble and the image. */
+  aside?: ReactNode;
   /** The text panel. */
   children: ReactNode;
 }) {
@@ -84,8 +88,12 @@ export function GappedItemLayout({
     <>
       <div className="grid gap-4 md:grid-cols-2 md:items-start">
         <div className="space-y-4">
-          <ItemPrompt item={item} />
-          <ItemImage src={item.image} />
+          {aside ?? (
+            <>
+              <ItemPrompt item={item} />
+              <ItemImage src={item.image} />
+            </>
+          )}
         </div>
         <div>{children}</div>
       </div>

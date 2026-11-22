@@ -10,7 +10,7 @@
  */
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import { ui } from "@/ui-it";
-import { expectCounter, hydrated, nextRefresh, shownText } from "./helpers";
+import { expectCounter, hydrated, resetLesson, shownText } from "./helpers";
 
 const LESSON_2 = "/a2/la-casa-della-signora-pina";
 
@@ -31,14 +31,7 @@ async function enterOn(page: Page, locator: Locator) {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.goto(`${LESSON_2}/info`);
-  const menu = page.getByRole("button", { name: ui.lesson.openMenu, exact: true });
-  await hydrated(menu);
-  await menu.click();
-  await page.getByRole("button", { name: ui.reset.lessonButton, exact: true }).click();
-  const refreshed = nextRefresh(page);
-  await page.getByRole("dialog").getByRole("button", { name: ui.reset.confirm, exact: true }).click();
-  await refreshed;
+  await resetLesson(page, LESSON_2);
 });
 
 test("tiles fill the first empty gap, a Check marks each gap, and a reload restores them", async ({ page }) => {

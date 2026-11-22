@@ -1,5 +1,5 @@
 /**
- * Items with gaps (dropdown, text_gap, word_bank; later audio_gap), checked
+ * Items with gaps (dropdown, text_gap, word_bank, audio_gap), checked
  * together with Controlla (SPEC §5.1). All right: green, a point if it was the
  * first Check, and the item locks. Otherwise right gaps turn green and lock,
  * wrong gaps turn red and stay editable (editing one clears its red), for a
@@ -35,7 +35,7 @@ export type GapView = InputView & { accentHint?: true };
 export const ACCENT_TAG = "spelling.accent";
 
 /**
- * Typed gaps (text_gap) get the typed-answer accent rule (SPEC §5.1). In chosen
+ * Typed gaps (text_gap, audio_gap) get the typed-answer accent rule (SPEC §5.1). In chosen
  * gaps (dropdown) an option that differs only by an accent is plainly wrong.
  */
 export type GapMode = { typed: boolean };

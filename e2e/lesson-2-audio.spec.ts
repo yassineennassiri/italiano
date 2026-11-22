@@ -4,16 +4,15 @@
  * `single_choice`, and a step with `media.kind: "clip"` shows the clip player,
  * which plays only that span.
  *
- * The browser gets a stand-in Italian `speechSynthesis` that records what it
- * is asked to say and ends each utterance quickly, so the test hears nothing
- * and doesn't depend on the computer's voices.
+ * The browser gets a stand-in Italian `speechSynthesis` (`useStandInVoice`),
+ * so the test hears nothing and doesn't depend on the computer's voices.
  *
  * Runs against the Neon `dev` branch only (the global setup checks), and
  * resets A2.1.2 first with the lesson menu's *Azzera*.
  */
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import { ui } from "@/ui-it";
-import { expectCounter, hydrated, nextRefresh, shownText } from "./helpers";
+import { expectCounter, hydrated, resetLesson, shownText, spoken, useStandInVoice } from "./helpers";
 
 const LESSON_2 = "/a2/la-casa-della-signora-pina";
 
@@ -22,51 +21,9 @@ const option = (scope: Locator, text: string) =>
   scope.getByRole("button", { name: new RegExp(`^${text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}( |$)`) });
 const shown = (locator: Locator) => locator.filter({ visible: true });
 
-/** What the stand-in voice was asked to say, in order. */
-const spoken = (page: Page) => page.evaluate(() => (window as unknown as { spokenLines: string[] }).spokenLines);
-
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => {
-    const said: string[] = [];
-    (window as unknown as { spokenLines: string[] }).spokenLines = said;
-    const voice = { lang: "it-IT", name: "Voce di prova", default: true, localService: true, voiceURI: "test" };
-    class Utterance {
-      lang = "";
-      voice: unknown = null;
-      rate = 1;
-      onend: (() => void) | null = null;
-      onerror: ((event: { error: string }) => void) | null = null;
-      constructor(public text: string) {}
-    }
-    let current: Utterance | undefined;
-    const synthesis = {
-      getVoices: () => [voice],
-      speak: (utterance: Utterance) => {
-        current = utterance;
-        said.push(utterance.text);
-        setTimeout(() => {
-          if (current === utterance) utterance.onend?.();
-        }, 150);
-      },
-      cancel: () => {
-        const cancelled = current;
-        current = undefined;
-        cancelled?.onerror?.({ error: "canceled" });
-      },
-      addEventListener: () => {},
-    };
-    Object.defineProperty(window, "speechSynthesis", { value: synthesis, configurable: true });
-    Object.defineProperty(window, "SpeechSynthesisUtterance", { value: Utterance, configurable: true });
-  });
-
-  await page.goto(`${LESSON_2}/info`);
-  const menu = page.getByRole("button", { name: ui.lesson.openMenu, exact: true });
-  await hydrated(menu);
-  await menu.click();
-  await page.getByRole("button", { name: ui.reset.lessonButton, exact: true }).click();
-  const refreshed = nextRefresh(page);
-  await page.getByRole("dialog").getByRole("button", { name: ui.reset.confirm, exact: true }).click();
-  await refreshed;
+  await useStandInVoice(page);
+  await resetLesson(page, LESSON_2);
 });
 
 test("audio_choice: 🔊 speaks exactly the clip's lines in order, and picks check like single_choice", async ({ page }) => {
