@@ -754,6 +754,7 @@ There's a single user, but every table keeps a `user_id` so a second profile sta
 | status | text | `not_started` · `in_progress` · `completed` |
 | last_location | text | resume point, e.g. `esercizi/3` |
 | review_items | text[], nullable | M2: the item ids frozen for this lesson's Ripasso personale step (10.5); null = not chosen yet, empty = no step |
+| review_chosen_at | timestamptz, nullable | M2: when `review_items` was chosen; the step's answers given since then show again after a reload |
 | last_percent | int | |
 | best_percent | int | |
 | started_at, completed_at, updated_at | timestamptz | |
@@ -834,9 +835,9 @@ A review **never touches the lesson's `item_state`** or its %: it writes `review
 3. **Aggiungi una correzione**: *Cosa hai detto* (`given`), *Versione corretta* (`expected`), a multi-select of tags from `error-tags.json` and an optional note. Saving writes an error_log row (`source = manual`) and its error card, due tomorrow.
 
 **Ripasso personale step (ADR-0005).** The app inserts an extra step before *Parla!*, titled *Ripasso personale*, with an instruction saying the items come from my mistakes. This implements the course plan's "plus 2–3 items drawn from your own error log". It is **on by default** from M2; `settings.inject_review` turns it off.
-- **Which cards:** up to 3 due `item` cards from *other* lessons whose item tags overlap this lesson's tags (the union of its items' `error_tags`), most overdue first. If none match, any due item cards. With no due item cards, there is no step.
+- **Which cards:** up to 3 due `item` cards from *other* lessons whose item tags overlap this lesson's tags (the union of its items' `error_tags`), most overdue first. When fewer than 3 match, any other due item cards fill the rest, most overdue first (so with none matching, any due item cards). With no due item cards, there is no step.
 - **When chosen:** the first time I open the lesson. The ids are stored in `lesson_progress.review_items`, so the step count stays stable across reloads and both computers. Azzera and finishing the lesson clear the choice; the next visit chooses again.
-- **Scoring:** its exercises count in the footer's *X di Y* but are **not scorable**. They earn no points and stay out of the lesson %, the Results S/M and *Correggi i miei errori*. Each answer grades its card (`source = ripasso_personale`).
+- **Scoring:** its exercises count in the footer's *X di Y* but are **not scorable**. They earn no points and stay out of the lesson %, the Results S/M and *Correggi i miei errori*. The first answer to each exercise in a visit grades its card (`source = ripasso_personale`), as in a review session; it shows again after a reload, so the card is never graded twice in one visit.
 
 ### 10.6 `feedback_note`
 `id`, `user_id`, `scope` (`level` · `lesson` · `item`), `ref_id`, `text`, `created_at`, `done` bool. These are my notes about content to fix (M2).

@@ -5,11 +5,21 @@
  */
 import "server-only";
 import { connection } from "next/server";
+import { type StepLayout, stepLayout } from "@/content/lesson-nav";
 import type { Lesson } from "@/content/schema";
 import { db } from "@/db";
 import { PROFILE_ID } from "@/db/schema";
 import type { SavedEntry } from "./merge";
-import { type DueCard, loadDueCards, loadItemCardRefs, loadTopErrorTags } from "@/review/store";
+import {
+  type DueCard,
+  loadDueCards,
+  loadItemCardRefs,
+  loadRipassoCards,
+  loadRipassoChoice,
+  loadTopErrorTags,
+  type RipassoCard,
+  type RipassoChoice,
+} from "@/review/store";
 import type { TopTag } from "@/review/top-tags";
 import { loadLastLocation, loadLessonEntries, loadProgressSummaries, type ProgressSummary } from "./store";
 
@@ -80,5 +90,32 @@ export async function readDrillSources(): Promise<{ progress: ProgressSummary[];
   } catch (error) {
     console.error("Could not load the lessons for a tag drill.", error);
     return { progress: [], carded: new Set(), loaded: false };
+  }
+}
+
+/**
+ * How this visit numbers the lesson's steps: with its Ripasso personale step
+ * when it has one, chosen on the first visit (ADR-0005). Without the
+ * database there is no step.
+ */
+export async function readStepLayout(lesson: Lesson): Promise<{ layout: StepLayout; choice: RipassoChoice }> {
+  await connection();
+  try {
+    const choice = await loadRipassoChoice(db(), PROFILE_ID, lesson, new Date());
+    return { layout: stepLayout(lesson, choice.items.length > 0), choice };
+  } catch (error) {
+    console.error("Could not load the Ripasso personale step; the lesson opens without it.", error);
+    return { layout: stepLayout(lesson, false), choice: { items: [], chosenAt: null } };
+  }
+}
+
+/** The Ripasso personale step's exercises with their cards and answers; `loaded` is false when the database couldn't be read. */
+export async function readRipassoCards(choice: RipassoChoice): Promise<{ cards: RipassoCard[]; loaded: boolean }> {
+  await connection();
+  try {
+    return { cards: await loadRipassoCards(db(), PROFILE_ID, choice), loaded: true };
+  } catch (error) {
+    console.error("Could not load the Ripasso personale exercises.", error);
+    return { cards: [], loaded: false };
   }
 }

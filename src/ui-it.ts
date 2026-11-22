@@ -238,7 +238,12 @@ export const ui = {
     /** Read out with the ✓ and ✗ icons. */
     correct: "Giusto",
     wrong: "Sbagliato",
-    /** SPEC §6.2; the nouns agree with the total, the points with their count. */
+    /** The step of up to 3 exercises from the learner's mistakes in other lessons, before Parla! (SPEC §10.5). */
+    ripasso: {
+      title: "Ripasso personale",
+      instruction: "Questi esercizi vengono dai tuoi errori nelle altre lezioni. Non danno punti: servono a ripassare.",
+    },
+        /** SPEC §6.2; the nouns agree with the total, the points with their count. */
     footerCounter: ({ completed, total, points }: { completed: number; total: number; points: number }) =>
       `${completed} di ${total} ${total === 1 ? "esercizio completato" : "esercizi completati"}. ` +
       `${points} ${points === 1 ? "punto" : "punti"}.`,

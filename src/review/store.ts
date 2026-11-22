@@ -3,17 +3,19 @@
  * `progress/store.ts`: one batch of reads, a pure plan (`plan.ts`), one
  * batch of writes. Takes the client as a parameter.
  */
-import { and, asc, eq, gte, lte, sql } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
 import { exerciseHashes } from "@/content/hash";
 import { lessonIdOfExercise } from "@/content/ids";
 import { loadErrorTags, loadLesson } from "@/content/load";
+import type { Lesson } from "@/content/schema";
 import type { Db } from "@/db/connect";
-import { errorLog, exerciseAttempt, reviewCard, reviewLog } from "@/db/schema";
+import { errorLog, exerciseAttempt, lessonProgress, profile, reviewCard, reviewLog } from "@/db/schema";
 import { type ErrorCardFields, getsErrorCard, type NewCorrectionWrite, planErrorReview, planNewCorrection } from "./error-card";
 import type { CardKind } from "./kinds";
 import type { CardRow, GradedCard, ReviewLogRow, StoredCard } from "./item-card";
 import { type DrillWrite, type ErrorReviewWrite, type ItemReviewWrite, planDrill, planReview, type ReviewWrite, type VocabReviewWrite } from "./plan";
+import { chooseReviewItems, CLOCK_SKEW_MS, injectsReview } from "./ripasso";
 import { RECENT_DAYS, type TopTag, topErrorTags } from "./top-tags";
 import { findVocabEntry, planVocabReview } from "./vocab-card";
 
@@ -252,3 +254,86 @@ const resolveItemErrors = (db: Db, userId: string, exerciseId: string) =>
     .update(errorLog)
     .set({ resolved: true })
     .where(and(eq(errorLog.userId, userId), eq(errorLog.itemId, exerciseId), eq(errorLog.resolved, false)));
+
+/** A visit's Ripasso personale step: its exercise ids (empty for no step) and when they were chosen. */
+export type RipassoChoice = { items: string[]; chosenAt: Date | null };
+
+const NO_RIPASSO: RipassoChoice = { items: [], chosenAt: null };
+
+/**
+ * The lesson's Ripasso personale step (SPEC §10.5, ADR-0005): the stored
+ * choice, or on the first visit up to 3 due item cards chosen now and stored
+ * in `lesson_progress.review_items`, empty when none is due. The choice then
+ * stays until Finish or Azzera clears it, so the step count is the same on
+ * every reload and both computers: when both choose at once, the first
+ * stored choice wins. With `inject_review` off there is no step and nothing
+ * is chosen. `updated_at` is left alone: choosing is not playing.
+ */
+export async function loadRipassoChoice(db: Db, userId: string, lesson: Lesson, now: Date): Promise<RipassoChoice> {
+  const [[owner], [stored]] = await db.batch([
+    db.select({ settings: profile.settings }).from(profile).where(eq(profile.id, userId)),
+    db
+      .select({ items: lessonProgress.reviewItems, chosenAt: lessonProgress.reviewChosenAt })
+      .from(lessonProgress)
+      .where(and(eq(lessonProgress.userId, userId), eq(lessonProgress.lessonId, lesson.id))),
+  ]);
+  if (!injectsReview(owner?.settings)) return NO_RIPASSO;
+  if (stored?.items) return { items: stored.items, chosenAt: stored.chosenAt };
+
+  const items = chooseReviewItems({ lesson, due: await loadDueCards(db, userId, now), load: loadLesson });
+  const chosenNow = sql`${lessonProgress.reviewItems} is null`;
+  const [row] = await db
+    .insert(lessonProgress)
+    .values({ userId, lessonId: lesson.id, contentVersion: lesson.version, reviewItems: items, reviewChosenAt: now })
+    .onConflictDoUpdate({
+      target: [lessonProgress.userId, lessonProgress.lessonId],
+      set: {
+        reviewItems: sql`case when ${chosenNow} then excluded.review_items else ${lessonProgress.reviewItems} end`,
+        reviewChosenAt: sql`case when ${chosenNow} then excluded.review_chosen_at else ${lessonProgress.reviewChosenAt} end`,
+      },
+    })
+    .returning({ items: lessonProgress.reviewItems, chosenAt: lessonProgress.reviewChosenAt });
+  return { items: row.items ?? items, chosenAt: row.chosenAt };
+}
+
+/** An exercise of the step: its item card, and the first answer given to it in this visit, if any. */
+export type RipassoCard = { exerciseId: string; cardId: string; answer?: { answer: unknown; correct: boolean | null } };
+
+/**
+ * The step's exercises in the chosen order, each with its item card and its
+ * first answer since the choice: a `review` attempt whose review_log row has
+ * source `ripasso_personale`. Exercises without a card are left out.
+ */
+export async function loadRipassoCards(db: Db, userId: string, choice: RipassoChoice): Promise<RipassoCard[]> {
+  if (choice.items.length === 0) return [];
+  const since = new Date((choice.chosenAt ?? new Date(0)).getTime() - CLOCK_SKEW_MS);
+  const [cards, answers] = await db.batch([
+    db
+      .select({ id: reviewCard.id, refId: reviewCard.refId })
+      .from(reviewCard)
+      .where(and(eq(reviewCard.userId, userId), eq(reviewCard.kind, "item"), inArray(reviewCard.refId, choice.items))),
+    db
+      .select({ itemId: exerciseAttempt.itemId, answer: exerciseAttempt.answer, correct: exerciseAttempt.correct })
+      .from(exerciseAttempt)
+      .innerJoin(reviewLog, eq(reviewLog.id, exerciseAttempt.id))
+      .where(
+        and(
+          eq(exerciseAttempt.userId, userId),
+          eq(exerciseAttempt.action, "review"),
+          inArray(exerciseAttempt.itemId, choice.items),
+          eq(reviewLog.source, "ripasso_personale"),
+          gte(exerciseAttempt.createdAt, since),
+        ),
+      )
+      .orderBy(asc(exerciseAttempt.createdAt)),
+  ]);
+  const cardIds = new Map(cards.map((card) => [card.refId, card.id]));
+  const firstAnswers = new Map<string, RipassoCard["answer"]>();
+  for (const { itemId, answer, correct } of answers) if (!firstAnswers.has(itemId)) firstAnswers.set(itemId, { answer, correct });
+  return choice.items.flatMap((exerciseId) => {
+    const cardId = cardIds.get(exerciseId);
+    if (cardId === undefined) return [];
+    const answer = firstAnswers.get(exerciseId);
+    return [answer ? { exerciseId, cardId, answer } : { exerciseId, cardId }];
+  });
+}

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { type MouseEvent, useEffect, useSyncExternalStore } from "react";
-import { lessonPageHref, type ReviewPage } from "@/content/lesson-nav";
+import { lessonPageHref, lessonStepNumber, type ReviewPage, type StepLayout } from "@/content/lesson-nav";
 import { entriesVersion, entryOf, progressQueue, submitCorrection, submitFinish, subscribeEntries } from "@/progress/client";
 import type { SavedEntry } from "@/progress/merge";
 import { type LessonResults, lessonResults } from "@/progress/results";
@@ -48,8 +48,15 @@ export function ResultsScreen({
   lesson,
   reviewPages,
   continueHref,
+  layout,
   ...props
-}: ResultsProps & { lesson: { id: string; slug: string }; reviewPages: ReviewPage[]; continueHref: string }) {
+}: ResultsProps & {
+  lesson: { id: string; slug: string };
+  reviewPages: ReviewPage[];
+  continueHref: string;
+  /** How this visit numbers the steps: the jump counts a Ripasso personale step before it. */
+  layout: StepLayout;
+}) {
   const results = useLessonResults(props);
   const router = useRouter();
   const { correction } = results;
@@ -57,7 +64,7 @@ export function ResultsScreen({
   const correct = () => {
     if (!correction) return;
     submitCorrection(lesson.id, correction.reopen, props.saved);
-    router.push(lessonPageHref(lesson, "esercizi", correction.stepNumber));
+    router.push(lessonPageHref(lesson, "esercizi", lessonStepNumber(layout, correction.stepNumber - 1)));
   };
 
   return (

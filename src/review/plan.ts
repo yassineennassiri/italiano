@@ -104,7 +104,9 @@ export function planReview({
   const answered = gradeAnswer(lesson, hashes, write, now);
   if (!answered) return undefined;
   const graded = gradeCard({ card, grade: answered.grade, source: write.source, eventId: write.eventId, at: answered.at, now });
-  return { grade: answered.grade, ...graded, attempt: answered.attempt, resolves: graded.card.streak >= RESOLVE_STREAK };
+  // The attempt shares the review_log row's id, so a Ripasso personale step finds its answers by their source.
+  const attempt = { ...answered.attempt, id: write.eventId };
+  return { grade: answered.grade, ...graded, attempt, resolves: graded.card.streak >= RESOLVE_STREAK };
 }
 
 /**

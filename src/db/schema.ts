@@ -66,6 +66,13 @@ export const lessonProgress = pgTable(
     contentVersion: integer("content_version").notNull(),
     status: text("status", { enum: lessonStatuses }).notNull().default("not_started"),
     lastLocation: text("last_location"),
+    /**
+     * The exercise ids frozen for this visit's Ripasso personale step (§10.5,
+     * ADR-0005): null = not chosen yet, empty = no step. Finish and Azzera clear it.
+     */
+    reviewItems: text("review_items").array(),
+    /** When `review_items` was chosen: the step's answers given since then show again after a reload. */
+    reviewChosenAt: timestamp("review_chosen_at", { withTimezone: true }),
     lastPercent: integer("last_percent"),
     bestPercent: integer("best_percent"),
     startedAt: timestamp("started_at", { withTimezone: true }),

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { loadLesson } from "./load";
-import { hasPage, lessonMenu, resumeHref, reviewNav, reviewPages, reviewStartHref, stepPage } from "./lesson-nav";
+import { hasPage, lessonMenu, lessonStepNumber, resumeHref, reviewNav, reviewPages, reviewStartHref, stepLayout, stepPage } from "./lesson-nav";
 import { copyContent, editJson, LESSON_FILE } from "./test-content";
 
 const lesson = () => loadLesson("a2.u01.l01")!;
@@ -35,7 +35,7 @@ describe("stepPage", () => {
   it("numbers the step N / M and sends Avanti to the next step", () => {
     const page = stepPage(lesson(), "2");
     expect(page).toMatchObject({ number: 2, total: 6, nextHref: "/a2/benvenuto-a-genova/esercizi/3" });
-    expect(page?.step.title).toBe("il, lo, l' o la?");
+    expect(page?.kind === "lesson" && page.step.title).toBe("il, lo, l' o la?");
   });
 
   it("sends Avanti on the last step to the Results", () => {
@@ -44,6 +44,49 @@ describe("stepPage", () => {
 
   it("has no page for a step number the lesson doesn't have", () => {
     for (const n of ["0", "7", "-1", "1.5", "01", "due", ""]) expect(stepPage(lesson(), n)).toBeUndefined();
+  });
+});
+
+describe("stepLayout (the Ripasso personale step, ADR-0005)", () => {
+  const withRipasso = () => stepLayout(lesson(), true);
+
+  it("puts the step before Parla!, which moves one number on", () => {
+    expect(stepPage(lesson(), "6", withRipasso())).toEqual({
+      kind: "ripasso",
+      number: 6,
+      total: 7,
+      nextHref: "/a2/benvenuto-a-genova/esercizi/7",
+    });
+    const parla = stepPage(lesson(), "7", withRipasso());
+    expect(parla).toMatchObject({ kind: "lesson", number: 7, total: 7, nextHref: "/a2/benvenuto-a-genova/risultati" });
+    expect(parla?.kind === "lesson" && parla.step.id).toBe("a2.u01.l01.s06");
+    expect(stepPage(lesson(), "5", withRipasso())).toMatchObject({ kind: "lesson", total: 7, nextHref: "/a2/benvenuto-a-genova/esercizi/6" });
+    expect(stepPage(lesson(), "8", withRipasso())).toBeUndefined();
+  });
+
+  it("leaves the steps as they are without the step", () => {
+    expect(stepPage(lesson(), "6", stepLayout(lesson(), false))).toMatchObject({ kind: "lesson", number: 6, total: 6 });
+    expect(stepPage(lesson(), "7", stepLayout(lesson(), false))).toBeUndefined();
+  });
+
+  it("puts the step last in a lesson without Parla!", () => {
+    const noParla = { ...lesson(), steps: lesson().steps.slice(0, 5) };
+    expect(stepPage(noParla, "6", stepLayout(noParla, true))).toEqual({
+      kind: "ripasso",
+      number: 6,
+      total: 6,
+      nextHref: "/a2/benvenuto-a-genova/risultati",
+    });
+  });
+
+  it("gives each of the lesson's own steps its number, for the Results' jump to the first wrong step", () => {
+    expect([0, 4, 5].map((index) => lessonStepNumber(withRipasso(), index))).toEqual([1, 5, 7]);
+    expect(lessonStepNumber(stepLayout(lesson(), false), 5)).toBe(6);
+  });
+
+  it("resumes at a step only the layout with Ripasso personale has", () => {
+    expect(resumeHref(lesson(), "esercizi/7", withRipasso())).toBe("/a2/benvenuto-a-genova/esercizi/7");
+    expect(resumeHref(lesson(), "esercizi/7", stepLayout(lesson(), false))).toBe("/a2/benvenuto-a-genova/info");
   });
 });
 

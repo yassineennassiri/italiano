@@ -136,26 +136,61 @@ export function reviewNav(lesson: LessonRef & PagedLesson, page: ReviewPage, num
   };
 }
 
+/**
+ * How a lesson's steps are numbered: its own steps, plus the Ripasso
+ * personale step (ADR-0005) when this visit has one. That step sits before the
+ * Parla! step, or last in a lesson without one, and the steps from there on
+ * move one number on.
+ */
+export type StepLayout = {
+  /** How many steps the lesson's content has. */
+  lessonSteps: number;
+  /** The Ripasso personale step's number (1-based); absent when this visit has none. */
+  ripassoNumber?: number;
+};
+
+type StepsShape = { steps: readonly { items: readonly { type: string }[] }[] };
+
+/** The lesson's step numbering, with the Ripasso personale step when `ripasso` is true. */
+export function stepLayout(lesson: StepsShape, ripasso: boolean): StepLayout {
+  const lessonSteps = lesson.steps.length;
+  if (!ripasso) return { lessonSteps };
+  const parla = lesson.steps.findIndex((step) => step.items.some((item) => item.type === "parla"));
+  return { lessonSteps, ripassoNumber: parla === -1 ? lessonSteps + 1 : parla + 1 };
+}
+
+/** How many numbered steps the layout has: "N / M"'s M. */
+export const stepTotal = (layout: StepLayout): number => layout.lessonSteps + (layout.ripassoNumber === undefined ? 0 : 1);
+
+/** The number of the lesson's own step at `index` (0-based in the content). */
+export function lessonStepNumber(layout: StepLayout, index: number): number {
+  return layout.ripassoNumber !== undefined && index + 1 >= layout.ripassoNumber ? index + 2 : index + 1;
+}
+
 export type StepPage<S> = {
-  step: S;
   /** 1-based, as in the URL and the "N / M" counter. */
   number: number;
   total: number;
   /** Where Avanti goes: the next step, or the Results after the last one. */
   nextHref: string;
-};
+} & ({ kind: "lesson"; step: S } | { kind: "ripasso" });
 
-/** The step at `/esercizi/:n`, or undefined when the lesson has no step n. */
-export function stepPage<S>(lesson: LessonRef & { steps: readonly S[] }, segment: string): StepPage<S> | undefined {
-  const total = lesson.steps.length;
+/**
+ * The step at `/esercizi/:n`, or undefined when the layout has no step n.
+ * Without a layout, the lesson's own steps.
+ */
+export function stepPage<S>(
+  lesson: LessonRef & { steps: readonly S[] },
+  segment: string,
+  layout: StepLayout = { lessonSteps: lesson.steps.length },
+): StepPage<S> | undefined {
+  const total = stepTotal(layout);
   const number = pageNumber(segment, total);
   if (number === undefined) return undefined;
-  return {
-    step: lesson.steps[number - 1],
-    number,
-    total,
-    nextHref: number < total ? lessonPageHref(lesson, "esercizi", number + 1) : lessonPageHref(lesson, "risultati"),
-  };
+  const nextHref = number < total ? lessonPageHref(lesson, "esercizi", number + 1) : lessonPageHref(lesson, "risultati");
+  if (number === layout.ripassoNumber) return { kind: "ripasso", number, total, nextHref };
+  const index = layout.ripassoNumber !== undefined && number > layout.ripassoNumber ? number - 2 : number - 1;
+  return { kind: "lesson", step: lesson.steps[index], number, total, nextHref };
 }
 
 /** `esercizi/3`: what `lesson_progress.last_location` stores for a step page. */
@@ -171,11 +206,16 @@ export function parseStepLocation(location: string | null): number | undefined {
 
 /**
  * Where reopening the lesson goes (SPEC §3): the last visited step, or the
- * intro when nothing was visited or that step no longer exists.
+ * intro when nothing was visited or that step no longer exists. Without a
+ * layout, the lesson's own steps.
  */
-export function resumeHref(lesson: LessonRef & PagedLesson, lastLocation: string | null): string {
+export function resumeHref(
+  lesson: LessonRef & PagedLesson,
+  lastLocation: string | null,
+  layout: StepLayout = { lessonSteps: lesson.steps.length },
+): string {
   const number = parseStepLocation(lastLocation);
-  return number !== undefined && number <= lesson.steps.length
+  return number !== undefined && number <= stepTotal(layout)
     ? lessonPageHref(lesson, "esercizi", number)
     : lessonPageHref(lesson, "info");
 }
