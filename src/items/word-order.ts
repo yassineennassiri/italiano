@@ -13,7 +13,7 @@ import { type ExerciseEntry, type ExerciseOutcome, isLocked } from "./entry";
 import type { InputLook } from "./input-look";
 import { seededRandom, shuffledIndexes } from "./shuffle";
 
-export type WordOrderItem = Pick<Extract<Item, { type: "word_order" }>, "id" | "tiles" | "accept" | "solvable">;
+export type WordOrderItem = Pick<Extract<Item, { type: "word_order" }>, "id" | "tiles" | "accept" | "solvable" | "layout">;
 
 /**
  * The stored answer: the tiles in the answer box at the last Check (after
@@ -86,6 +86,9 @@ const sentence = (texts: readonly string[]) =>
     .replace(/ ([.,;:!?…])/g, "$1")
     .replace(/(?<!\bpo)(['’]) /gi, "$1");
 
+/** Tiles as the error log shows them: words as a sentence, script lines kept apart with a slash. */
+const logged = (item: WordOrderItem, texts: readonly string[]) => (item.layout === "lines" ? texts.join(" / ") : sentence(texts));
+
 /** Whether the indexes are a placement of this item's tiles: each names a tile, and no tile is placed twice. */
 const isPlacement = (item: WordOrderItem, placed: readonly number[]) =>
   new Set(placed).size === placed.length && placed.every((index) => Number.isInteger(index) && index >= 0 && index < item.tiles.length);
@@ -103,7 +106,7 @@ export function checkWordOrder(item: WordOrderItem, entry: Entry, placed: readon
     entry: { state: applyEvent(entry.state, { type: "check", correct }), answer: { placed: [...placed] } },
     action: "check",
     correct,
-    errors: correct ? [] : [{ expected: sentence(item.tiles), given: sentence(placed.map((index) => item.tiles[index])) }],
+    errors: correct ? [] : [{ expected: logged(item, item.tiles), given: logged(item, placed.map((index) => item.tiles[index])) }],
   };
 }
 

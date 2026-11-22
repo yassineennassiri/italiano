@@ -204,9 +204,10 @@ export const ui = {
     parlaChecklist: "Obiettivi",
     hesitationNote: "Su cosa hai esitato?",
     hesitationPlaceholder: "Facoltativo: una parola, una struttura, un dubbio…",
-    /** A word_order item's answer box and the tiles still to place (SPEC §5.2.3). */
+    /** A word_order item's answer box and the tiles still to place, as words or as script lines (SPEC §5.2.3). */
     answerBox: "La tua risposta",
     tileTray: "Parole da mettere in ordine",
+    lineTray: "Battute da mettere in ordine",
     /** A word_bank item's bank, and a filled gap read out with its word (SPEC §5.2.9). */
     wordBank: "Parole da inserire",
     filledGapLabel: (number: number, word: string) => `Spazio ${number}: ${word}`,
