@@ -10,7 +10,7 @@ import { lessonIdOfExercise } from "@/content/ids";
 import { loadErrorTags, loadLesson } from "@/content/load";
 import type { Db } from "@/db/connect";
 import { errorLog, exerciseAttempt, reviewCard, reviewLog } from "@/db/schema";
-import { getsErrorCard, type NewCorrectionWrite, planErrorReview, planNewCorrection } from "./error-card";
+import { type ErrorCardFields, getsErrorCard, type NewCorrectionWrite, planErrorReview, planNewCorrection } from "./error-card";
 import type { CardKind } from "./kinds";
 import type { CardRow, GradedCard, ReviewLogRow, StoredCard } from "./item-card";
 import { type ErrorReviewWrite, type ItemReviewWrite, planReview, type ReviewWrite, type VocabReviewWrite } from "./plan";
@@ -36,7 +36,7 @@ const errorRowOfCard = and(
   sql`${errorLog.id}::text = ${reviewCard.refId}`,
 );
 
-/** The fields of an error card's row a review and a session read. */
+/** The fields of an error card's row a review and a session read (`ErrorCardFields`). */
 const errorRowColumns = { source: errorLog.source, given: errorLog.given, expected: errorLog.expected };
 
 /** The fields of a stored card that grading reads. */
@@ -86,8 +86,9 @@ export async function loadDueCards(db: Db, userId: string, now: Date): Promise<D
     .orderBy(asc(reviewCard.dueAt), asc(reviewCard.id));
   return rows.flatMap(({ id, kind, refId, source, given, expected, errorTags, note }): DueCard[] => {
     if (kind !== "error") return [{ id, kind, refId }];
-    if (!source || !getsErrorCard({ source, given, expected })) return [];
-    return [{ id, kind, refId, correction: { given: given!, expected: expected!, errorTags: errorTags ?? [], note } }];
+    const row = source && { source, given, expected };
+    if (!row || !getsErrorCard(row)) return [];
+    return [{ id, kind, refId, correction: { given: row.given, expected: row.expected, errorTags: errorTags ?? [], note } }];
   });
 }
 
@@ -130,12 +131,7 @@ export async function saveReviewWrite(db: Db, userId: string, write: ReviewWrite
     db.select({ id: reviewLog.id }).from(reviewLog).where(eq(reviewLog.id, write.eventId)),
   ]);
   if (!card || seen) return { result: "ignored" };
-  const writes =
-    write.kind === "grade"
-      ? vocabReviewWrites(db, userId, card, write, now)
-      : write.kind === "rewrite"
-        ? errorReviewWrites(db, userId, card, write, now)
-        : itemReviewWrites(db, userId, card, write, now);
+  const writes = reviewWrites(db, userId, card, write, now);
   if (!writes) return { result: "ignored" };
   await db.batch(writes);
   return { result: "saved" };
@@ -144,10 +140,19 @@ export async function saveReviewWrite(db: Db, userId: string, write: ReviewWrite
 /** A non-empty batch of writes. */
 type Writes = [BatchItem<"pg">, ...BatchItem<"pg">[]];
 /** A stored card with its kind, which decides how a review write applies to it, and an error card's row. */
-type CardWithKind = StoredCard & {
-  kind: CardKind;
-  errorRow: { source: (typeof errorLog.$inferSelect)["source"]; given: string | null; expected: string | null } | null;
-};
+type CardWithKind = StoredCard & { kind: CardKind; errorRow: ErrorCardFields | null };
+
+/** The writes for a review answer, by the kind of answer; undefined when it doesn't fit the card. */
+function reviewWrites(db: Db, userId: string, card: CardWithKind, write: ReviewWrite, now: Date): Writes | undefined {
+  switch (write.kind) {
+    case "grade":
+      return vocabReviewWrites(db, userId, card, write, now);
+    case "rewrite":
+      return errorReviewWrites(db, userId, card, write, now);
+    default:
+      return itemReviewWrites(db, userId, card, write, now);
+  }
+}
 
 /** The card's new schedule and its review_log row. */
 const gradedWrites = (db: Db, userId: string, graded: { card: GradedCard; log: ReviewLogRow }): Writes => [
@@ -166,14 +171,14 @@ function vocabReviewWrites(db: Db, userId: string, card: CardWithKind, write: Vo
 function errorReviewWrites(db: Db, userId: string, card: CardWithKind, write: ErrorReviewWrite, now: Date): Writes | undefined {
   const row = card.errorRow;
   if (card.kind !== "error" || !row || !getsErrorCard(row)) return undefined;
-  const plan = planErrorReview({ card, row: { expected: row.expected! }, write, now });
+  const plan = planErrorReview({ card, row, write, now });
   const writes = gradedWrites(db, userId, plan);
   if (plan.resolves) {
     writes.push(
       db
         .update(errorLog)
         .set({ resolved: true })
-        .where(and(eq(errorLog.userId, userId), sql`${errorLog.id}::text = ${card.refId}`, eq(errorLog.resolved, false))),
+        .where(and(eq(errorLog.userId, userId), eq(errorLog.id, card.refId), eq(errorLog.resolved, false))),
     );
   }
   return writes;

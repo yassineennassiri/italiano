@@ -18,17 +18,23 @@ const errorCardSources: readonly ErrorRow["source"][] = ["manual", "ai"];
 
 type ErrorRow = typeof errorLog.$inferSelect;
 
+/** The fields of an error_log row that decide whether it gets an error card. */
+export type ErrorCardFields = Pick<ErrorRow, "source" | "given" | "expected">;
+
+/** A tag as an error card or the form shows it: its id and English explanation (`error-tags.json`). */
+export type ExplainedTag = { id: string; explanation: string };
+
 /**
  * Whether an error_log row gets an error card: only one with both `given` and
  * `expected`, from a correction. Rows from exercises and speaking feed item
  * cards instead, and `parla_note` rows are only logged.
  */
-export function getsErrorCard({ source, given, expected }: Pick<ErrorRow, "source" | "given" | "expected">): boolean {
-  return errorCardSources.includes(source) && !!given?.trim() && !!expected?.trim();
+export function getsErrorCard<R extends ErrorCardFields>(row: R): row is R & { given: string; expected: string } {
+  return errorCardSources.includes(row.source) && !!row.given?.trim() && !!row.expected?.trim();
 }
 
 /** Longer than any sentence a correction holds; keeps a stray paste out of the database. */
-const MAX_TEXT = 1000;
+export const MAX_TEXT = 1000;
 
 /** A correction as the form sends it. Both texts are trimmed and can't be empty. */
 export const newCorrectionWriteSchema = z.strictObject({

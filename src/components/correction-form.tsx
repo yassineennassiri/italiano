@@ -2,11 +2,9 @@
 
 import { type FormEvent, useId, useState } from "react";
 import { submitNewCorrection } from "@/progress/client";
+import type { ExplainedTag } from "@/review/error-card";
 import { ui } from "@/ui-it";
 import { ACCENT_CLASS } from "./accent-link";
-
-/** A tag the form offers: its id and English explanation (`error-tags.json`). */
-export type CorrectionTag = { id: string; explanation: string };
 
 const FIELD_CLASS = "mt-1 block w-full rounded-md border-2 border-brand bg-background px-2 py-1";
 
@@ -32,7 +30,7 @@ function TextField({ label, value, onChange, required = false }: { label: string
  * while either text is blank. Saving queues the write (an error_log row with
  * `source = manual` and its error card, due tomorrow) and empties the form.
  */
-export function CorrectionForm({ tags }: { tags: readonly CorrectionTag[] }) {
+export function CorrectionForm({ tags }: { tags: readonly ExplainedTag[] }) {
   const [given, setGiven] = useState("");
   const [expected, setExpected] = useState("");
   const [chosen, setChosen] = useState<ReadonlySet<string>>(new Set());

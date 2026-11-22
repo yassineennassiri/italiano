@@ -95,10 +95,13 @@ export function ErrorCard({
               {ui.review.info}
             </button>
             {info && (
-              <div lang="en" className="mt-3 space-y-2 text-sm">
+              <div className="mt-3 space-y-2 text-sm">
                 {card.tags.map((tag) => (
-                  <p key={tag.id}>{tag.explanation}</p>
+                  <p key={tag.id} lang="en">
+                    {tag.explanation}
+                  </p>
                 ))}
+                {/* The learner's own note, in whatever language they wrote it. */}
                 {card.note !== null && <p className="italic">{card.note}</p>}
               </div>
             )}

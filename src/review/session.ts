@@ -10,6 +10,7 @@ import { type ErrorTag, loadErrorTags, loadLesson } from "@/content/load";
 import type { Item, Lesson, Step, VocabEntry } from "@/content/schema";
 import { findExercise } from "@/items/engine";
 import { shuffledIndexes } from "@/items/shuffle";
+import type { ExplainedTag } from "./error-card";
 import { type CardKind, countByKind } from "./kinds";
 import type { DueCard } from "./store";
 import { findVocabEntry } from "./vocab-card";
@@ -42,7 +43,7 @@ export type ErrorSessionCard = {
   given: string;
   expected: string;
   note: string | null;
-  tags: { id: string; explanation: string }[];
+  tags: ExplainedTag[];
 };
 
 /** A card as the session shows it. */
@@ -70,19 +71,21 @@ export function dueSession(due: readonly DueCard[], random: () => number): DueSe
 function showableCards(due: readonly DueCard[]): SessionCard[] {
   const lessons = new Map<string, Lesson | undefined>();
   let errorTags: ReadonlyMap<string, ErrorTag> | undefined;
+  const explained = (ids: readonly string[]): ExplainedTag[] => {
+    errorTags ??= new Map(loadErrorTags().map((tag) => [tag.id, tag]));
+    return ids.flatMap((tag) => {
+      const found = errorTags!.get(tag);
+      return found ? [{ id: tag, explanation: found.explanation_en }] : [];
+    });
+  };
   const cards: SessionCard[] = [];
   for (const card of due) {
-    const { id, kind, refId } = card;
     if (card.kind === "error") {
-      errorTags ??= new Map(loadErrorTags().map((tag) => [tag.id, tag]));
-      const { given, expected, note } = card.correction;
-      const tags = card.correction.errorTags.flatMap((tag) => {
-        const found = errorTags!.get(tag);
-        return found ? [{ id: tag, explanation: found.explanation_en }] : [];
-      });
-      cards.push({ kind: "error", cardId: id, given, expected, note, tags });
+      const { given, expected, note, errorTags: ids } = card.correction;
+      cards.push({ kind: "error", cardId: card.id, given, expected, note, tags: explained(ids) });
       continue;
     }
+    const { id, kind, refId } = card;
     if (kind === "vocab") {
       const found = findVocabEntry(refId);
       if (found) cards.push({ kind, cardId: id, ...found });
@@ -97,7 +100,7 @@ function showableCards(due: readonly DueCard[]): SessionCard[] {
     if (!lesson || !exercise || !step) continue;
     const { item, exchange } = exercise;
     cards.push({
-      kind: "item",
+      kind,
       cardId: id,
       exerciseId: refId,
       contentHash: exerciseHashes(lesson).get(refId)!,
