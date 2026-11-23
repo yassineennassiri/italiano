@@ -80,6 +80,17 @@ Set `R=repos/yassineennassiri/italiano` first. Pass long text (comments, issue b
 
 The merge command works in the cloud (first used for #39, PR #65). If it ever fails, don't try workarounds: leave the PR open with green CI, comment on the issue that it's ready to merge, and tell the user.
 
+### Chaining issues
+
+The rule is in `CLAUDE.md` under "Chaining issues". These are the tool calls.
+
+- **Check-in for the usage limit**, right after step 2: `send_later` with `delay_minutes: 300`, `name: "#N check-in"` and the message "If /implement #N stopped before step 10 (for example at the usage limit), carry on from where it stopped: the branch and the issue comments show how far it got. If it finished, do nothing." Keep the `trigger_id` it returns.
+- **Cancel the check-in** at the end of step 10: `delete_trigger` with that `trigger_id`.
+- **Push after every commit:** `git push -u origin HEAD`. A resumed session gets a fresh container, so anything not pushed is lost.
+- **Start the next issue**, step 11: `create_session` with `prompt: "/implement #M"` and `title: "#M short title"`. Leave the environment, model and permission mode out, so the new session inherits them. Then post an issue comment on `#M` saying it was started by the session for `#N`.
+- **Phone notification** when the chain stops: the `PushNotification` tool (load it with `ToolSearch` first), with the **Next:** line as its text. If it isn't there, the **Next:** line alone is the message.
+- **Not tried yet:** whether a check-in that fires before the usage limit has refreshed resumes the session or fails again. If a session is still stuck after its check-in, open it and type "continue".
+
 ### Creating issues in the cloud (`/to-tickets`)
 
 - **Find the milestone's number:** `gh api "$R/milestones?state=all" --jq '.[] | select(.title | startswith("M3:")) | .number'`

@@ -36,7 +36,14 @@ When I run /implement #N:
 8. Wait for GitHub Actions CI to pass on the PR.
 9. Squash-merge the PR, delete the branch, and confirm the issue closed.
 10. Comment a short summary on the issue, then end with the **Next:** line (see below).
+11. In a cloud session, chain to the next issue (see below).
 Never merge with failing CI. HITL issues (ready-for-human): stop and ask me.
+
+## Chaining issues (cloud sessions only)
+So I don't have to start every issue by hand, a cloud `/implement` run starts the next one itself. The commands are under "Chaining issues" in `docs/agents/workflow-notes.md`.
+- **Start the next issue** in a new cloud session, only when all of these hold: this issue's PR merged with green CI, the issue is closed, no PR is open, and the **Next:** line is "Claude can take the next issue" with an issue in the **same milestone**. Start exactly one, and say in the **Next:** line that it started.
+- **Otherwise stop**: the next issue is mine, the milestone is finished, or the run stopped on a problem. Never start an issue in another milestone: a new milestone needs grilling with me first. Send me a phone notification with the **Next:** line when the tool is there.
+- **Survive the usage limit.** A session cut off by the limit doesn't restart by itself. So push the branch after every commit from step 3 on, and right after step 2 schedule a check-in to this session 5 hours later that carries on from where the run stopped. Cancel it at the end of step 10.
 
 ## Always end with what's next
 I follow the work from my phone and I'm not a developer. So every piece of work ends with a **Next:** line telling me exactly what to do, even when I didn't ask: an issue finished, a milestone finished, a grilling done, tickets created, the roadmap refreshed, or a session that had to stop.
