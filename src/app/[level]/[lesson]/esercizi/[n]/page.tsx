@@ -9,6 +9,7 @@ import { ScriptToggle } from "@/components/script-toggle";
 import { StepCounterText, StepProgress } from "@/components/step-progress";
 import { StepInstruction } from "@/components/step-instruction";
 import { StepReading } from "@/components/step-reading";
+import { LessonVocab } from "@/components/vocab-link";
 import { exerciseHashes } from "@/content/hash";
 import { lessonIdOfExercise } from "@/content/ids";
 import { type ErrorTag, loadErrorTags, loadLesson, loadLessonBySlug } from "@/content/load";
@@ -16,6 +17,7 @@ import { type StepPage, stepLocation, stepPage } from "@/content/lesson-nav";
 import { readingLayout } from "@/content/reading";
 import type { Lesson, Step } from "@/content/schema";
 import { stepScript } from "@/content/script";
+import { linkedVocab } from "@/content/vocab-links";
 import { findExercise, parseAnswer } from "@/items/engine";
 import { readLessonEntries, readRipassoCards, readStepLayout } from "@/progress/read";
 import { ripassoEntry } from "@/review/ripasso";
@@ -70,21 +72,23 @@ async function LessonStepView({ lesson, page, errorTags }: ViewProps & { page: S
   return (
     <StepProgress lessonId={lesson.id} location={stepLocation(number)} saved={saved} loaded={loaded} hashes={hashes} step={step}>
       <Breadcrumb lesson={lesson} stepTitle={step.title} />
-      <div className="mx-auto max-w-5xl px-4 py-6">
-        <StepMedia step={step} lesson={lesson} />
-        <div className="mx-auto max-w-3xl">
-          <p className="mt-6 text-center text-sm tracking-widest text-muted">{counter}</p>
-          <h1 className="mt-2 text-2xl font-bold text-brand">{step.title}</h1>
-          <StepInstruction instruction={step.instruction} instructionEn={step.instruction_en} />
-          {script && <ScriptToggle lines={script} />}
-          {step.reading && <StepReading md={step.reading} layout={readingLayout(step)} />}
-          <div className="mt-8 space-y-10">
-            {step.items.map((item) => (
-              <ItemSlot key={item.id} item={item} scene={lesson.scene} errorTags={errorTags} />
-            ))}
+      <LessonVocab entries={linkedVocab(lesson)}>
+        <div className="mx-auto max-w-5xl px-4 py-6">
+          <StepMedia step={step} lesson={lesson} />
+          <div className="mx-auto max-w-3xl">
+            <p className="mt-6 text-center text-sm tracking-widest text-muted">{counter}</p>
+            <h1 className="mt-2 text-2xl font-bold text-brand">{step.title}</h1>
+            <StepInstruction instruction={step.instruction} instructionEn={step.instruction_en} />
+            {script && <ScriptToggle lines={script} />}
+            {step.reading && <StepReading md={step.reading} layout={readingLayout(step)} />}
+            <div className="mt-8 space-y-10">
+              {step.items.map((item) => (
+                <ItemSlot key={item.id} item={item} scene={lesson.scene} errorTags={errorTags} />
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      </LessonVocab>
       <StepFooter counter={counter} nextHref={nextHref}>
         <StepCounterText />
       </StepFooter>

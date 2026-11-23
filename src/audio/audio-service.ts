@@ -8,12 +8,14 @@
  * One clip plays at a time. The browser objects are injected, so it runs in tests.
  */
 import { mediaUrl } from "@/content/media-url";
+import { plainVocabLinks } from "@/content/vocab-links";
 import type { ScriptLine } from "@/content/schema";
 import { estimateLineSeconds, LINE_GAP_S } from "./scene-timeline";
 
 /**
  * Something to say: Italian text, and the content media path of its MP3 if
- * there is one. One line of a scene's clip (CONTEXT.md) is one of these.
+ * there is one. One line of a scene's clip (CONTEXT.md) is one of these. The
+ * text may hold vocab links (`[[word|v-id]]`); they are spoken as their words.
  */
 export type Clip = { text: string; audio?: string };
 
@@ -182,7 +184,9 @@ export class AudioService {
       if (over) return;
       if (this.availability() === "speech" && this.env.speech) {
         const speech = this.env.speech;
-        const utterance = this.env.createUtterance?.(clip.text) ?? { text: clip.text };
+        // A line's vocab links are spoken as their words (SPEC §4.3).
+        const text = plainVocabLinks(clip.text);
+        const utterance = this.env.createUtterance?.(text) ?? { text };
         utterance.lang = "it-IT";
         utterance.voice = this.voice;
         utterance.rate = rate;

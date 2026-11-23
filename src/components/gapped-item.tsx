@@ -8,6 +8,7 @@ import { currentValues, type GapMode, type GapView, gapLooks, type GappedItem, t
 import { ui } from "@/ui-it";
 import { FeedbackIcon, ItemControls } from "./item-controls";
 import { ItemImage } from "./media-frame";
+import { LinkedText } from "./linked-text";
 import { ItemPrompt } from "./prompt-bubble";
 import { useExercise } from "./step-progress";
 
@@ -102,12 +103,12 @@ export function GappedItemLayout({
   );
 }
 
-/** The item's text with each `{{gN}}` marker replaced by `renderGap(gap, its 1-based number)`. */
+/** The item's text, vocab links rendered, with each `{{gN}}` marker replaced by `renderGap(gap, its 1-based number)`. */
 export function GapText<G extends { id: string }>({ text, gaps, renderGap }: { text: string; gaps: readonly G[]; renderGap: (gap: G, number: number) => ReactNode }) {
   return (
     <p className="whitespace-pre-line rounded-lg bg-tint px-4 py-4 leading-loose text-brand">
       {splitGapText(text).map((piece, index) => {
-        if ("text" in piece) return <span key={index}>{piece.text}</span>;
+        if ("text" in piece) return <LinkedText key={index} text={piece.text} />;
         const number = gaps.findIndex((gap) => gap.id === piece.gap) + 1;
         // content:check guarantees every marker has a gap.
         if (number === 0) throw new Error(`Gap marker {{${piece.gap}}} has no gap.`);

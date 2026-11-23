@@ -83,6 +83,15 @@ describe("AudioService", () => {
     expect(await done).toBe("ended");
   });
 
+  it("speaks a line's vocab links as their plain words", async () => {
+    const { speech, spoken, finish } = fakeSpeech([ITALIAN]);
+    const service = new AudioService({ speech, createAudio: fakeAudio().createAudio });
+    const done = service.play({ text: "Sì: la [[valigia|v-valigia]] e l'[[ombrello|v-ombrello]]." });
+    expect(spoken[0]).toMatchObject({ text: "Sì: la valigia e l'ombrello." });
+    finish();
+    expect(await done).toBe("ended");
+  });
+
   it("is unavailable without an Italian voice, and says so instead of speaking English", async () => {
     const { speech, spoken } = fakeSpeech([ENGLISH]);
     const service = new AudioService({ speech, createAudio: fakeAudio().createAudio });

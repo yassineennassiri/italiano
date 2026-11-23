@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { loadLesson } from "./load";
 import { hasPage, lessonMenu, lessonStepNumber, resumeHref, reviewNav, reviewPages, reviewStartHref, stepLayout, stepPage } from "./lesson-nav";
-import { copyContent, editJson, LESSON_FILE } from "./test-content";
+import { copyContent, editJson, LESSON_FILE, removeVocab } from "./test-content";
 
 const lesson = () => loadLesson("a2.u01.l01")!;
 
@@ -23,7 +23,7 @@ describe("lessonMenu", () => {
     const dir = copyContent();
     editJson(dir, LESSON_FILE, (data) => {
       data.grammar = [];
-      data.vocab = [];
+      removeVocab(data);
       delete data.culture;
     });
     const pages = lessonMenu(loadLesson("a2.u01.l01", dir)!).map((entry) => entry.page);
@@ -102,7 +102,7 @@ describe("hasPage", () => {
   it("has no Cultura or Vocabolario page for a lesson without them", () => {
     const dir = copyContent();
     editJson(dir, LESSON_FILE, (data) => {
-      data.vocab = [];
+      removeVocab(data);
       delete data.culture;
     });
     const bare = loadLesson("a2.u01.l01", dir)!;
@@ -140,7 +140,7 @@ describe("reviewPages", () => {
     expect(reviewStartHref(noGrammar)).toBe("/a2/benvenuto-a-genova/vocabolario");
 
     editJson(dir, LESSON_FILE, (data) => {
-      data.vocab = [];
+      removeVocab(data);
     });
     expect(reviewStartHref(loadLesson("a2.u01.l01", dir)!)).toBe("/a2/benvenuto-a-genova/fine");
   });

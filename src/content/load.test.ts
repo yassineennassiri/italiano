@@ -29,21 +29,18 @@ describe("loadLesson", () => {
     expect(loadLesson("a2.u02.l01")).toBeUndefined();
   });
 
-  it("shows vocab links as their plain word until the popovers exist", () => {
+  it("keeps vocab links as written, so pages can render them", () => {
     const dir = copyContent();
     editJson(dir, LESSON_FILE, (lesson) => {
       lesson.scene.lines[5].it = "Sì: la [[valigia|v-valigia]], lo [[zaino|v-zaino]] e l'[[ombrello|v-ombrello]].";
       lesson.steps[0].items[1].prompt = "Com'è andato il [[viaggio|v-viaggio]] di Adam?";
-      lesson.steps[2].items[0].text = "il [[vicolo|v-vicolo]] → {{g1}} vicoli";
-      lesson.steps[2].items[0].gaps = [{ id: "g1", answer: "i" }];
       lesson.steps[3].reading = "# I [[caruggi|v-caruggio]]";
     });
 
     const lesson = loadLesson("a2.u01.l01", dir)!;
-    expect(lesson.scene.lines[5].it).toBe("Sì: la valigia, lo zaino e l'ombrello.");
-    expect(lesson.steps[0].items[1].prompt).toBe("Com'è andato il viaggio di Adam?");
-    expect(lesson.steps[2].items[0]).toMatchObject({ text: "il vicolo → {{g1}} vicoli" });
-    expect(lesson.steps[3].reading).toBe("# I caruggi");
+    expect(lesson.scene.lines[5].it).toBe("Sì: la [[valigia|v-valigia]], lo [[zaino|v-zaino]] e l'[[ombrello|v-ombrello]].");
+    expect(lesson.steps[0].items[1].prompt).toBe("Com'è andato il [[viaggio|v-viaggio]] di Adam?");
+    expect(lesson.steps[3].reading).toBe("# I [[caruggi|v-caruggio]]");
   });
 
   it("refuses an invalid lesson file, saying what is wrong", () => {

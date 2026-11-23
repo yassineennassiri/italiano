@@ -11,7 +11,8 @@ describe("audioChoiceClips: what an audio_choice item's 🔊 plays", () => {
   it("plays exactly its clip's scene lines, in order, with their MP3s when they have them", () => {
     const scene = { lines: lesson.scene.lines.map((line) => (line.id === "L12" ? { ...line, audio: "audio/a2/u01/l02/l12.mp3" } : line)) };
     expect(audioChoiceClips(ELETTRICISTA, scene)).toEqual([
-      { text: "Che bello! Ma c'è un problema: in cucina la luce non funziona." },
+      // As written: the audio service speaks vocab links as their words.
+      { text: "Che bello! Ma c'è un [[problema|v-problema]]: in cucina la [[luce|v-luce]] non funziona." },
       { text: "Ah, sì, il problema della luce… Domani chiamo un elettricista.", audio: "audio/a2/u01/l02/l12.mp3" },
       { text: "Non serve, signora: sono un ingegnere elettrico!" },
     ]);

@@ -1,13 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { exerciseHashes } from "./hash";
-import { readContentFile } from "./files";
 import { loadLesson } from "./load";
-import { lessonSchema } from "./schema";
 import { copyContent, editJson, LESSON_FILE } from "./test-content";
 
 const hashesOf = (dir?: string) => exerciseHashes(loadLesson("a2.u01.l01", dir)!);
-/** Hashes of lesson 1 as written in the file, vocab-link markup included (the loader would strip it). */
-const rawHashesOf = (dir: string) => exerciseHashes(readContentFile(dir, LESSON_FILE, lessonSchema));
 
 describe("exerciseHashes", () => {
   it("gives every exercise of the lesson a hash, speaking exchanges one each", () => {
@@ -39,11 +35,11 @@ describe("exerciseHashes", () => {
   it("hashes a vocab link as its plain word, so adding links keeps progress (ADR-0006)", () => {
     const dir = copyContent();
     editJson(dir, LESSON_FILE, (lesson) => {
-      lesson.steps[0].items[0].prompt = "Prima di guardare: secondo te, chi aspetta Adam alla [[stazione|v-stazione]]?";
+      lesson.steps[0].items[1].prompt = "Com'è andato il [[viaggio|v-viaggio]] di Adam?";
       lesson.steps[1].items[0].text = "{{g1}} [[valigia|v-valigia]], {{g2}} [[zaino|v-zaino]], {{g3}} ombrello e {{g4}} computer.";
-      lesson.steps[4].items[0].exchanges[1].other = "Com'è andato il [[viaggio|v-viaggio]]?";
+      lesson.steps[3].items[1].prompt = "Dov'è l'[[appartamento|v-appartamento]]?";
     });
-    expect(rawHashesOf(dir)).toEqual(hashesOf());
+    expect(hashesOf(dir)).toEqual(hashesOf());
   });
 
   it("still changes the hash when the linked word itself changes", () => {
@@ -51,7 +47,7 @@ describe("exerciseHashes", () => {
     editJson(dir, LESSON_FILE, (lesson) => {
       lesson.steps[1].items[0].text = "{{g1}} [[valigie|v-valigia]], {{g2}} zaino, {{g3}} ombrello e {{g4}} computer.";
     });
-    expect(rawHashesOf(dir).get("a2.u01.l01.s02.i01")).not.toBe(hashesOf().get("a2.u01.l01.s02.i01"));
+    expect(hashesOf(dir).get("a2.u01.l01.s02.i01")).not.toBe(hashesOf().get("a2.u01.l01.s02.i01"));
   });
 
   it("keeps lesson 1's hashes as they were when its progress was stored", () => {

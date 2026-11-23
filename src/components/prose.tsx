@@ -1,11 +1,13 @@
 import { parseInline, parseMarkdown, type Span } from "@/content/markdown";
+import { LinkedText } from "./linked-text";
 
-/** Styled runs: **bold** as <strong>, *italic* as <em>. */
+/** Styled runs: **bold** as <strong>, *italic* as <em>; vocab links (a reading's) as links. */
 export function InlineText({ spans }: { spans: readonly Span[] }) {
   return spans.map((span, index) => {
-    if (span.bold) return <strong key={index}>{span.text}</strong>;
-    if (span.italic) return <em key={index}>{span.text}</em>;
-    return <span key={index}>{span.text}</span>;
+    const text = <LinkedText text={span.text} />;
+    if (span.bold) return <strong key={index}>{text}</strong>;
+    if (span.italic) return <em key={index}>{text}</em>;
+    return <span key={index}>{text}</span>;
   });
 }
 

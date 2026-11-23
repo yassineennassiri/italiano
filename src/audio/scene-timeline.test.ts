@@ -10,6 +10,10 @@ describe("estimateLineSeconds", () => {
     expect(estimateLineSeconds("x".repeat(28), 0.75)).toBeCloseTo(2.667, 3);
   });
 
+  it("times a line by its words, not its vocab-link markup", () => {
+    expect(estimateLineSeconds(`[[${"x".repeat(28)}|v-valigia]]`)).toBe(2);
+  });
+
   it("gives a short line at least a second", () => {
     expect(estimateLineSeconds("Sì.")).toBe(1);
   });
