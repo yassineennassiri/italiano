@@ -19,7 +19,7 @@ import type { Lesson, Step } from "@/content/schema";
 import { stepScript } from "@/content/script";
 import { linkedVocab } from "@/content/vocab-links";
 import { findExercise, parseAnswer } from "@/items/engine";
-import { readLessonEntries, readRipassoCards, readStepLayout } from "@/progress/read";
+import { readLessonEntries, readRipassoCards, readSceneSettings, readStepLayout } from "@/progress/read";
 import { ripassoEntry } from "@/review/ripasso";
 import { type ShownExercise, shownExercise } from "@/review/session";
 import type { RipassoChoice } from "@/review/store";
@@ -65,7 +65,7 @@ async function LessonStepView({ lesson, page, errorTags }: ViewProps & { page: S
   const { step, number, total, nextHref } = page;
   const counter = ui.lesson.stepCounter(number, total);
   const script = stepScript(lesson, step);
-  const { saved, loaded } = await readLessonEntries(lesson);
+  const [{ saved, loaded }, settings] = await Promise.all([readLessonEntries(lesson), step.media?.kind === "scene" ? readSceneSettings() : undefined]);
   const allHashes = exerciseHashes(lesson);
   const hashes = Object.fromEntries(lessonExercises({ steps: [step] }).map(({ id }) => [id, allHashes.get(id)!]));
 
@@ -74,7 +74,7 @@ async function LessonStepView({ lesson, page, errorTags }: ViewProps & { page: S
       <Breadcrumb lesson={lesson} stepTitle={step.title} />
       <LessonVocab entries={linkedVocab(lesson)}>
         <div className="mx-auto max-w-5xl px-4 py-6">
-          <StepMedia step={step} lesson={lesson} />
+          <StepMedia step={step} lesson={lesson} settings={settings} />
           <div className="mx-auto max-w-3xl">
             <p className="mt-6 text-center text-sm tracking-widest text-muted">{counter}</p>
             <h1 className="mt-2 text-2xl font-bold text-brand">{step.title}</h1>

@@ -113,7 +113,7 @@ test("turning Ripasso personale off removes the step from lessons, and on brings
   await resetLesson(page, LESSON_2);
 });
 
-test("the voice picker lists the Italian voices, keeps the choice on this computer, and the scene player speaks with it", async ({ page }) => {
+test("the voice picker lists the Italian voices, keeps the choice on this computer, and the scene player and 🔊 speak with it", async ({ page }) => {
   await useStandInVoice(page, ["Voce di prova", "Seconda voce"]);
   await openSettings(page);
   const picker = page.getByRole("combobox", { name: ui.settings.voice });
@@ -131,4 +131,11 @@ test("the voice picker lists the Italian voices, keeps the choice on this comput
   await hydrated(play);
   await play.click();
   await expect.poll(async () => (await spokenVoices(page))[0]).toBe("Seconda voce");
+
+  // A 🔊 button too.
+  await page.goto(`${LESSON}/vocabolario`);
+  const listen = page.getByRole("button", { name: ui.lesson.listen, exact: true }).first();
+  await hydrated(listen);
+  await listen.click();
+  await expect.poll(async () => (await spokenVoices(page)).at(-1)).toBe("Seconda voce");
 });

@@ -6,13 +6,9 @@ import { SUBTITLE_MODES, type SubtitleMode } from "@/audio/subtitles";
 import { progressQueue, submitSettings } from "@/progress/client";
 import type { Settings } from "@/settings/settings";
 import { ui } from "@/ui-it";
+import { SPEED_OPTIONS } from "./scene-player";
 import { useVoices } from "./use-audio";
 import { useSettings } from "./use-settings";
-
-const SPEEDS: readonly { value: Rate; label: string }[] = [
-  { value: 1, label: ui.lesson.player.speeds.normal },
-  { value: 0.75, label: ui.lesson.player.speeds.slow },
-];
 
 function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   const id = useId();
@@ -28,7 +24,7 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
 }
 
 /** A labelled group of radio buttons, one of them checked. */
-function Choice<T extends string | number>({
+function RadioChoice<T extends string | number>({
   legend,
   options,
   value,
@@ -89,10 +85,12 @@ function VoicePicker() {
 
 /**
  * Impostazioni (SPEC §10.1). The synced settings change at once and are
- * queued like every other write; the voice is this computer's own.
+ * queued like every other write; the voice is this computer's own. When the
+ * page couldn't read the saved settings, the last ones this tab knows (or the
+ * defaults) show, and never count as saved.
  */
 export function SettingsForm({ saved, loaded }: { saved: Settings; loaded: boolean }) {
-  const settings = useSettings(saved);
+  const settings = useSettings(loaded ? saved : undefined);
   useEffect(() => {
     if (!loaded) progressQueue.reportUnreachable();
   }, [loaded]);
@@ -115,13 +113,13 @@ export function SettingsForm({ saved, loaded }: { saved: Settings; loaded: boole
         </label>
       </Section>
       <Section title={ui.settings.scene} hint={ui.settings.sceneHint}>
-        <Choice<SubtitleMode>
+        <RadioChoice<SubtitleMode>
           legend={ui.settings.subtitles}
           options={SUBTITLE_MODES.map((mode) => ({ value: mode, label: ui.lesson.player.subtitleModes[mode] }))}
           value={settings.subtitles}
           onChange={(subtitles) => submitSettings({ subtitles })}
         />
-        <Choice<Rate> legend={ui.settings.speed} options={SPEEDS} value={settings.sceneSpeed} onChange={(scene_speed) => submitSettings({ scene_speed })} />
+        <RadioChoice<Rate> legend={ui.settings.speed} options={SPEED_OPTIONS} value={settings.sceneSpeed} onChange={(scene_speed) => submitSettings({ scene_speed })} />
       </Section>
       <Section title={ui.settings.voice} hint={ui.settings.voiceHint}>
         <VoicePicker />

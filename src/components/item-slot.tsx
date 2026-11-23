@@ -8,6 +8,7 @@ import type { ReactNode } from "react";
 import { clipLines } from "@/content/clip";
 import type { ErrorTag } from "@/content/load";
 import type { Item, Lesson, Note, Scene, Step } from "@/content/schema";
+import type { Settings } from "@/settings/settings";
 import { audioChoiceClips } from "@/items/audio-choice";
 import { ui } from "@/ui-it";
 import { AudioGapItem } from "./audio-gap-item";
@@ -24,11 +25,11 @@ import { TextGapItem } from "./text-gap-item";
 import { WordBankItem } from "./word-bank-item";
 import { WordOrderItem } from "./word-order-item";
 
-/** The step's media above its items: the scene, an image or a clip. */
-export function StepMedia({ step, lesson }: { step: Step; lesson: Lesson }) {
+/** The step's media above its items: the scene, an image or a clip. `settings`: the saved ones, for the scene player, when the page read them. */
+export function StepMedia({ step, lesson, settings }: { step: Step; lesson: Lesson; settings?: Settings }) {
   switch (step.media?.kind) {
     case "scene":
-      return <ScenePlayer scene={lesson.scene} lessonTitle={lesson.title} />;
+      return <ScenePlayer scene={lesson.scene} lessonTitle={lesson.title} settings={settings} />;
     case "image":
       return <MediaFrame src={step.media.src} alt={step.media.alt} fit="contain" />;
     case "clip":

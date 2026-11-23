@@ -25,8 +25,9 @@ export const lineClip = (line: Pick<ScriptLine, "it" | "audio">): Clip => ({ tex
 /** How a play ended: it finished, it was stopped (or replaced), or it couldn't be heard at all. */
 export type PlayResult = "ended" | "stopped" | "unavailable";
 
-/** The speaking speed: normal or slower (SPEC §11.3). */
-export type Rate = 1 | 0.75;
+/** The speaking speeds: normal or slower (SPEC §11.3). */
+export const RATES = [1, 0.75] as const;
+export type Rate = (typeof RATES)[number];
 
 export type PlayOptions = {
   rate?: Rate;

@@ -137,3 +137,9 @@ export async function readSettings(): Promise<{ settings: Settings; loaded: bool
     return { settings: DEFAULT_SETTINGS, loaded: false };
   }
 }
+
+/** The saved settings for a scene player the page shows, or undefined when the database couldn't be read: the player then asks for them itself. */
+export async function readSceneSettings(): Promise<Settings | undefined> {
+  const { settings, loaded } = await readSettings();
+  return loaded ? settings : undefined;
+}

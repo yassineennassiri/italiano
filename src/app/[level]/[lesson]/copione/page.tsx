@@ -3,6 +3,7 @@ import { ScenePlayer } from "@/components/scene-player";
 import { ScriptLines } from "@/components/script-lines";
 import { LessonVocab } from "@/components/vocab-link";
 import { linkedVocab } from "@/content/vocab-links";
+import { readSceneSettings } from "@/progress/read";
 import { ui } from "@/ui-it";
 import { type LessonRouteParams, lessonFromParams } from "../lesson-params";
 
@@ -21,9 +22,10 @@ export default function ScriptPage({ params }: PageProps<"/[level]/[lesson]/copi
 
 async function Script({ params }: { params: Promise<LessonRouteParams> }) {
   const lesson = await lessonFromParams(params);
+  const settings = await readSceneSettings();
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
-      <ScenePlayer scene={lesson.scene} lessonTitle={lesson.title} />
+      <ScenePlayer scene={lesson.scene} lessonTitle={lesson.title} settings={settings} />
       <div className="mx-auto mt-8 max-w-3xl">
         <h2 className="text-2xl font-bold text-brand">{ui.lesson.script}</h2>
         <div className="mt-4">

@@ -4,13 +4,15 @@
  * does for exercises. A write shows when the learner changes a setting, and
  * again when a reload restores it from IndexedDB. Plain TypeScript.
  */
+import type { ProgressResponse } from "@/progress/local";
 import { DEFAULT_SETTINGS, type Settings, type SettingsWrite, withWrite } from "./settings";
 
+/** The settings this tab uses, and the subscribers told of each change. */
 export class LocalSettings {
   /** The settings as the server last sent them; undefined until it has. */
   private saved: Settings | undefined;
   /** Writes the server saved before it sent any settings: they hold over a page's stand-in. */
-  private savedEarly: SettingsWrite[] = [];
+  private landedBeforeSaved: SettingsWrite[] = [];
   /** The writes not answered yet, oldest first. */
   private readonly pending: SettingsWrite[] = [];
   /** How many restored writes lead `pending`: they are older than this tab's own. */
@@ -35,14 +37,14 @@ export class LocalSettings {
    * settings) or the defaults take their place.
    */
   current(standIn: Settings = DEFAULT_SETTINGS): Settings {
-    const saved = this.saved ?? this.savedEarly.reduce(withWrite, standIn);
+    const saved = this.saved ?? this.landedBeforeSaved.reduce(withWrite, standIn);
     return this.pending.reduce(withWrite, saved);
   }
 
   /** The settings as the server has them now. */
   receive(saved: Settings): void {
     this.saved = saved;
-    this.savedEarly = [];
+    this.landedBeforeSaved = [];
     this.changed();
   }
 
@@ -59,14 +61,14 @@ export class LocalSettings {
   }
 
   /** The server answered a write: once saved, it is part of the saved settings; otherwise it is dropped. */
-  landed(write: SettingsWrite, response: { result: string }): void {
+  landed(write: SettingsWrite, response: Pick<ProgressResponse, "result">): void {
     const index = this.pending.indexOf(write);
     if (index === -1) return;
     this.pending.splice(index, 1);
     if (index < this.restored) this.restored--;
     if (response.result === "saved") {
       if (this.saved) this.saved = withWrite(this.saved, write);
-      else this.savedEarly.push(write);
+      else this.landedBeforeSaved.push(write);
     }
     this.changed();
   }

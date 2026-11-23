@@ -2,11 +2,12 @@
 
 import Image from "next/image";
 import { type ReactNode, type Ref, useEffect, useRef, useState } from "react";
-import type { Rate } from "@/audio/audio-service";
+import { RATES, type Rate } from "@/audio/audio-service";
 import { estimateSceneSeconds, panelIndexAt } from "@/audio/scene-timeline";
 import { SUBTITLE_MODES, type SubtitleMode } from "@/audio/subtitles";
 import { mediaUrl } from "@/content/media-url";
 import type { Scene } from "@/content/schema";
+import type { Settings } from "@/settings/settings";
 import { plainVocabLinks } from "@/content/vocab-links";
 import { ui } from "@/ui-it";
 import { PAUSE_PATH, PLAY_PATH, PlayerIcon } from "./player-icons";
@@ -17,10 +18,11 @@ import { useSettings } from "./use-settings";
 /** The audio service's key for the line the player is saying. */
 const PLAYER_KEY = "scene-player";
 const SIZES = "(min-width: 1024px) 960px, 100vw";
-const SPEEDS: readonly { value: Rate; label: string }[] = [
-  { value: 1, label: ui.lesson.player.speeds.normal },
-  { value: 0.75, label: ui.lesson.player.speeds.slow },
-];
+/** The speeds, as the player and Impostazioni offer them. */
+export const SPEED_OPTIONS: readonly { value: Rate; label: string }[] = RATES.map((value) => ({
+  value,
+  label: value === 1 ? ui.lesson.player.speeds.normal : ui.lesson.player.speeds.slow,
+}));
 
 const PREVIOUS = "M6 5 H8.5 V19 H6 Z M19 5 V19 L9.5 12 Z";
 const NEXT = "M15.5 5 H18 V19 H15.5 Z M5 5 L14.5 12 L5 19 Z";
@@ -90,13 +92,16 @@ function Choice<T extends string | number>({
  * while the lines play one by one: their MP3s if generated, else the
  * browser's Italian voice. With neither, it runs silently on estimated timings
  * with Italian subtitles. The scrubber is line-based ("riga 4 di 11"). It
- * opens with the default subtitles and speed from Impostazioni (SPEC §10.1).
+ * opens with the default subtitles and speed from Impostazioni (SPEC §10.1):
+ * `settings` as the page read them, else as asked for once it mounts. They
+ * are fixed when it starts, so settings that arrive later don't change it
+ * mid-scene.
  */
-export function ScenePlayer({ scene, lessonTitle }: { scene: Scene; lessonTitle: string }) {
+export function ScenePlayer({ scene, lessonTitle, settings }: { scene: Scene; lessonTitle: string; settings?: Settings }) {
   const audio = useAudio();
   const [started, setStarted] = useState(false);
   // The saved defaults (Impostazioni) hold until the learner changes them in this player.
-  const defaults = useSettings();
+  const defaults = useSettings(settings);
   const [chosenRate, setRate] = useState<Rate | null>(null);
   const rate = chosenRate ?? defaults.sceneSpeed;
   const playback = useLinePlayback(scene.lines, { key: PLAYER_KEY, rate, silentFallback: true });
@@ -121,12 +126,17 @@ export function ScenePlayer({ scene, lessonTitle }: { scene: Scene; lessonTitle:
   }, [started]);
   const panel = panelIndexAt(scene, line);
 
-  const goTo = (index: number) => {
+  const start = () => {
     setStarted(true);
+    setRate(rate);
+    setSubtitles(subtitles);
+  };
+  const goTo = (index: number) => {
+    start();
     playback.goTo(index);
   };
   const togglePlay = () => {
-    setStarted(true);
+    start();
     playback.togglePlay();
   };
 
@@ -199,7 +209,7 @@ export function ScenePlayer({ scene, lessonTitle }: { scene: Scene; lessonTitle:
           </label>
           <Choice
             label={ui.lesson.player.speed}
-            options={SPEEDS}
+            options={SPEED_OPTIONS}
             value={rate}
             onChange={setRate}
           />
