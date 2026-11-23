@@ -314,6 +314,17 @@ describe("checkContent", () => {
     ]);
   });
 
+  it("reports a vocab link around a gap: links go outside the gaps", () => {
+    const dir = copyContent();
+    editJson(dir, LESSON_FILE, (lesson) => {
+      lesson.steps[2].items[0].text = "il vicolo → [[{{g1}} vicoli|v-vicolo]]";
+      lesson.steps[2].items[0].gaps = [{ id: "g1", answer: "i" }];
+    });
+    expect(checkContent(dir)).toEqual([
+      `${LESSON_FILE}: steps[2].items[0].text: a vocab link must sit outside the gaps`,
+    ]);
+  });
+
   it("reports a malformed vocab link", () => {
     const dir = copyContent();
     editJson(dir, LESSON_FILE, (lesson) => {

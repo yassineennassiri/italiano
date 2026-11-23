@@ -67,6 +67,8 @@ test("the Copione's vocab links open their popover, and the rest of the line sti
   // Clicking the line away from the link (its start, "Bene") toggles its English.
   await page.keyboard.press("Escape");
   const translation = line.getByRole("button", { name: ui.lesson.showTranslation });
+  // The link is an inline-block, so the computed description has a space after it.
+  await expect(translation).toHaveAccessibleDescription(/^Bene, grazie\. Il treno era un po' in ritardo ?, ma va bene così\.$/);
   await translation.click({ position: { x: 5, y: 5 } });
   await expect(translation).toHaveAttribute("aria-expanded", "true");
   await expect(line.getByText("Fine, thanks. The train was a bit late, but that's OK.")).toBeVisible();

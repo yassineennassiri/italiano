@@ -4,7 +4,7 @@ import { type PointerEvent, useEffect, useId, useRef, useState } from "react";
 
 /**
  * Open/close state for a button that toggles a panel: Escape closes it and
- * returns focus to the button, a click outside closes it. Spreading
+ * returns focus to the button (when focus was inside it), a click outside closes it. Spreading
  * `hoverProps` on the root also opens it while a mouse is over the button or
  * the panel; a click then keeps it open after the mouse leaves.
  */
@@ -28,7 +28,8 @@ export function usePopover<Root extends HTMLElement = HTMLDivElement>() {
       if (event.key !== "Escape") return;
       setPinned(false);
       setHovered(false);
-      buttonRef.current?.focus();
+      // A popover opened by hover mustn't pull focus away from, say, a gap being typed in.
+      if (rootRef.current?.contains(document.activeElement)) buttonRef.current?.focus();
     };
     const onPointerDown = (event: globalThis.PointerEvent) => {
       if (rootRef.current?.contains(event.target as Node)) return;

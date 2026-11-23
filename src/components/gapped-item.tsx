@@ -108,13 +108,7 @@ export function GapText<G extends { id: string }>({ text, gaps, renderGap }: { t
   return (
     <p className="whitespace-pre-line rounded-lg bg-tint px-4 py-4 leading-loose text-brand">
       {splitGapText(text).map((piece, index) => {
-        if ("text" in piece) {
-          return (
-            <span key={index}>
-              <LinkedText text={piece.text} />
-            </span>
-          );
-        }
+        if ("text" in piece) return <LinkedText key={index} text={piece.text} />;
         const number = gaps.findIndex((gap) => gap.id === piece.gap) + 1;
         // content:check guarantees every marker has a gap.
         if (number === 0) throw new Error(`Gap marker {{${piece.gap}}} has no gap.`);

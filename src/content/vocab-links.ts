@@ -5,6 +5,11 @@
  * and the content hash use the plain word (ADR-0006).
  */
 
+import { GAP_MARKER as GAP_MARKERS } from "./gap-text";
+
+/** One gap marker anywhere in a string (not global, so `test` keeps no state). */
+const GAP_MARKER = new RegExp(GAP_MARKERS.source);
+
 /** A vocab link; group 1 is the shown word, group 2 the vocab id. */
 const VOCAB_LINK = /\[\[([^|\]]+)\|([^\]]+)\]\]/g;
 
@@ -50,24 +55,27 @@ function walkStrings(value: unknown, path: Path, visit: (text: string, path: Pat
 /** Item fields that hold or reveal answers: a link there would give the answer away. */
 const ANSWER_FIELDS = new Set<PropertyKey>(["options", "tiles", "bank", "gaps", "accept"]);
 
-const isItem = (path: Path) => path[0] === "steps" && path[2] === "items" && path.length > 4;
+/** The item field a path is in (`["steps", s, "items", i, field, …]`), or undefined outside items. */
+const itemField = (path: Path): PropertyKey | undefined =>
+  path[0] === "steps" && path[2] === "items" ? path[4] : undefined;
 
 /** Where links may go: prompts, scene and script lines, readings and gap text (SPEC §4.3). */
 function linkAllowed(path: Path): boolean {
-  const [first, second, third, , fifth] = path;
-  if (first === "scene") return second === "lines" && path[3] === "it" && path.length === 4;
-  if (first !== "steps") return false;
-  if (path.length === 3) return third === "reading";
-  if (third === "script") return path.length === 5 && fifth === "it";
-  return isItem(path) && path.length === 5 && (fifth === "prompt" || fifth === "text");
+  const field = path.at(-1);
+  const depth = path.length;
+  if (path[0] === "scene") return path[1] === "lines" && depth === 4 && field === "it";
+  if (path[0] !== "steps") return false;
+  if (depth === 3) return field === "reading";
+  if (path[2] === "script") return depth === 5 && field === "it";
+  return itemField(path) !== undefined && depth === 5 && (field === "prompt" || field === "text");
 }
 
 export type VocabLinkProblem = { path: Path; message: string };
 
 /**
  * `content:check`'s vocab-link rules (SPEC §9.1): links are well formed, sit
- * only where they are allowed (never in options, tiles or answers), and point
- * at an entry in the same lesson's vocab.
+ * only where they are allowed (never in options, tiles or answers, and outside
+ * gaps), and point at an entry in the same lesson's vocab.
  */
 export function vocabLinkProblems(lesson: { vocab: readonly { id: string }[] }): VocabLinkProblem[] {
   const vocabIds = new Set(lesson.vocab.map((entry) => entry.id));
@@ -78,10 +86,13 @@ export function vocabLinkProblems(lesson: { vocab: readonly { id: string }[] }):
       problems.push({ path, message: "malformed vocab link: write [[word|v-id]]" });
     }
     if (links.length === 0) return;
-    if (isItem(path) && ANSWER_FIELDS.has(path[4])) {
+    const field = itemField(path);
+    if (field !== undefined && ANSWER_FIELDS.has(field)) {
       problems.push({ path, message: "a vocab link here would give the answer away" });
     } else if (!linkAllowed(path)) {
       problems.push({ path, message: "vocab links are allowed only in prompts, script lines, readings and gap text" });
+    } else if (links.some(([, word]) => GAP_MARKER.test(word))) {
+      problems.push({ path, message: "a vocab link must sit outside the gaps" });
     } else {
       for (const [, , vocabId] of links) {
         if (!vocabIds.has(vocabId)) problems.push({ path, message: `vocab link "${vocabId}" is not in this lesson's vocab` });

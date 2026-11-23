@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { ScriptLine } from "@/content/schema";
 import { ui } from "@/ui-it";
 import { LinkedText } from "./linked-text";
@@ -14,6 +14,7 @@ import { SpeakButton } from "./speak-button";
  */
 export function ScriptLines({ lines }: { lines: readonly ScriptLine[] }) {
   const [open, setOpen] = useState<ReadonlySet<string>>(new Set());
+  const idPrefix = useId();
   const toggle = (id: string) =>
     setOpen((before) => {
       const next = new Set(before);
@@ -34,11 +35,12 @@ export function ScriptLines({ lines }: { lines: readonly ScriptLine[] }) {
                 type="button"
                 aria-expanded={open.has(line.id)}
                 aria-label={ui.lesson.showTranslation}
+                aria-describedby={`${idPrefix}-${line.id}`}
                 title={ui.lesson.showTranslation}
                 onClick={() => toggle(line.id)}
                 className="absolute inset-0 rounded"
               />
-              <span className="pointer-events-none relative group-hover:text-brand">
+              <span id={`${idPrefix}-${line.id}`} className="pointer-events-none relative group-hover:text-brand">
                 <LinkedText text={line.it} />
               </span>
             </p>
