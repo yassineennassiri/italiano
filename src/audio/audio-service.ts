@@ -65,10 +65,17 @@ export type AudioLike = {
   onerror: (() => void) | null;
 };
 
+/** Where this computer keeps the name of its chosen Italian voice (`localStorage` in the browser). */
+export type VoiceChoice = {
+  load: () => string | null;
+  save: (name: string) => void;
+};
+
 export type AudioEnvironment = {
   speech: SpeechLike | undefined;
   createAudio: (url: string) => AudioLike;
   createUtterance?: (text: string) => UtteranceLike;
+  voiceChoice?: VoiceChoice;
 };
 
 /** Whether text without an MP3 can be heard: "speech" with an Italian voice, else "unavailable". */
@@ -96,20 +103,51 @@ export class AudioService {
   private changes = 0;
 
   constructor(private readonly env: AudioEnvironment) {
-    this.voice = env.speech?.getVoices().find(isItalian);
+    this.voice = this.pickVoice();
     // Chrome and Edge load their voices after the page; listen for them.
     env.speech?.addEventListener("voiceschanged", () => {
-      this.voice = env.speech?.getVoices().find(isItalian);
+      this.voice = this.pickVoice();
       this.voiceFailed = false;
       this.changed();
     });
+  }
+
+  private voices(): VoiceLike[] {
+    return this.env.speech?.getVoices().filter(isItalian) ?? [];
+  }
+
+  /** The voice chosen on this computer, while the browser still has it; else its first Italian voice. */
+  private pickVoice(): VoiceLike | undefined {
+    const voices = this.voices();
+    const chosen = this.env.voiceChoice?.load();
+    return voices.find((voice) => voice.name === chosen) ?? voices[0];
+  }
+
+  /** The names of the browser's Italian voices, for the voice picker in Impostazioni. */
+  italianVoices(): string[] {
+    return this.voices().map((voice) => voice.name);
+  }
+
+  /** The name of the Italian voice that speaks, or null when there is none. */
+  voiceName(): string | null {
+    return this.voice?.name ?? null;
+  }
+
+  /** Speaks with this Italian voice from now on, on this computer only. A name that isn't one of them is ignored. */
+  chooseVoice(name: string): void {
+    const voice = this.voices().find((candidate) => candidate.name === name);
+    if (!voice) return;
+    this.voice = voice;
+    this.voiceFailed = false;
+    this.env.voiceChoice?.save(name);
+    this.changed();
   }
 
   availability(): Availability {
     return this.voice && !this.voiceFailed ? "speech" : "unavailable";
   }
 
-  /** Changes whenever `availability()` or `playing()` does, for `useSyncExternalStore`. */
+  /** Changes whenever `availability()`, `voiceName()` or `playing()` does, for `useSyncExternalStore`. */
   version(): number {
     return this.changes;
   }
@@ -272,6 +310,26 @@ function browserSpeech(): SpeechLike | undefined {
   };
 }
 
+const VOICE_KEY = "italiano-voice";
+
+/** The chosen voice in `localStorage`; storage that is blocked or full just keeps no choice. */
+const browserVoiceChoice: VoiceChoice = {
+  load: () => {
+    try {
+      return localStorage.getItem(VOICE_KEY);
+    } catch {
+      return null;
+    }
+  },
+  save: (name) => {
+    try {
+      localStorage.setItem(VOICE_KEY, name);
+    } catch {
+      // The choice holds for this page only.
+    }
+  },
+};
+
 /** The page's audio service, created on first use in the browser. */
 export function audioService(): AudioService {
   browserService ??= new AudioService({
@@ -279,6 +337,7 @@ export function audioService(): AudioService {
     // The DOM types want handlers that take an event; ours ignore it, which is fine at runtime.
     createAudio: (url) => new Audio(url) as unknown as AudioLike,
     createUtterance: (text) => new SpeechSynthesisUtterance(text) as unknown as UtteranceLike,
+    voiceChoice: browserVoiceChoice,
   });
   return browserService;
 }

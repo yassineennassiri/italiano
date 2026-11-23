@@ -55,14 +55,17 @@ export async function resetLesson(page: Page, lessonPath: string): Promise<void>
 /**
  * Gives the page a stand-in Italian `speechSynthesis` that records what it is
  * asked to say and ends each utterance quickly, so a test hears nothing and
- * doesn't depend on the computer's voices. Read what it said with `spoken`.
+ * doesn't depend on the computer's voices. Read what it said with `spoken`,
+ * and with which voice with `spokenVoices`. `names` are its Italian voices.
  * Call it before the first `goto`.
  */
-export async function useStandInVoice(page: Page): Promise<void> {
-  await page.addInitScript(() => {
+export async function useStandInVoice(page: Page, names: readonly string[] = ["Voce di prova"]): Promise<void> {
+  await page.addInitScript((names) => {
     const said: string[] = [];
+    const voices: string[] = [];
     (window as unknown as { spokenLines: string[] }).spokenLines = said;
-    const voice = { lang: "it-IT", name: "Voce di prova", default: true, localService: true, voiceURI: "test" };
+    (window as unknown as { spokenVoices: string[] }).spokenVoices = voices;
+    const italian = names.map((name, index) => ({ lang: "it-IT", name, default: index === 0, localService: true, voiceURI: name }));
     class Utterance {
       lang = "";
       voice: unknown = null;
@@ -73,10 +76,11 @@ export async function useStandInVoice(page: Page): Promise<void> {
     }
     let current: Utterance | undefined;
     const synthesis = {
-      getVoices: () => [voice],
+      getVoices: () => italian,
       speak: (utterance: Utterance) => {
         current = utterance;
         said.push(utterance.text);
+        voices.push((utterance.voice as { name?: string } | null)?.name ?? "");
         setTimeout(() => {
           if (current === utterance) utterance.onend?.();
         }, 150);
@@ -90,8 +94,11 @@ export async function useStandInVoice(page: Page): Promise<void> {
     };
     Object.defineProperty(window, "speechSynthesis", { value: synthesis, configurable: true });
     Object.defineProperty(window, "SpeechSynthesisUtterance", { value: Utterance, configurable: true });
-  });
+  }, names);
 }
 
 /** What the stand-in voice (`useStandInVoice`) was asked to say, in order. */
 export const spoken = (page: Page) => page.evaluate(() => (window as unknown as { spokenLines: string[] }).spokenLines);
+
+/** The voice the stand-in was asked to say each line with, in order. */
+export const spokenVoices = (page: Page) => page.evaluate(() => (window as unknown as { spokenVoices: string[] }).spokenVoices);

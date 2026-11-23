@@ -22,6 +22,8 @@ import {
   type RipassoChoice,
 } from "@/review/store";
 import type { TopTag } from "@/review/top-tags";
+import { DEFAULT_SETTINGS, type Settings } from "@/settings/settings";
+import { loadSettings } from "@/settings/store";
 import { loadLastLocation, loadLessonEntries, loadProgressSummaries, type ProgressSummary } from "./store";
 
 /** Every lesson's progress, most recently changed first; empty when the database is unreachable. */
@@ -122,5 +124,16 @@ export async function readRipassoCards(choice: RipassoChoice): Promise<{ cards: 
   } catch (error) {
     console.error("Could not load the Ripasso personale exercises.", error);
     return { cards: [], loaded: false };
+  }
+}
+
+/** The synced settings (SPEC §10.1); the defaults, and `loaded` false, when the database couldn't be read. */
+export async function readSettings(): Promise<{ settings: Settings; loaded: boolean }> {
+  await connection();
+  try {
+    return { settings: await loadSettings(db(), PROFILE_ID), loaded: true };
+  } catch (error) {
+    console.error("Could not load the settings; showing the defaults.", error);
+    return { settings: DEFAULT_SETTINGS, loaded: false };
   }
 }

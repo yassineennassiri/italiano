@@ -16,6 +16,9 @@ export type MenuEntry = { page: LessonPage; href: string };
 /** The review hub (SPEC §3, §10.5). */
 export const REVIEW_HUB_HREF = "/ripasso";
 
+/** Impostazioni (SPEC §3, §10.1). */
+export const SETTINGS_HREF = "/impostazioni";
+
 /** A review session of the hub's due cards. */
 export const REVIEW_SESSION_HREF = "/ripasso/sessione";
 

@@ -251,3 +251,57 @@ describe("canPlayClip", () => {
     expect(canPlayClip({ text: "Ciao" }, "unavailable")).toBe(false);
   });
 });
+
+describe("AudioService choosing the Italian voice (SPEC §10.1)", () => {
+  const ISABELLA: Voice = { lang: "it_IT", name: "Isabella" };
+  /** A per-computer store for the chosen voice, as localStorage is in the browser. */
+  const memory = (stored: string | null = null) => {
+    const store = { value: stored, load: () => store.value, save: (name: string) => void (store.value = name) };
+    return store;
+  };
+
+  it("lists only the Italian voices, and speaks with the first one until one is chosen", async () => {
+    const { speech, spoken, finish } = fakeSpeech([ENGLISH, ITALIAN, ISABELLA]);
+    const service = new AudioService({ speech, createAudio: fakeAudio().createAudio, voiceChoice: memory() });
+    expect(service.italianVoices()).toEqual(["Elsa", "Isabella"]);
+    expect(service.voiceName()).toBe("Elsa");
+    const done = service.play({ text: "Ciao" });
+    expect(spoken[0].voice).toEqual(ITALIAN);
+    finish();
+    await done;
+  });
+
+  it("speaks with the chosen voice from then on, keeps the choice, and tells its listeners", async () => {
+    const { speech, spoken, finish } = fakeSpeech([ITALIAN, ISABELLA]);
+    const choice = memory();
+    const service = new AudioService({ speech, createAudio: fakeAudio().createAudio, voiceChoice: choice });
+    const listener = vi.fn();
+    service.subscribe(listener);
+    service.chooseVoice("Isabella");
+    expect(listener).toHaveBeenCalled();
+    expect(service.voiceName()).toBe("Isabella");
+    expect(choice.value).toBe("Isabella");
+    const done = service.play({ text: "Ciao" });
+    expect(spoken[0].voice).toEqual(ISABELLA);
+    finish();
+    await done;
+  });
+
+  it("uses the voice chosen earlier on this computer, also when the browser loads its voices late", () => {
+    const { speech, loadVoices } = fakeSpeech([]);
+    const service = new AudioService({ speech, createAudio: fakeAudio().createAudio, voiceChoice: memory("Isabella") });
+    expect(service.voiceName()).toBeNull();
+    loadVoices([ITALIAN, ISABELLA]);
+    expect(service.voiceName()).toBe("Isabella");
+  });
+
+  it("falls back to the first Italian voice when the chosen one is gone, and ignores a voice that isn't Italian", () => {
+    const { speech } = fakeSpeech([ENGLISH, ITALIAN]);
+    const choice = memory("Isabella");
+    const service = new AudioService({ speech, createAudio: fakeAudio().createAudio, voiceChoice: choice });
+    expect(service.voiceName()).toBe("Elsa");
+    service.chooseVoice("Zira");
+    expect(service.voiceName()).toBe("Elsa");
+    expect(choice.value).toBe("Isabella");
+  });
+});

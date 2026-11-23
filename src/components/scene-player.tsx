@@ -12,6 +12,7 @@ import { ui } from "@/ui-it";
 import { PAUSE_PATH, PLAY_PATH, PlayerIcon } from "./player-icons";
 import { useAudio } from "./use-audio";
 import { useLinePlayback } from "./use-line-playback";
+import { useSettings } from "./use-settings";
 
 /** The audio service's key for the line the player is saying. */
 const PLAYER_KEY = "scene-player";
@@ -88,15 +89,20 @@ function Choice<T extends string | number>({
  * duration; once started, the panels crossfade at each panel's `from_line`
  * while the lines play one by one: their MP3s if generated, else the
  * browser's Italian voice. With neither, it runs silently on estimated timings
- * with Italian subtitles. The scrubber is line-based ("riga 4 di 11").
+ * with Italian subtitles. The scrubber is line-based ("riga 4 di 11"). It
+ * opens with the default subtitles and speed from Impostazioni (SPEC §10.1).
  */
 export function ScenePlayer({ scene, lessonTitle }: { scene: Scene; lessonTitle: string }) {
   const audio = useAudio();
   const [started, setStarted] = useState(false);
-  const [rate, setRate] = useState<Rate>(1);
+  // The saved defaults (Impostazioni) hold until the learner changes them in this player.
+  const defaults = useSettings();
+  const [chosenRate, setRate] = useState<Rate | null>(null);
+  const rate = chosenRate ?? defaults.sceneSpeed;
   const playback = useLinePlayback(scene.lines, { key: PLAYER_KEY, rate, silentFallback: true });
   const { line, playing } = playback;
-  const [subtitles, setSubtitles] = useState<SubtitleMode>("off");
+  const [chosenSubtitles, setSubtitles] = useState<SubtitleMode | null>(null);
+  const subtitles = chosenSubtitles ?? defaults.subtitles;
 
   const total = scene.lines.length;
   const allMp3 = scene.lines.every((sceneLine) => sceneLine.audio !== undefined);

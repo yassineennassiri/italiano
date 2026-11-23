@@ -18,6 +18,7 @@ import {
 } from "./merge";
 import type { NewCorrectionWrite } from "@/review/error-card";
 import type { DrillWrite, ReviewWrite } from "@/review/plan";
+import type { SettingsWrite } from "@/settings/settings";
 import type { CorrectionWrite, ExerciseWrite, FinishWrite, ResetWrite, VisitWrite } from "./plan";
 import type { CorrectionResponse, ResetResponse, WriteResponse } from "./store";
 
@@ -35,7 +36,9 @@ export type ProgressWrite =
   /** A tag drill answer: like a review, it changes none of this tab's lesson entries. */
   | { type: "drill"; drill: DrillWrite }
   /** Aggiungi una correzione: an error_log row and its error card; no lesson entry changes. */
-  | { type: "newCorrection"; newCorrection: NewCorrectionWrite };
+  | { type: "newCorrection"; newCorrection: NewCorrectionWrite }
+  /** A change in Impostazioni: `LocalSettings` shows it; no lesson entry changes. */
+  | { type: "settings"; settings: SettingsWrite };
 
 type Rejected = { result: "rejected" };
 
@@ -111,6 +114,7 @@ export class LocalProgress {
       case "review":
       case "drill":
       case "newCorrection":
+      case "settings":
         return;
     }
     this.changed();
@@ -150,6 +154,7 @@ export class LocalProgress {
       case "review":
       case "drill":
       case "newCorrection":
+      case "settings":
         return;
     }
     this.changed();

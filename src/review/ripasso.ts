@@ -10,13 +10,14 @@ import { findExercise } from "@/items/engine";
 import type { ExerciseEntry } from "@/items/entry";
 import { ratingAnswerSchema } from "@/items/self-rating";
 import { type ExerciseState, isCompleted } from "@/scoring/exercise";
+import { parseSettings } from "@/settings/settings";
 import type { CardKind } from "./kinds";
 
 /** The step holds at most this many exercises. */
 export const RIPASSO_SIZE = 3;
 
 /** `settings.inject_review` (SPEC §10.1): the step is on unless it is turned off. */
-export const injectsReview = (settings: Readonly<Record<string, unknown>> | undefined): boolean => settings?.inject_review !== false;
+export const injectsReview = (settings: Readonly<Record<string, unknown>> | undefined): boolean => parseSettings(settings).injectReview;
 
 /**
  * How far an answer's time may sit before the choice and still count as

@@ -67,6 +67,7 @@ export const ui = {
     home: "Home",
     levels: "Livelli",
     review: "Ripasso",
+    settings: "Impostazioni",
   },
 
   footer: {
@@ -346,6 +347,23 @@ export const ui = {
       save: "Salva la correzione",
       saved: "Correzione salvata: la ripasserai domani.",
     },
+  },
+
+  /** Impostazioni (SPEC §3, §10.1). */
+  settings: {
+    pageTitle: `Impostazioni · ${appName}`,
+    heading: "Impostazioni",
+    notLoaded: "Non è stato possibile caricare le impostazioni salvate: qui vedi quelle predefinite.",
+    lessons: "Lezioni",
+    ripasso: "Ripasso personale",
+    ripassoHint: "Prima di Parla!, fino a tre esercizi da ripassare presi da altre lezioni.",
+    scene: "Scena",
+    sceneHint: "Come si apre il lettore della scena. Nel lettore puoi sempre cambiarli.",
+    subtitles: "Sottotitoli",
+    speed: "Velocità",
+    voice: "Voce italiana",
+    voiceHint: "Vale solo per questo computer: ogni computer ha le sue voci.",
+    noVoice: "Su questo computer non c'è una voce italiana.",
   },
 
   /** The status circle's tooltip, e.g. "Completata · 87%". */

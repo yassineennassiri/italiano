@@ -18,3 +18,13 @@ export function useAudio(): { availability: Availability; playing: string | null
     canPlay: (clip) => canPlayClip(clip, availability),
   };
 }
+
+/** The browser's Italian voices and the one that speaks, for the voice picker; none until the page hydrates. */
+export function useVoices(): { voices: string[]; voice: string | null; choose: (name: string) => void } {
+  const hydrated = useSyncExternalStore(subscribe, version, () => SERVER) !== SERVER;
+  return {
+    voices: hydrated ? audioService().italianVoices() : [],
+    voice: hydrated ? audioService().voiceName() : null,
+    choose: (name) => audioService().chooseVoice(name),
+  };
+}
