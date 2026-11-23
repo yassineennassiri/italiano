@@ -41,6 +41,14 @@ describe("levelOverview", () => {
           draft: true,
           href: "/a2/la-casa-della-signora-pina",
         },
+        {
+          id: "a2.u01.l03",
+          title: "Il vicino di casa",
+          topic: "Conoscere i vicini",
+          grammarLabel: "Tu o Lei? · Presentarsi",
+          draft: true,
+          href: "/a2/il-vicino-di-casa",
+        },
       ],
     });
   });
@@ -81,11 +89,12 @@ function withUnit2Lesson(): string {
 describe("finishTarget", () => {
   it("goes to the next lesson's intro, in the same unit and across units", () => {
     expect(finishTarget("a2.u01.l01")).toEqual({ href: "/a2/la-casa-della-signora-pina/info", levelCompleted: false });
-    expect(finishTarget("a2.u01.l02", withUnit2Lesson())).toEqual({ href: "/a2/una-casa/info", levelCompleted: false });
+    expect(finishTarget("a2.u01.l02")).toEqual({ href: "/a2/il-vicino-di-casa/info", levelCompleted: false });
+    expect(finishTarget("a2.u01.l03", withUnit2Lesson())).toEqual({ href: "/a2/una-casa/info", levelCompleted: false });
   });
 
   it("goes to the level overview with Livello completato after the level's last lesson", () => {
-    expect(finishTarget("a2.u01.l02")).toEqual({ href: "/a2?completato=1", levelCompleted: true });
+    expect(finishTarget("a2.u01.l03")).toEqual({ href: "/a2?completato=1", levelCompleted: true });
     expect(finishTarget("a2.u02.l01", withUnit2Lesson())).toEqual({ href: "/a2?completato=1", levelCompleted: true });
   });
 });

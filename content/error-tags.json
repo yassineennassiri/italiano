@@ -52,7 +52,8 @@
   },
   "register.lei": {
     "explanation_en": "With strangers, older people and in formal settings, use Lei (third person singular) consistently: Lei è Adam? E Lei?",
-    "unit": "a2.u01"
+    "unit": "a2.u01",
+    "grammar_page": "a2.u01.l03.gr1"
   },
   "verb.conjugation": {
     "explanation_en": "The verb ending must match the subject: io vado, tu vai, lui va. Watch the irregular verbs essere, avere, fare, andare, venire, dovere, potere and volere.",

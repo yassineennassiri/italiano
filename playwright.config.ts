@@ -8,7 +8,8 @@
  * review session of item cards (issue #44) and vocab flip cards
  * (issue #45), corrections with error cards (issue #46), and top error
  * tags with tag drills (issue #47), vocab-link popovers (issue #49) and
- * Impostazioni (issue #50) and feedback notes (issue #51),
+ * Impostazioni (issue #50) and feedback notes (issue #51), and A2.1.3
+ * played to the Finish screen (issue #53),
  * against the
  * Neon `dev` branch only (ADR-0001, SPEC §12). It starts
  * `npm run dev:test` on port 3001, or reuses one that is already running;

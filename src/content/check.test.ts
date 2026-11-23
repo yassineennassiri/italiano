@@ -176,17 +176,17 @@ describe("checkContent", () => {
   it("reports a lesson listed in course.json that has no file", () => {
     const dir = copyContent();
     editJson(dir, "course.json", (course) => {
-      course.levels[0].units[0].lessons.push("a2.u01.l03");
+      course.levels[0].units[0].lessons.push("a2.u01.l04");
     });
     expect(checkContent(dir)).toEqual([
-      `course.json: levels[0].units[0].lessons[2]: no lesson file for "a2.u01.l03"`,
+      `course.json: levels[0].units[0].lessons[3]: no lesson file for "a2.u01.l04"`,
     ]);
   });
 
   it("reports a lesson file that course.json does not list", () => {
     const dir = copyContent();
     editJson(dir, "course.json", (course) => {
-      course.levels[0].units[0].lessons = ["a2.u01.l02"];
+      course.levels[0].units[0].lessons = ["a2.u01.l02", "a2.u01.l03"];
     });
     expect(checkContent(dir)).toEqual([
       `${LESSON_FILE}: lesson "a2.u01.l01" is not listed in course.json under unit "a2.u01"`,

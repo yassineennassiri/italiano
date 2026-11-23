@@ -1,0 +1,939 @@
+{
+  "id": "a2.u01.l03",
+  "version": 1,
+  "status": "draft",
+  "slug": "il-vicino-di-casa",
+  "title": "Il vicino di casa",
+  "topic": "Conoscere i vicini",
+  "grammar_label": "Tu o Lei? · Presentarsi",
+  "summary": "Sulle scale del palazzo Adam incontra Luca, un giovane vicino che gli dà subito del tu. Con la signora Pina, invece, Adam continua a dare del Lei. Chi dà del tu a chi?",
+  "objectives": [
+    "presentarsi: mi chiamo, sono di, lavoro come",
+    "chiedere il nome, l'origine e il lavoro a un'altra persona",
+    "scegliere tra tu e Lei e non mescolarli",
+    "salutare in modo informale e formale: ciao e buongiorno"
+  ],
+  "scene": {
+    "poster": "images/a2/u01/l03/poster.webp",
+    "duration_s": 85,
+    "panels": [
+      {
+        "image": "images/a2/u01/l03/panel-01.webp",
+        "from_line": "L1"
+      },
+      {
+        "image": "images/a2/u01/l03/panel-02.webp",
+        "from_line": "L8"
+      },
+      {
+        "image": "images/a2/u01/l03/panel-03.webp",
+        "from_line": "L13"
+      }
+    ],
+    "lines": [
+      {
+        "id": "L1",
+        "speaker": "luca",
+        "it": "Ciao! Sei il nuovo [[vicino|v-vicino]] del quinto piano?",
+        "en": "Hi! Are you the new neighbour on the fifth floor?"
+      },
+      {
+        "id": "L2",
+        "speaker": "adam",
+        "it": "Buongiorno! Sì, sono io. Lei [[abita|v-abitare]] qui?",
+        "en": "Good morning! Yes, that's me. Do you live here?"
+      },
+      {
+        "id": "L3",
+        "speaker": "luca",
+        "it": "«Lei»? Ma no, [[dammi del tu|v-dare-del-tu]]! Ho ventisei anni.",
+        "en": "\"Lei\"? Oh no, call me tu! I'm twenty-six."
+      },
+      {
+        "id": "L4",
+        "speaker": "luca",
+        "it": "[[Piacere|v-piacere]], [[mi chiamo|v-chiamarsi]] Luca. Abito al quarto piano, proprio sotto di te.",
+        "en": "Nice to meet you, my name's Luca. I live on the fourth floor, right below you."
+      },
+      {
+        "id": "L5",
+        "speaker": "adam",
+        "it": "Piacere, Luca. Io mi chiamo Adam.",
+        "en": "Nice to meet you, Luca. My name's Adam."
+      },
+      {
+        "id": "L6",
+        "speaker": "luca",
+        "it": "Di dove sei, Adam?",
+        "en": "Where are you from, Adam?"
+      },
+      {
+        "id": "L7",
+        "speaker": "adam",
+        "it": "Non sono di qui: sono arrivato ieri. E tu, [[sei di|v-essere-di]] Genova?",
+        "en": "I'm not from here: I arrived yesterday. And you, are you from Genoa?"
+      },
+      {
+        "id": "L8",
+        "speaker": "luca",
+        "it": "Sì, sono di Genova, nato e cresciuto nei caruggi. E che lavoro fai?",
+        "en": "Yes, I'm from Genoa, born and raised in the caruggi. And what do you do for a living?"
+      },
+      {
+        "id": "L9",
+        "speaker": "adam",
+        "it": "Sono [[ingegnere|v-ingegnere]]. Da lunedì [[lavoro come|v-lavorare-come]] ingegnere elettrico in un'[[azienda|v-azienda]] di energia.",
+        "en": "I'm an engineer. Starting Monday I'll be working as an electrical engineer at an energy company."
+      },
+      {
+        "id": "L10",
+        "speaker": "luca",
+        "it": "Forte! Io lavoro come [[cuoco|v-cuoco]] in una [[focacceria|v-focacceria]] qui vicino. Giochi a padel?",
+        "en": "Cool! I work as a cook in a focaccia bakery near here. Do you play padel?"
+      },
+      {
+        "id": "L11",
+        "speaker": "adam",
+        "it": "Sì, ma gioco male!",
+        "en": "Yes, but I play badly!"
+      },
+      {
+        "id": "L12",
+        "speaker": "luca",
+        "it": "Non importa! Sabato giochiamo insieme. Oh, ecco la signora Pina…",
+        "en": "Doesn't matter! We'll play together on Saturday. Oh, here's Signora Pina…"
+      },
+      {
+        "id": "L13",
+        "speaker": "pina",
+        "it": "Buongiorno, ingegnere! Vedo che ha conosciuto Luca.",
+        "en": "Good morning, engineer! I see you've met Luca."
+      },
+      {
+        "id": "L14",
+        "speaker": "adam",
+        "it": "Buongiorno, signora! Sì, è molto [[simpatico|v-simpatico]]. Lei conosce tutti, vero?",
+        "en": "Good morning, signora! Yes, he's very nice. You know everyone, don't you?"
+      },
+      {
+        "id": "L15",
+        "speaker": "pina",
+        "it": "Certo! E tu, Luca, [[saluta|v-salutare]] come si deve: con me si dice «buongiorno», non «ciao»!",
+        "en": "Of course! And you, Luca, say hello properly: with me it's \"buongiorno\", not \"ciao\"!"
+      },
+      {
+        "id": "L16",
+        "speaker": "luca",
+        "it": "Buongiorno, signora Pina! A sabato, Adam!",
+        "en": "Good morning, Signora Pina! See you on Saturday, Adam!"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "id": "a2.u01.l03.s01",
+      "title": "Sulle scale",
+      "instruction": "Guarda la scena e rispondi alle domande.",
+      "media": {
+        "kind": "scene"
+      },
+      "script": "scene",
+      "items": [
+        {
+          "id": "a2.u01.l03.s01.i01",
+          "type": "single_choice",
+          "prompt": "Prima di guardare: secondo te, chi incontra Adam sulle scale del palazzo?",
+          "options": [
+            "Un vicino di casa",
+            "Un collega di lavoro",
+            "Il postino"
+          ],
+          "answer": 0
+        },
+        {
+          "id": "a2.u01.l03.s01.i02",
+          "type": "single_choice",
+          "prompt": "Vero o falso? Luca dà del Lei ad Adam.",
+          "options": [
+            "Vero",
+            "Falso"
+          ],
+          "answer": 1
+        },
+        {
+          "id": "a2.u01.l03.s01.i03",
+          "type": "dropdown",
+          "prompt": "Chi lo dice?",
+          "text": "{{g1}}: «Dammi del tu!»\n{{g2}}: «Lei conosce tutti, vero?»\n{{g3}}: «Buongiorno, ingegnere!»",
+          "gaps": [
+            {
+              "id": "g1",
+              "options": [
+                "Adam",
+                "Luca",
+                "Pina"
+              ],
+              "answer": "Luca"
+            },
+            {
+              "id": "g2",
+              "options": [
+                "Adam",
+                "Luca",
+                "Pina"
+              ],
+              "answer": "Adam"
+            },
+            {
+              "id": "g3",
+              "options": [
+                "Adam",
+                "Luca",
+                "Pina"
+              ],
+              "answer": "Pina"
+            }
+          ],
+          "solvable": true
+        }
+      ]
+    },
+    {
+      "id": "a2.u01.l03.s02",
+      "title": "Tu o Lei?",
+      "instruction": "Scegli la forma giusta: tu o Lei?",
+      "script": "scene",
+      "items": [
+        {
+          "id": "a2.u01.l03.s02.i01",
+          "type": "dropdown",
+          "prompt": "Chi dà del tu e chi dà del Lei?",
+          "text": "Luca ad Adam: «Ciao! {{g1}} il nuovo vicino?»\nAdam alla signora Pina: «{{g2}} conosce tutti, vero?»\nLuca ad Adam: «E che lavoro {{g3}}?»\nPina ad Adam: «Vedo che {{g4}} conosciuto Luca.»\nAdam a Luca: «E {{g5}}, sei di Genova?»",
+          "gaps": [
+            {
+              "id": "g1",
+              "options": [
+                "Sei",
+                "È"
+              ],
+              "answer": "Sei"
+            },
+            {
+              "id": "g2",
+              "options": [
+                "Tu",
+                "Lei"
+              ],
+              "answer": "Lei"
+            },
+            {
+              "id": "g3",
+              "options": [
+                "fai",
+                "fa"
+              ],
+              "answer": "fai"
+            },
+            {
+              "id": "g4",
+              "options": [
+                "hai",
+                "ha"
+              ],
+              "answer": "ha"
+            },
+            {
+              "id": "g5",
+              "options": [
+                "tu",
+                "Lei"
+              ],
+              "answer": "tu"
+            }
+          ],
+          "error_tags": [
+            "register.lei"
+          ],
+          "solvable": true,
+          "notes": [
+            {
+              "kind": "info",
+              "text_en": "With tu the verb is in the second person: sei, fai, hai. With Lei it is in the third person, the same form as for lui and lei: è, fa, ha."
+            },
+            {
+              "kind": "tip",
+              "text_en": "Lei meaning 'you' is often written with a capital L, to tell it apart from lei, 'she'."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a2.u01.l03.s03",
+      "title": "Tocca a te: incontri Luca",
+      "instruction": "Ascolta Luca e rispondi ad alta voce. Poi valuta come è andata.",
+      "items": [
+        {
+          "id": "a2.u01.l03.s03.i01",
+          "type": "speak_rate",
+          "variant": "dialogue",
+          "exchanges": [
+            {
+              "id": "e1",
+              "other": "Ciao! Sei il nuovo vicino?",
+              "me": "Ciao! Sì, sono io. Mi chiamo Adam.",
+              "notes": [
+                {
+                  "kind": "tip",
+                  "text_en": "Luca is young and starts with tu, so answer with tu too: Ciao!, not Buongiorno!",
+                  "error_tag": "register.lei"
+                }
+              ]
+            },
+            {
+              "id": "e2",
+              "other": "Piacere, io sono Luca. Di dove sei?",
+              "me": "Piacere, Luca! Non sono di qui: sono arrivato ieri. E tu?"
+            },
+            {
+              "id": "e3",
+              "other": "Io sono di Genova. E che lavoro fai?",
+              "me": "Lavoro come ingegnere elettrico. E tu, che lavoro fai?",
+              "hint": "Con Luca usa il tu: e tu?, non e Lei?"
+            }
+          ],
+          "error_tags": [
+            "register.lei"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a2.u01.l03.s04",
+      "title": "Come ti chiami? Come si chiama?",
+      "instruction": "Completa le domande con il verbo giusto.",
+      "instruction_en": "Write the verb: tu forms for Luca, Lei forms for the older neighbour.",
+      "items": [
+        {
+          "id": "a2.u01.l03.s04.i01",
+          "type": "text_gap",
+          "layout": "full",
+          "prompt": "Adam prepara le domande per i vicini: a Luca dà del tu, alla vicina anziana del primo piano dà del Lei.",
+          "text": "A Luca:\nCome ti {{g1}}?\nDi dove {{g2}}?\nChe lavoro {{g3}}?\n\nAlla vicina del primo piano:\nCome si {{g4}}?\nDi dov'{{g5}}?\nDa quanto tempo {{g6}} qui?",
+          "gaps": [
+            {
+              "id": "g1",
+              "answer": "chiami"
+            },
+            {
+              "id": "g2",
+              "answer": "sei"
+            },
+            {
+              "id": "g3",
+              "answer": "fai"
+            },
+            {
+              "id": "g4",
+              "answer": "chiama"
+            },
+            {
+              "id": "g5",
+              "answer": "è"
+            },
+            {
+              "id": "g6",
+              "answer": "abita",
+              "accept": [
+                "vive"
+              ]
+            }
+          ],
+          "error_tags": [
+            "register.lei"
+          ],
+          "solvable": true,
+          "notes": [
+            {
+              "kind": "attenzione",
+              "text_en": "Once you use Lei, keep the third person all the way through: Come si chiama? Di dov'è? Not Come ti chiama? or Di dove sei, signora?",
+              "error_tag": "register.lei"
+            },
+            {
+              "kind": "info",
+              "text_en": "chiamarsi changes its little pronoun too: mi chiamo, ti chiami, si chiama."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a2.u01.l03.s05",
+      "title": "Ascolta e scegli",
+      "instruction": "Ascolta e scegli la risposta giusta.",
+      "items": [
+        {
+          "id": "a2.u01.l03.s05.i01",
+          "type": "audio_choice",
+          "prompt": "Adam: «Buongiorno! Sì, sono io. Lei abita qui?» Luca: «…»",
+          "clip": {
+            "from_line": "L2",
+            "to_line": "L3"
+          },
+          "options": [
+            "«Lei»? Ma no, dammi del tu!",
+            "Sì, abito al quarto piano, signore.",
+            "No, abito a Sampierdarena."
+          ],
+          "answer": 0
+        },
+        {
+          "id": "a2.u01.l03.s05.i02",
+          "type": "audio_choice",
+          "prompt": "Luca dà subito del tu ad Adam, …",
+          "clip": {
+            "from_line": "L3",
+            "to_line": "L4"
+          },
+          "options": [
+            "perché è giovane e sono vicini di casa.",
+            "perché Adam è un suo collega.",
+            "perché la signora Pina lo vuole."
+          ],
+          "answer": 0
+        },
+        {
+          "id": "a2.u01.l03.s05.i03",
+          "type": "audio_choice",
+          "prompt": "Pina: «E tu, Luca, saluta come si deve: con me si dice…»",
+          "clip": {
+            "from_line": "L15",
+            "to_line": "L16"
+          },
+          "options": [
+            "«buongiorno», non «ciao»!",
+            "«ciao», non «buongiorno»!",
+            "«piacere», non «ciao»!"
+          ],
+          "answer": 0
+        }
+      ]
+    },
+    {
+      "id": "a2.u01.l03.s06",
+      "title": "Il mio vicino",
+      "instruction": "Ascolta Luca e completa gli appunti di Adam.",
+      "items": [
+        {
+          "id": "a2.u01.l03.s06.i01",
+          "type": "audio_gap",
+          "prompt": "Adam scrive che cosa sa del suo nuovo vicino.",
+          "clip": {
+            "from_line": "L4",
+            "to_line": "L10"
+          },
+          "text": "Il mio vicino:\n– si chiama {{g1}}\n– abita al {{g2}} piano\n– è di {{g3}}\n– lavora come {{g4}} in una focacceria",
+          "gaps": [
+            {
+              "id": "g1",
+              "answer": "Luca",
+              "case_sensitive": false
+            },
+            {
+              "id": "g2",
+              "answer": "quarto"
+            },
+            {
+              "id": "g3",
+              "answer": "Genova",
+              "case_sensitive": false
+            },
+            {
+              "id": "g4",
+              "answer": "cuoco"
+            }
+          ],
+          "solvable": true,
+          "notes": [
+            {
+              "kind": "info",
+              "text_en": "Here si chiama, è and lavora are about Luca: he. The Lei form is exactly the same as the form for he and she, which is why Lei feels formal: you speak to someone as if about them."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a2.u01.l03.s07",
+      "title": "Tu o Lei? Una piccola guida",
+      "instruction": "Leggi la guida e rispondi alle domande.",
+      "reading": "# Tu o Lei?\n\n## Piccola guida per chi arriva in Italia\n\nIn Italia si [[dà del Lei|v-dare-del-lei]] alle persone che non si conoscono, alle persone anziane, ai clienti e in ufficio. Si [[dà del tu|v-dare-del-tu]] agli amici, in famiglia, ai bambini e tra ragazzi.\n\n- Al bar il barista chiede: «Buongiorno, che cosa prende?». Dà del Lei.\n- Tra giovani [[vicini|v-vicino]] di casa si usa subito il tu, senza chiedere: «Ciao, come ti chiami?»\n- Al lavoro dipende: in molte [[aziende|v-azienda]] i colleghi si danno del tu dal primo giorno, ma con il capo si comincia con il Lei.\n\nNon sai che cosa fare? Comincia con il Lei. Con una persona più anziana o più importante, di solito è lei che propone il tu: «Possiamo darci del tu?»",
+      "items": [
+        {
+          "id": "a2.u01.l03.s07.i01",
+          "type": "single_choice",
+          "prompt": "Al bar il barista ti chiede: «Che cosa prende?». Dà del tu o del Lei?",
+          "options": [
+            "Del Lei.",
+            "Del tu."
+          ],
+          "answer": 0,
+          "error_tags": [
+            "register.lei"
+          ]
+        },
+        {
+          "id": "a2.u01.l03.s07.i02",
+          "type": "single_choice",
+          "prompt": "Parli con una persona più anziana di te. Chi propone il tu, di solito?",
+          "options": [
+            "La persona più anziana.",
+            "Io, la persona più giovane.",
+            "Nessuno: si dà sempre del Lei."
+          ],
+          "answer": 0
+        },
+        {
+          "id": "a2.u01.l03.s07.i03",
+          "type": "single_choice",
+          "prompt": "Non sai se dare del tu o del Lei. Che cosa fai?",
+          "options": [
+            "Comincio con il Lei.",
+            "Comincio con il tu.",
+            "Non dico niente."
+          ],
+          "answer": 0,
+          "error_tags": [
+            "register.lei"
+          ],
+          "notes": [
+            {
+              "kind": "new_words",
+              "text_en": "anziano = elderly · il capo = the boss · proporre = to suggest · darsi del tu = to be on tu terms with each other"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a2.u01.l03.s08",
+      "title": "Per una signora anziana",
+      "instruction": "Scegli le domande giuste.",
+      "items": [
+        {
+          "id": "a2.u01.l03.s08.i01",
+          "type": "multi_select",
+          "prompt": "Incontri sulle scale una signora anziana che non conosci. Quali domande le fai? Ci sono tre risposte giuste.",
+          "options": [
+            "Come si chiama?",
+            "Di dove sei?",
+            "Lei è di Genova?",
+            "Come sta?",
+            "Come ti chiami?"
+          ],
+          "answers": [
+            0,
+            2,
+            3
+          ],
+          "error_tags": [
+            "register.lei"
+          ],
+          "solvable": true
+        }
+      ]
+    },
+    {
+      "id": "a2.u01.l03.s09",
+      "title": "Presentarsi",
+      "instruction": "Metti le parole nell'ordine giusto.",
+      "items": [
+        {
+          "id": "a2.u01.l03.s09.i01",
+          "type": "word_order",
+          "prompt": "Luca: «Piacere, mi chiamo Luca. E tu?»",
+          "tiles": [
+            "Mi chiamo",
+            "Adam",
+            "e",
+            "lavoro",
+            "come",
+            "ingegnere",
+            "."
+          ],
+          "solvable": true
+        },
+        {
+          "id": "a2.u01.l03.s09.i02",
+          "type": "word_order",
+          "prompt": "Pina: «Buongiorno, ingegnere! Vedo che ha conosciuto Luca.»",
+          "tiles": [
+            "Sì,",
+            "è",
+            "molto",
+            "simpatico.",
+            "Lei",
+            "conosce",
+            "tutti,",
+            "vero?"
+          ],
+          "solvable": true
+        }
+      ]
+    },
+    {
+      "id": "a2.u01.l03.s10",
+      "title": "Tocca a te: presentati",
+      "instruction": "Rispondi ad alta voce con i tuoi dati. Poi valuta come è andata.",
+      "items": [
+        {
+          "id": "a2.u01.l03.s10.i01",
+          "type": "speak_rate",
+          "variant": "personal",
+          "exchanges": [
+            {
+              "id": "e1",
+              "other": "Ciao! Come ti chiami?",
+              "me": "Mi chiamo … E tu?",
+              "hint": "Luca ti dà del tu: rispondi con il tu."
+            },
+            {
+              "id": "e2",
+              "other": "Di dove sei?",
+              "me": "Sono di …"
+            },
+            {
+              "id": "e3",
+              "other": "Che lavoro fai?",
+              "me": "Lavoro come …"
+            },
+            {
+              "id": "e4",
+              "other": "Buongiorno! Lei è il nuovo inquilino? Come si chiama?",
+              "me": "Buongiorno, signora! Mi chiamo … E Lei?",
+              "hint": "Ora parli con una vicina anziana: usa il Lei.",
+              "notes": [
+                {
+                  "kind": "attenzione",
+                  "text_en": "Switch register with the person, not halfway through: with an older neighbour it's E Lei?, never E tu?",
+                  "error_tag": "register.lei"
+                }
+              ]
+            }
+          ],
+          "error_tags": [
+            "register.lei"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a2.u01.l03.s11",
+      "title": "Parla! Due vicini",
+      "instruction": "Parla liberamente per circa un minuto, poi valuta come è andata.",
+      "items": [
+        {
+          "id": "a2.u01.l03.s11.i01",
+          "type": "parla",
+          "task": "Sabato c'è una festa nel cortile del palazzo. Incontri Luca e poi la signora Pina. Presentati a tutti e due: come ti chiami, di dove sei e che lavoro fai, e fai qualche domanda anche a loro.",
+          "example": "Ciao, Luca! Io mi chiamo Adam, sono il nuovo vicino del quinto piano. Non sono italiano: sono di … e sono arrivato da poco. E tu, sei di Genova? Ti piace lavorare in focacceria? … Buongiorno, signora Pina! Come sta? Sì, il lavoro va bene: lavoro come ingegnere elettrico in un'azienda di energia. Anche Lei è di Genova?",
+          "checklist": [
+            "Usa mi chiamo, sono di e lavoro come",
+            "Fai almeno due domande con il tu a Luca",
+            "Fai almeno due domande con il Lei alla signora Pina",
+            "Non mescolare tu e Lei con la stessa persona"
+          ],
+          "error_tags": [
+            "register.lei"
+          ]
+        }
+      ]
+    }
+  ],
+  "grammar": [
+    {
+      "id": "a2.u01.l03.gr1",
+      "title": "Tu o Lei?",
+      "blocks": [
+        {
+          "kind": "example",
+          "image": "images/a2/u01/l03/gr-stairs.webp",
+          "it": "Luca: «Ciao! **Sei** il nuovo vicino?» · Adam: «Buongiorno, signora! **Lei conosce** tutti, vero?»",
+          "en": "Luca: \"Hi! Are you the new neighbour?\" · Adam: \"Good morning, signora! You know everyone, don't you?\""
+        },
+        {
+          "kind": "table",
+          "columns": [
+            "",
+            "tu (informal)",
+            "Lei (formal)"
+          ],
+          "rows": [
+            [
+              "essere",
+              "sei",
+              "è"
+            ],
+            [
+              "avere",
+              "hai",
+              "ha"
+            ],
+            [
+              "fare",
+              "fai",
+              "fa"
+            ],
+            [
+              "abitare",
+              "abiti",
+              "abita"
+            ],
+            [
+              "chiamarsi",
+              "ti chiami",
+              "si chiama"
+            ],
+            [
+              "and you?",
+              "e tu?",
+              "e Lei?"
+            ]
+          ]
+        },
+        {
+          "kind": "rule",
+          "rows": [
+            [
+              {
+                "text": "tu "
+              },
+              {
+                "text": "sei",
+                "style": "highlight"
+              },
+              {
+                "text": " di Genova?"
+              }
+            ],
+            [
+              {
+                "text": "Lei "
+              },
+              {
+                "text": "è",
+                "style": "highlight"
+              },
+              {
+                "text": " di Genova?"
+              }
+            ]
+          ],
+          "arrows": [
+            {
+              "from": [
+                0,
+                1
+              ],
+              "to": [
+                1,
+                1
+              ],
+              "kind": "down"
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "md": "Italian has two ways to say *you* to one person. **tu** is informal: friends, family, children, and young people among themselves, as Luca does with Adam straight away. **Lei** is formal: strangers, older people, shops, offices and anyone you'd call *signora* or *signore*, as Adam does with Signora Pina.\n\n**Lei** takes the verb in the **third person**, the same form as for *lui* and *lei*: *Lei è*, *Lei ha*, *Lei si chiama*. Pronouns follow it too: *Le offro un caffè*. The commonest mistake is to mix the two in one sentence: *Lei sei* or *Come ti chiama?* Pick one and keep it.\n\nRespect for age runs one way: Signora Pina, much older, says *tu* to Luca, but Luca says *Lei* and *buongiorno* to her."
+        },
+        {
+          "kind": "terms",
+          "items": [
+            {
+              "term": "register",
+              "def_en": "how formal your language is: tu is the informal register, Lei the formal one"
+            },
+            {
+              "term": "dare del tu / dare del Lei",
+              "def_en": "to address someone as tu or as Lei: Luca dà del tu ad Adam"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a2.u01.l03.gr2",
+      "title": "Presentarsi: mi chiamo, sono di, lavoro come",
+      "blocks": [
+        {
+          "kind": "example",
+          "it": "Piacere, **mi chiamo** Luca. **Sono di** Genova e **lavoro come** cuoco.",
+          "en": "Nice to meet you, my name is Luca. I'm from Genoa and I work as a cook."
+        },
+        {
+          "kind": "table",
+          "columns": [
+            "",
+            "io",
+            "tu",
+            "Lei"
+          ],
+          "rows": [
+            [
+              "name",
+              "mi chiamo",
+              "ti chiami",
+              "si chiama"
+            ],
+            [
+              "origin",
+              "sono di",
+              "sei di",
+              "è di"
+            ],
+            [
+              "job",
+              "lavoro come",
+              "lavori come",
+              "lavora come"
+            ],
+            [
+              "home",
+              "abito a / in",
+              "abiti a / in",
+              "abita a / in"
+            ]
+          ]
+        },
+        {
+          "kind": "text",
+          "md": "**mi chiamo** literally means *I call myself*: the little pronoun changes with the person (*mi*, *ti*, *si*).\n\n**sono di** + a **town**: *sono di Genova*, *Luca è di Genova*. For a country, use the adjective or *vengo da*: *sono francese*, *vengo dalla Francia*. *Sono di Francia* is wrong.\n\n**lavoro come** + job, with **no article**: *lavoro come ingegnere*, *lavora come cuoco*. You can also say *sono ingegnere* or *faccio l'ingegnere*, where *fare* does take the article.\n\nTo answer an introduction, say **Piacere!** or **Piacere mio!**, and turn the question back: *E tu?* or *E Lei?*"
+        },
+        {
+          "kind": "terms",
+          "items": [
+            {
+              "term": "reflexive verb",
+              "def_en": "a verb used with mi, ti, si…, such as chiamarsi: mi chiamo Adam"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "vocab": [
+    {
+      "id": "v-abitare",
+      "it": "abitare",
+      "pos": "verb",
+      "forms": "abito, abiti, abita; abitare a Genova, in via…",
+      "en": "to live (somewhere)"
+    },
+    {
+      "id": "v-azienda",
+      "it": "l'azienda",
+      "plural": "le aziende",
+      "gender": "f",
+      "pos": "noun",
+      "en": "company, firm"
+    },
+    {
+      "id": "v-chiamarsi",
+      "it": "chiamarsi",
+      "pos": "verb",
+      "forms": "mi chiamo, ti chiami, si chiama",
+      "en": "to be called; mi chiamo Adam = my name is Adam"
+    },
+    {
+      "id": "v-cuoco",
+      "it": "il cuoco",
+      "plural": "i cuochi",
+      "gender": "m",
+      "pos": "noun",
+      "forms": "femminile: la cuoca",
+      "en": "cook, chef"
+    },
+    {
+      "id": "v-dare-del-lei",
+      "it": "dare del Lei",
+      "pos": "phrase",
+      "forms": "do del Lei, dai del Lei, dà del Lei",
+      "en": "to address someone formally, as Lei"
+    },
+    {
+      "id": "v-dare-del-tu",
+      "it": "dare del tu",
+      "pos": "phrase",
+      "forms": "dammi del tu!; darsi del tu",
+      "en": "to address someone informally, as tu; dammi del tu! = call me tu!"
+    },
+    {
+      "id": "v-essere-di",
+      "it": "essere di",
+      "pos": "phrase",
+      "forms": "sono di, sei di, è di + città",
+      "en": "to be from (a town)"
+    },
+    {
+      "id": "v-focacceria",
+      "it": "la focacceria",
+      "plural": "le focaccerie",
+      "gender": "f",
+      "pos": "noun",
+      "en": "focaccia bakery"
+    },
+    {
+      "id": "v-ingegnere",
+      "it": "l'ingegnere",
+      "plural": "gli ingegneri",
+      "gender": "m",
+      "pos": "noun",
+      "forms": "anche come titolo: Buongiorno, ingegnere!",
+      "en": "engineer; also used as a title"
+    },
+    {
+      "id": "v-lavorare-come",
+      "it": "lavorare come",
+      "pos": "phrase",
+      "forms": "lavoro come, lavori come, lavora come + mestiere, senza articolo",
+      "en": "to work as"
+    },
+    {
+      "id": "v-piacere",
+      "it": "piacere!",
+      "pos": "phrase",
+      "forms": "piacere mio!",
+      "en": "nice to meet you!"
+    },
+    {
+      "id": "v-salutare",
+      "it": "salutare",
+      "pos": "verb",
+      "forms": "saluto, saluti, saluta",
+      "en": "to greet, to say hello or goodbye"
+    },
+    {
+      "id": "v-simpatico",
+      "it": "simpatico",
+      "pos": "adj",
+      "forms": "simpatica, simpatici, simpatiche",
+      "en": "nice, likeable"
+    },
+    {
+      "id": "v-vicino",
+      "it": "il vicino di casa",
+      "plural": "i vicini di casa",
+      "gender": "m",
+      "pos": "noun",
+      "forms": "femminile: la vicina di casa",
+      "sort_key": "vicino di casa",
+      "en": "neighbour"
+    }
+  ],
+  "culture": {
+    "title": "From Lei to tu",
+    "image": "images/a2/u01/l03/culture-tu-lei.webp",
+    "md": "Italians switch from **Lei** to **tu** much faster than they used to, but the switch still follows a few unwritten rules.\n\nAmong young people it happens at once, as with Luca on the stairs: using *Lei* with someone your own age sounds cold, or even a little funny. With older people, strangers, shopkeepers and officials, *Lei* is the safe default, and in Genoa an older landlady like Signora Pina will expect it.\n\nOutside that, the switch is usually **offered**, not taken. The older or more senior person proposes it: *Possiamo darci del tu?* or simply *Dammi pure del tu!* Accepting is easy, *Volentieri!*, and from then on going back to *Lei* would feel like a step back.\n\nAt work it depends on the company. Many offices, especially young and technical ones, use *tu* among colleagues from the first day, while the boss or a client may stay on *Lei* for months. Titles are part of the same system: Italians address graduates by their profession, so Adam becomes *ingegnere* and a doctor or any graduate *dottore*.\n\nWhen in doubt, start with *Lei* and let the other person move you to *tu*. Nobody is offended by too much courtesy."
+  }
+}
