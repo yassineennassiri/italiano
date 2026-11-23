@@ -9,6 +9,10 @@ describe("lessonNoteRef (SPEC §10.6)", () => {
     expect(lessonNoteRef("a2.u01.l01", "/a2/benvenuto-a-genova", "/a2/benvenuto-a-genova/vocabolario")).toBe("a2.u01.l01/vocabolario");
   });
 
+  it("ignores a path outside the lesson, even one that starts with the lesson's slug", () => {
+    expect(lessonNoteRef("a2.u01.l01", "/a2/benvenuto", "/a2/benvenuto-a-genova/info")).toBe("a2.u01.l01");
+  });
+
   it("is the lesson id alone on the lesson's own URL, with or without a trailing slash", () => {
     expect(lessonNoteRef("a2.u01.l01", "/a2/benvenuto-a-genova", "/a2/benvenuto-a-genova")).toBe("a2.u01.l01");
     expect(lessonNoteRef("a2.u01.l01", "/a2/benvenuto-a-genova", "/a2/benvenuto-a-genova/info/")).toBe("a2.u01.l01/info");

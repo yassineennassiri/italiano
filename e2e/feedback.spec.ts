@@ -65,8 +65,9 @@ test("Annulla closes Segnala un problema without saving", async ({ page }) => {
   await dialog.getByLabel(ui.feedback.note).fill("Non la mando.");
   await dialog.getByRole("button", { name: ui.feedback.cancel }).click();
   await expect(dialog).toBeHidden();
-  // A note saved afterwards is the only one: the cancelled text was never queued.
+  // The next opening starts empty, and a note saved then is the only one: the cancelled text was never queued.
   await openReport(page);
+  await expect(dialog.getByLabel(ui.feedback.note)).toHaveValue("");
   await dialog.getByLabel(ui.feedback.note).fill("Questa sì.");
   await dialog.getByRole("button", { name: ui.feedback.send }).click();
   await expect.poll(savedNotes).toEqual([{ scope: "lesson", refId: "a2.u01.l02/info", text: "Questa sì.", done: false }]);

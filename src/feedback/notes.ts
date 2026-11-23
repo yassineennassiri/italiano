@@ -41,7 +41,8 @@ export type FeedbackDoneWrite = z.infer<typeof feedbackDoneWriteSchema>;
  * `/a2/la-casa-della-signora-pina/esercizi/4` → `a2.u01.l02/esercizi/4`.
  */
 export function lessonNoteRef(lessonId: string, lessonPath: string, pathname: string): string {
-  const page = pathname.startsWith(lessonPath) ? pathname.slice(lessonPath.length).replace(/^\/+|\/+$/g, "") : "";
+  const inLesson = pathname === lessonPath || pathname.startsWith(`${lessonPath}/`);
+  const page = inLesson ? pathname.slice(lessonPath.length).replace(/^\/+|\/+$/g, "") : "";
   return page === "" ? lessonId : `${lessonId}/${page}`;
 }
 
@@ -52,11 +53,7 @@ export type OpenNote = { id: string; scope: FeedbackScope; refId: string; text: 
 export type NoteGroup = { id: string; title: string; notes: OpenNote[] };
 
 /** The level or lesson a note belongs to: `a2.u01.l02/esercizi/4` → `a2.u01.l02`. */
-function groupId(note: OpenNote): string {
-  const head = note.refId.split("/")[0];
-  // An item ref (later) starts with its lesson id.
-  return note.scope === "item" ? (/^.+?\.l\d{2}/.exec(head)?.[0] ?? head) : head;
-}
+const groupId = (note: OpenNote): string => note.refId.split("/")[0];
 
 /**
  * The open notes grouped by level and lesson, in course order (a level's own
@@ -77,7 +74,6 @@ export function groupOpenNotes(notes: readonly OpenNote[], titleOf: (id: string)
       notes: grouped.toSorted((a, b) => a.createdAt.getTime() - b.createdAt.getTime()),
     }));
 }
-
 
 /**
  * The open notes as Markdown, for a content-fixing agent (`npm run

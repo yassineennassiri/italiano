@@ -2,10 +2,13 @@
 
 import { usePathname } from "next/navigation";
 import { type FormEvent, useId, useRef, useState } from "react";
-import { type FeedbackWrite, lessonNoteRef } from "@/feedback/notes";
+import { type FeedbackWrite, lessonNoteRef, MAX_NOTE } from "@/feedback/notes";
 import { submitFeedback } from "@/progress/client";
 import { ui } from "@/ui-it";
 import { ACCENT_CLASS } from "./accent-link";
+
+/** The dialog's outlined secondary buttons (*Annulla*, *Chiudi*). */
+const OUTLINE_CLASS = "rounded-full border-2 border-brand px-6 py-2 font-bold text-brand hover:bg-tint";
 
 /**
  * A note's textarea and its Save button, which stays disabled while the text
@@ -42,6 +45,7 @@ function NoteForm({
         value={text}
         onChange={(event) => setText(event.target.value)}
         required
+        maxLength={MAX_NOTE}
         rows={3}
         className="block w-full rounded-md border-2 border-brand bg-background px-2 py-1"
       />
@@ -78,7 +82,8 @@ export function LevelFeedbackCard({ levelId }: { levelId: string }) {
 /**
  * *Segnala un problema* (SPEC §3.1, §10.6) with its dialog, a native modal:
  * a textarea that saves a `scope = lesson` note on the page I'm on
- * (`a2.u01.l02/esercizi/4`). Escape or *Annulla* closes it and saves nothing;
+ * (`a2.u01.l02/esercizi/4`). Escape or *Annulla* closes it and saves nothing,
+ * and the next opening starts empty;
  * *Invia* saves and says so. `onClose` runs whenever the dialog closes, for
  * returning focus. Returns the function that opens it, and the dialog to render.
  */
@@ -87,6 +92,8 @@ export function useReportDialog({ lessonId, lessonPath, onClose }: { lessonId: s
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const [sent, setSent] = useState(false);
+  // A new form on every opening, so a draft left by Annulla doesn't come back on another page.
+  const [opening, setOpening] = useState(0);
   const close = () => dialogRef.current?.close();
 
   const dialog = (
@@ -105,7 +112,7 @@ export function useReportDialog({ lessonId, lessonPath, onClose }: { lessonId: s
             {ui.feedback.sent}
           </p>
           <div className="mt-6 flex justify-end">
-            <button type="button" autoFocus onClick={close} className="rounded-full border-2 border-brand px-6 py-2 font-bold text-brand hover:bg-tint">
+            <button type="button" autoFocus onClick={close} className={OUTLINE_CLASS}>
               {ui.feedback.close}
             </button>
           </div>
@@ -114,11 +121,12 @@ export function useReportDialog({ lessonId, lessonPath, onClose }: { lessonId: s
         <>
           <p className="mt-3">{ui.feedback.reportText}</p>
           <NoteForm
+            key={opening}
             note={() => ({ scope: "lesson", refId: lessonNoteRef(lessonId, lessonPath, pathname) })}
             saveLabel={ui.feedback.send}
             onSaved={() => setSent(true)}
           >
-            <button type="button" onClick={close} className="rounded-full border-2 border-brand px-6 py-2 font-bold text-brand hover:bg-tint">
+            <button type="button" onClick={close} className={OUTLINE_CLASS}>
               {ui.feedback.cancel}
             </button>
           </NoteForm>
@@ -130,6 +138,7 @@ export function useReportDialog({ lessonId, lessonPath, onClose }: { lessonId: s
   return {
     open: () => {
       setSent(false);
+      setOpening((count) => count + 1);
       dialogRef.current?.showModal();
     },
     dialog,
