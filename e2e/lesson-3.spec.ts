@@ -87,7 +87,9 @@ test("plays A2.1.3 to the Finish screen, with no placeholder on any step", async
   }
 
   // Results: every step complete, and the points from the choice items.
-  const percent = Math.round((100 * points) / scorable);
+  // 8 choice items answered right, 15 scorable items (ADR-0002).
+  expect([points, scorable]).toEqual([8, 15]);
+  const percent = 53;
   await expect(shownText(page, ui.percent(percent))).toBeVisible();
   await expect(shownText(page, ui.results.steps(lesson.steps.length, lesson.steps.length))).toBeVisible();
 

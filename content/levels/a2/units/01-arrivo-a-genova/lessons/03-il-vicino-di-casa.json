@@ -83,7 +83,7 @@
         "id": "L9",
         "speaker": "adam",
         "it": "Sono [[ingegnere|v-ingegnere]]. Da lunedì [[lavoro come|v-lavorare-come]] ingegnere elettrico in un'[[azienda|v-azienda]] di energia.",
-        "en": "I'm an engineer. From Monday I work as an electrical engineer at an energy company."
+        "en": "I'm an engineer. Starting Monday I'll be working as an electrical engineer at an energy company."
       },
       {
         "id": "L10",
@@ -158,10 +158,7 @@
             "Vero",
             "Falso"
           ],
-          "answer": 1,
-          "error_tags": [
-            "register.lei"
-          ]
+          "answer": 1
         },
         {
           "id": "a2.u01.l03.s01.i03",
@@ -315,14 +312,14 @@
       "id": "a2.u01.l03.s04",
       "title": "Come ti chiami? Come si chiama?",
       "instruction": "Completa le domande con il verbo giusto.",
-      "instruction_en": "Write the verb: tu forms for Luca, Lei forms for Signora Pina.",
+      "instruction_en": "Write the verb: tu forms for Luca, Lei forms for the older neighbour.",
       "items": [
         {
           "id": "a2.u01.l03.s04.i01",
           "type": "text_gap",
           "layout": "full",
-          "prompt": "Adam prepara le domande per i vicini: a Luca dà del tu, alla signora Pina dà del Lei.",
-          "text": "A Luca:\nCome ti {{g1}}?\nDi dove {{g2}}?\nChe lavoro {{g3}}?\n\nAlla signora Pina:\nCome si {{g4}}?\nDi dov'{{g5}}?\nDa quanto tempo {{g6}} qui?",
+          "prompt": "Adam prepara le domande per i vicini: a Luca dà del tu, alla vicina anziana del primo piano dà del Lei.",
+          "text": "A Luca:\nCome ti {{g1}}?\nDi dove {{g2}}?\nChe lavoro {{g3}}?\n\nAlla vicina del primo piano:\nCome si {{g4}}?\nDi dov'{{g5}}?\nDa quanto tempo {{g6}} qui?",
           "gaps": [
             {
               "id": "g1",
@@ -346,7 +343,10 @@
             },
             {
               "id": "g6",
-              "answer": "abita"
+              "answer": "abita",
+              "accept": [
+                "vive"
+              ]
             }
           ],
           "error_tags": [
@@ -385,10 +385,7 @@
             "Sì, abito al quarto piano, signore.",
             "No, abito a Sampierdarena."
           ],
-          "answer": 0,
-          "error_tags": [
-            "register.lei"
-          ]
+          "answer": 0
         },
         {
           "id": "a2.u01.l03.s05.i02",
@@ -403,10 +400,7 @@
             "perché Adam è un suo collega.",
             "perché la signora Pina lo vuole."
           ],
-          "answer": 0,
-          "error_tags": [
-            "register.lei"
-          ]
+          "answer": 0
         },
         {
           "id": "a2.u01.l03.s05.i03",
@@ -473,7 +467,7 @@
       "id": "a2.u01.l03.s07",
       "title": "Tu o Lei? Una piccola guida",
       "instruction": "Leggi la guida e rispondi alle domande.",
-      "reading": "# Tu o Lei?\n\n## Piccola guida per chi arriva in Italia\n\nIn Italia si dà del **Lei** alle persone che non si conoscono, alle persone anziane, ai clienti e in ufficio. Si dà del **tu** agli amici, in famiglia, ai bambini e tra ragazzi.\n\n- Al bar o in un negozio il barista chiede: «Buongiorno, che cosa prende?». Dà del Lei.\n- Tra giovani [[vicini|v-vicino]] di casa si usa subito il tu: «Ciao, come ti chiami?»\n- Al lavoro dipende: in molte [[aziende|v-azienda]] i colleghi si danno del tu dal primo giorno, ma con il capo si comincia con il Lei.\n\nNon sai che cosa fare? Comincia con il Lei. Di solito è la persona più anziana o più importante che propone il tu: «Possiamo darci del tu?»",
+      "reading": "# Tu o Lei?\n\n## Piccola guida per chi arriva in Italia\n\nIn Italia si [[dà del Lei|v-dare-del-lei]] alle persone che non si conoscono, alle persone anziane, ai clienti e in ufficio. Si [[dà del tu|v-dare-del-tu]] agli amici, in famiglia, ai bambini e tra ragazzi.\n\n- Al bar il barista chiede: «Buongiorno, che cosa prende?». Dà del Lei.\n- Tra giovani [[vicini|v-vicino]] di casa si usa subito il tu, senza chiedere: «Ciao, come ti chiami?»\n- Al lavoro dipende: in molte [[aziende|v-azienda]] i colleghi si danno del tu dal primo giorno, ma con il capo si comincia con il Lei.\n\nNon sai che cosa fare? Comincia con il Lei. Con una persona più anziana o più importante, di solito è lei che propone il tu: «Possiamo darci del tu?»",
       "items": [
         {
           "id": "a2.u01.l03.s07.i01",
@@ -491,11 +485,11 @@
         {
           "id": "a2.u01.l03.s07.i02",
           "type": "single_choice",
-          "prompt": "Chi propone il tu, di solito?",
+          "prompt": "Parli con una persona più anziana di te. Chi propone il tu, di solito?",
           "options": [
-            "La persona più anziana o più importante.",
-            "La persona più giovane.",
-            "Lo straniero."
+            "La persona più anziana.",
+            "Io, la persona più giovane.",
+            "Nessuno: si dà sempre del Lei."
           ],
           "answer": 0
         },
@@ -523,13 +517,13 @@
     },
     {
       "id": "a2.u01.l03.s08",
-      "title": "Per la signora Pina",
+      "title": "Per una signora anziana",
       "instruction": "Scegli le domande giuste.",
       "items": [
         {
           "id": "a2.u01.l03.s08.i01",
           "type": "multi_select",
-          "prompt": "Quali domande fai alla signora Pina? Ci sono tre risposte giuste.",
+          "prompt": "Incontri sulle scale una signora anziana che non conosci. Quali domande le fai? Ci sono tre risposte giuste.",
           "options": [
             "Come si chiama?",
             "Di dove sei?",
@@ -572,17 +566,16 @@
         {
           "id": "a2.u01.l03.s09.i02",
           "type": "word_order",
-          "prompt": "Pina: «Buongiorno, ingegnere!»",
+          "prompt": "Pina: «Buongiorno, ingegnere! Vedo che ha conosciuto Luca.»",
           "tiles": [
-            "Buongiorno,",
-            "signora!",
+            "Sì,",
+            "è",
+            "molto",
+            "simpatico.",
             "Lei",
             "conosce",
             "tutti,",
             "vero?"
-          ],
-          "error_tags": [
-            "register.lei"
           ],
           "solvable": true
         }
@@ -643,7 +636,7 @@
           "id": "a2.u01.l03.s11.i01",
           "type": "parla",
           "task": "Sabato c'è una festa nel cortile del palazzo. Incontri Luca e poi la signora Pina. Presentati a tutti e due: come ti chiami, di dove sei e che lavoro fai, e fai qualche domanda anche a loro.",
-          "example": "Ciao, Luca! Io mi chiamo Adam, sono il nuovo vicino del quinto piano. Non sono di qui, sono arrivato da poco. E tu, sei di Genova? Lavori ancora come cuoco in focacceria? … Buongiorno, signora Pina! Come sta? Sì, il lavoro va bene: lavoro come ingegnere elettrico in un'azienda di energia. E Lei, è di Genova anche Lei?",
+          "example": "Ciao, Luca! Io mi chiamo Adam, sono il nuovo vicino del quinto piano. Non sono italiano: sono di … e sono arrivato da poco. E tu, sei di Genova? Ti piace lavorare in focacceria? … Buongiorno, signora Pina! Come sta? Sì, il lavoro va bene: lavoro come ingegnere elettrico in un'azienda di energia. Anche Lei è di Genova?",
           "checklist": [
             "Usa mi chiamo, sono di e lavoro come",
             "Fai almeno due domande con il tu a Luca",
@@ -752,7 +745,7 @@
         },
         {
           "kind": "text",
-          "md": "Italian has two ways to say *you* to one person. **tu** is informal: friends, family, children, and young people among themselves, as Luca does with Adam straight away. **Lei** is formal: strangers, older people, shops, offices and anyone you'd call *signora* or *signore*, as Adam does with Signora Pina.\n\n**Lei** takes the verb in the **third person**, the same form as for *lui* and *lei*: *Lei è*, *Lei ha*, *Lei si chiama*. Pronouns follow it too: *Le offro un caffè*. The commonest mistake is to mix the two in one sentence: *Lei sei* or *Come ti chiama?* Pick one and keep it.\n\nRespect for age runs one way: Signora Pina says *tu* to Luca, whom she has known since he was a child, but Luca says *Lei* and *buongiorno* to her."
+          "md": "Italian has two ways to say *you* to one person. **tu** is informal: friends, family, children, and young people among themselves, as Luca does with Adam straight away. **Lei** is formal: strangers, older people, shops, offices and anyone you'd call *signora* or *signore*, as Adam does with Signora Pina.\n\n**Lei** takes the verb in the **third person**, the same form as for *lui* and *lei*: *Lei è*, *Lei ha*, *Lei si chiama*. Pronouns follow it too: *Le offro un caffè*. The commonest mistake is to mix the two in one sentence: *Lei sei* or *Come ti chiama?* Pick one and keep it.\n\nRespect for age runs one way: Signora Pina, much older, says *tu* to Luca, but Luca says *Lei* and *buongiorno* to her."
         },
         {
           "kind": "terms",
@@ -941,6 +934,6 @@
   "culture": {
     "title": "From Lei to tu",
     "image": "images/a2/u01/l03/culture-tu-lei.webp",
-    "md": "Italians switch from **Lei** to **tu** much faster than they used to, but the switch still follows a few unwritten rules.\n\nAmong young people it happens at once, as with Luca on the stairs: using *Lei* with someone your own age sounds cold, or even a little funny. With older people, strangers, shopkeepers and officials, *Lei* is the safe default, and in Genoa an older landlady like Signora Pina will expect it.\n\nThe switch is usually **offered**, not taken. The older or more senior person proposes it: *Possiamo darci del tu?* or simply *Dammi pure del tu!* Accepting is easy, *Volentieri!*, and from then on going back to *Lei* would feel like a step back.\n\nAt work it depends on the company. Many offices, especially young and technical ones, use *tu* among colleagues from the first day, while the boss or a client may stay on *Lei* for months. Titles are part of the same system: Italians address graduates by their profession, so Adam becomes *ingegnere* and a doctor or any graduate *dottore*.\n\nWhen in doubt, start with *Lei* and let the other person move you to *tu*. Nobody is offended by too much courtesy."
+    "md": "Italians switch from **Lei** to **tu** much faster than they used to, but the switch still follows a few unwritten rules.\n\nAmong young people it happens at once, as with Luca on the stairs: using *Lei* with someone your own age sounds cold, or even a little funny. With older people, strangers, shopkeepers and officials, *Lei* is the safe default, and in Genoa an older landlady like Signora Pina will expect it.\n\nOutside that, the switch is usually **offered**, not taken. The older or more senior person proposes it: *Possiamo darci del tu?* or simply *Dammi pure del tu!* Accepting is easy, *Volentieri!*, and from then on going back to *Lei* would feel like a step back.\n\nAt work it depends on the company. Many offices, especially young and technical ones, use *tu* among colleagues from the first day, while the boss or a client may stay on *Lei* for months. Titles are part of the same system: Italians address graduates by their profession, so Adam becomes *ingegnere* and a doctor or any graduate *dottore*.\n\nWhen in doubt, start with *Lei* and let the other person move you to *tu*. Nobody is offended by too much courtesy."
   }
 }
