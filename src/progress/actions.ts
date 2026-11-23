@@ -9,6 +9,8 @@ import { PROFILE_ID } from "@/db/schema";
 import { newCorrectionWriteSchema } from "@/review/error-card";
 import { drillWriteSchema, reviewWriteSchema } from "@/review/plan";
 import { saveDrillWrite, saveNewCorrection, saveReviewWrite } from "@/review/store";
+import { type Settings, settingsWriteSchema } from "@/settings/settings";
+import { loadSettings, saveSettings } from "@/settings/store";
 import { correctionWriteSchema, exerciseWriteSchema, finishWriteSchema, resetWriteSchema, visitWriteSchema } from "./plan";
 import {
   type CorrectionResponse,
@@ -78,4 +80,16 @@ export async function recordNewCorrection(input: unknown): Promise<ActionRespons
   const parsed = newCorrectionWriteSchema.safeParse(input);
   if (!parsed.success) return { result: "rejected" };
   return saveNewCorrection(db(), PROFILE_ID, parsed.data);
+}
+
+/** A change in Impostazioni: merges the settings it names into `profile.settings` (SPEC §10.1). */
+export async function recordSettings(input: unknown): Promise<ActionResponse> {
+  const parsed = settingsWriteSchema.safeParse(input);
+  if (!parsed.success) return { result: "rejected" };
+  return saveSettings(db(), PROFILE_ID, parsed.data);
+}
+
+/** The synced settings as saved now, for a scene player that opens (SPEC §11.3). Throws when the database can't be read. */
+export async function fetchSettings(): Promise<Settings> {
+  return loadSettings(db(), PROFILE_ID);
 }

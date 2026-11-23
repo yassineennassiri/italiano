@@ -11,7 +11,20 @@ import type { ExerciseEntry } from "@/items/entry";
 import { applyEvent } from "@/scoring/exercise";
 import type { NewCorrectionWrite } from "@/review/error-card";
 import type { DrillWrite, ReviewWrite } from "@/review/plan";
-import { recordCorrection, recordDrill, recordExercise, recordFinish, recordNewCorrection, recordReset, recordReview, recordVisit } from "./actions";
+import { LocalSettings } from "@/settings/local";
+import type { Settings, SettingsWrite } from "@/settings/settings";
+import {
+  fetchSettings,
+  recordCorrection,
+  recordDrill,
+  recordExercise,
+  recordFinish,
+  recordNewCorrection,
+  recordReset,
+  recordReview,
+  recordSettings,
+  recordVisit,
+} from "./actions";
 import { openIndexedDbStore } from "./indexed-db-store";
 import { LocalProgress, type ProgressResponse, type ProgressWrite } from "./local";
 import { inResetScope, resetScope, type SavedEntry } from "./merge";
@@ -19,6 +32,7 @@ import type { ResetTarget, VisitWrite } from "./plan";
 import { type Tabs, type TabMessage, WriteQueue } from "./write-queue";
 
 const progress = new LocalProgress();
+const settings = new LocalSettings();
 
 function send(write: ProgressWrite): Promise<ProgressResponse> {
   switch (write.type) {
@@ -38,6 +52,8 @@ function send(write: ProgressWrite): Promise<ProgressResponse> {
       return recordDrill(write.drill);
     case "newCorrection":
       return recordNewCorrection(write.newCorrection);
+    case "settings":
+      return recordSettings(write.settings);
   }
 }
 
@@ -76,8 +92,14 @@ const tabs = typeof window === "undefined" ? undefined : browserTabs();
  */
 export const progressQueue = new WriteQueue<ProgressWrite, ProgressResponse>({
   send,
-  landed: (write, response) => progress.landed(write, response),
-  restore: (write) => progress.restore(write),
+  landed: (write, response) => {
+    progress.landed(write, response);
+    if (write.type === "settings") settings.landed(write.settings, response);
+  },
+  restore: (write) => {
+    progress.restore(write);
+    if (write.type === "settings") settings.restore(write.settings);
+  },
   store: tabs ? openIndexedDbStore(browserIndexedDb()) : undefined,
   tabs,
 });
@@ -168,4 +190,32 @@ export function recordStepVisit(visit: VisitWrite): void {
   if (lastVisit?.lessonId === visit.lessonId && lastVisit.location === visit.location) return;
   lastVisit = visit;
   progressQueue.enqueue({ type: "visit", visit });
+}
+
+/** A change in Impostazioni (SPEC §10.1): this tab uses it at once, and it is queued like every other write. */
+export function submitSettings(write: SettingsWrite): void {
+  const queued: ProgressWrite = { type: "settings", settings: write };
+  settings.show(write);
+  progressQueue.enqueue(queued);
+}
+
+/** Subscribes to changes of this tab's settings, for `useSyncExternalStore`. */
+export const subscribeSettings = (listener: () => void): (() => void) => settings.subscribe(listener);
+
+/** Changes on every change of this tab's settings, for `useSyncExternalStore`. */
+export const settingsVersion = (): number => settings.version;
+
+/** This tab's settings; `standIn` (a page's own saved settings) counts until the server has sent any. */
+export const currentSettings = (standIn?: Settings): Settings => settings.current(standIn);
+
+/** The settings as a page read them from the server. */
+export const receiveSettings = (saved: Settings): void => settings.receive(saved);
+
+/** Asks the server for the saved settings, e.g. the other computer's latest change; keeps the ones it has when offline. */
+export async function refreshSettings(): Promise<void> {
+  try {
+    settings.receive(await fetchSettings());
+  } catch (error) {
+    console.error("Could not load the settings; using the last ones known.", error);
+  }
 }

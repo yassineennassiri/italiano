@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { REVIEW_HUB_HREF } from "@/content/lesson-nav";
+import { REVIEW_HUB_HREF, SETTINGS_HREF } from "@/content/lesson-nav";
 import type { LevelCard } from "@/content/overview";
 import { ui } from "@/ui-it";
 import { usePopover } from "./use-popover";
 
 export type MenuLevel = Pick<LevelCard, "id" | "title" | "href" | "available">;
 
-/** The hamburger menu in the top bar (SPEC §3.1): Home, Ripasso and the levels. */
+/** The hamburger menu in the top bar (SPEC §3.1): Home, Ripasso, Impostazioni and the levels. */
 export function MainMenu({ levels }: { levels: MenuLevel[] }) {
   const { open, close, rootRef, buttonProps, panelProps } = usePopover();
   const linkClass = "block rounded px-3 py-2 text-brand hover:bg-tint";
@@ -42,6 +42,11 @@ export function MainMenu({ levels }: { levels: MenuLevel[] }) {
           <li>
             <Link href={REVIEW_HUB_HREF} onClick={close} className={linkClass}>
               {ui.topBar.review}
+            </Link>
+          </li>
+          <li>
+            <Link href={SETTINGS_HREF} onClick={close} className={linkClass}>
+              {ui.topBar.settings}
             </Link>
           </li>
         </ul>
