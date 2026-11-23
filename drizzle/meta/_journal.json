@@ -43,6 +43,13 @@
       "when": 1795382073981,
       "tag": "0005_ripasso_personale",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795424830074,
+      "tag": "0006_feedback_note",
+      "breakpoints": true
     }
   ]
 }

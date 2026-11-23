@@ -11,6 +11,6 @@ function createdTables(): string[] {
   return [...allSql.matchAll(/CREATE TABLE (?:IF NOT EXISTS )?"(\w+)"/g)].map((match) => match[1]).sort();
 }
 
-it("the committed migrations create exactly the tables of SPEC §10.1–10.5", () => {
-  expect(createdTables()).toEqual(["error_log", "exercise_attempt", "item_state", "lesson_progress", "profile", "review_card", "review_log"]);
+it("the committed migrations create exactly the tables of SPEC §10.1–10.6", () => {
+  expect(createdTables()).toEqual(["error_log", "exercise_attempt", "feedback_note", "item_state", "lesson_progress", "profile", "review_card", "review_log"]);
 });
