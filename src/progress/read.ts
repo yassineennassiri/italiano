@@ -9,6 +9,8 @@ import { type StepLayout, stepLayout } from "@/content/lesson-nav";
 import type { Lesson } from "@/content/schema";
 import { db } from "@/db";
 import { PROFILE_ID } from "@/db/schema";
+import type { NoteGroup } from "@/feedback/notes";
+import { loadOpenNoteGroups } from "@/feedback/store";
 import type { SavedEntry } from "./merge";
 import {
   type DueCard,
@@ -142,4 +144,15 @@ export async function readSettings(): Promise<{ settings: Settings; loaded: bool
 export async function readSceneSettings(): Promise<Settings | undefined> {
   const { settings, loaded } = await readSettings();
   return loaded ? settings : undefined;
+}
+
+/** The feedback notes not marked *Fatto*, grouped by level and lesson (SPEC §10.6); `loaded` is false when the database couldn't be read. */
+export async function readOpenNotes(): Promise<{ groups: NoteGroup[]; loaded: boolean }> {
+  await connection();
+  try {
+    return { groups: await loadOpenNoteGroups(db(), PROFILE_ID), loaded: true };
+  } catch (error) {
+    console.error("Could not load the feedback notes.", error);
+    return { groups: [], loaded: false };
+  }
 }

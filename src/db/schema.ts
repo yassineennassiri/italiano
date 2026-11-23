@@ -1,8 +1,8 @@
 /**
- * The tables from SPEC §10.1–10.5. Content is not in the database: rows
+ * The tables from SPEC §10.1–10.6. Content is not in the database: rows
  * point at content ids from the JSON files (`a2.u01.l01`, item and exchange
  * ids). Every table carries `user_id` so a second profile stays possible
- * (ADR-0001). `feedback_note` (§10.6) comes later in M2.
+ * (ADR-0001).
  *
  * After changing this file run `npm run db:generate` and commit the new SQL
  * under `drizzle/`.
@@ -23,6 +23,7 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
+import { feedbackScopes } from "../feedback/notes";
 import { cardKinds } from "../review/kinds";
 import { grades } from "../review/sm2";
 import { exerciseStatuses } from "../scoring/exercise";
@@ -203,4 +204,23 @@ export const reviewLog = pgTable(
     createdAt: createdAt(),
   },
   (t) => [oneOf("review_log_grade_check", t.grade, grades), oneOf("review_log_source_check", t.source, reviewSources)],
+);
+
+/**
+ * §10.6: my notes about content to fix. `ref_id` is a level id for a level
+ * note, or a lesson id plus the page (`a2.u01.l02/esercizi/4`) for a lesson
+ * note. `id` is the write's eventId. *Fatto* sets `done`; Reset never touches it.
+ */
+export const feedbackNote = pgTable(
+  "feedback_note",
+  {
+    id: uuid("id").primaryKey(),
+    userId: userId(),
+    scope: text("scope", { enum: feedbackScopes }).notNull(),
+    refId: text("ref_id").notNull(),
+    text: text("text").notNull(),
+    createdAt: createdAt(),
+    done: boolean("done").notNull().default(false),
+  },
+  (t) => [index("feedback_note_open_idx").on(t.userId, t.done), oneOf("feedback_note_scope_check", t.scope, feedbackScopes)],
 );

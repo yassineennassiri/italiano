@@ -19,6 +19,9 @@ export const REVIEW_HUB_HREF = "/ripasso";
 /** Impostazioni (SPEC §3, §10.1). */
 export const SETTINGS_HREF = "/impostazioni";
 
+/** The open feedback notes (SPEC §3, §10.6). */
+export const FEEDBACK_HREF = "/feedback";
+
 /** A review session of the hub's due cards. */
 export const REVIEW_SESSION_HREF = "/ripasso/sessione";
 

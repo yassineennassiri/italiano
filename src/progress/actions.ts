@@ -6,6 +6,8 @@
  */
 import { db } from "@/db";
 import { PROFILE_ID } from "@/db/schema";
+import { feedbackDoneWriteSchema, feedbackWriteSchema } from "@/feedback/notes";
+import { saveFeedbackDone, saveFeedbackNote } from "@/feedback/store";
 import { newCorrectionWriteSchema } from "@/review/error-card";
 import { drillWriteSchema, reviewWriteSchema } from "@/review/plan";
 import { saveDrillWrite, saveNewCorrection, saveReviewWrite } from "@/review/store";
@@ -87,6 +89,20 @@ export async function recordSettings(input: unknown): Promise<ActionResponse> {
   const parsed = settingsWriteSchema.safeParse(input);
   if (!parsed.success) return { result: "rejected" };
   return saveSettings(db(), PROFILE_ID, parsed.data);
+}
+
+/** A feedback note from the level overview or *Segnala un problema* (SPEC §10.6). */
+export async function recordFeedback(input: unknown): Promise<ActionResponse> {
+  const parsed = feedbackWriteSchema.safeParse(input);
+  if (!parsed.success) return { result: "rejected" };
+  return saveFeedbackNote(db(), PROFILE_ID, parsed.data);
+}
+
+/** *Fatto* ticked or unticked on `/feedback` (SPEC §10.6). */
+export async function recordFeedbackDone(input: unknown): Promise<ActionResponse> {
+  const parsed = feedbackDoneWriteSchema.safeParse(input);
+  if (!parsed.success) return { result: "rejected" };
+  return saveFeedbackDone(db(), PROFILE_ID, parsed.data);
 }
 
 /** The synced settings as saved now, for a scene player that opens (SPEC §11.3). Throws when the database can't be read. */

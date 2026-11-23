@@ -68,6 +68,7 @@ export const ui = {
     levels: "Livelli",
     review: "Ripasso",
     settings: "Impostazioni",
+    feedback: "Feedback",
   },
 
   footer: {
@@ -115,6 +116,30 @@ export const ui = {
     /** The link to the review hub below the unit grid (SPEC §3.3). */
     moreLessons: "Altre lezioni",
     moreLessonsText: "Ripassa i tuoi errori",
+  },
+
+  /** Feedback notes (SPEC §10.6): my notes about content to fix. */
+  feedback: {
+    pageTitle: `Feedback · ${appName}`,
+    heading: "Feedback",
+    intro: "Le tue note sui contenuti da correggere, per lezione.",
+    none: "Nessuna nota aperta.",
+    unreachable: "Non è stato possibile caricare le note.",
+    /** *Fatto* on a note: ticked, it is done. */
+    done: "Fatto",
+    /** The level overview's card (SPEC §3.3). */
+    levelCard: "Feedback",
+    levelCardText: "Una nota sui contenuti di questo livello.",
+    note: "La tua nota",
+    save: "Salva la nota",
+    saved: "Nota salvata.",
+    /** *Segnala un problema* in the lesson menu. */
+    report: "Segnala un problema",
+    reportText: "Cosa c'è da correggere in questa pagina?",
+    cancel: "Annulla",
+    send: "Invia",
+    close: "Chiudi",
+    sent: "Grazie: segnalazione salvata.",
   },
 
   /** The Results screen (SPEC §4.4) and the Finish screen (§4.9). */
