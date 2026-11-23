@@ -78,7 +78,7 @@ Set `R=repos/yassineennassiri/italiano` first. Pass long text (comments, issue b
 - **Squash-merge**, step 9 (instead of `gh pr merge P --squash --delete-branch`): `gh api -X PUT $R/pulls/P/merge -f merge_method=squash`. Don't delete the branch: GitHub does it.
 - **Confirm the issue closed**, step 9: `gh api $R/issues/N --jq .state` should print `closed`.
 
-The merge command works in the cloud (first used for #39, PR #65). If it ever fails, don't try workarounds: leave the PR open with green CI, comment on the issue that it's ready to merge, and tell the user.
+The merge command works in the cloud (first used for #39, PR #65). `.claude/settings.json` allows exactly this squash-merge command (and the local `gh pr merge … --squash --delete-branch`), so a session in auto mode doesn't refuse it; a session only picks up the rule if it started after the rule was merged. Merge only after every check run says `success`. If it ever fails, don't try workarounds: leave the PR open with green CI, comment on the issue that it's ready to merge, and tell the user.
 
 ### Chaining issues
 
