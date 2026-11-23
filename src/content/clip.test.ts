@@ -7,7 +7,7 @@ const scene = loadLesson("a2.u01.l02")!.scene;
 describe("clipLines", () => {
   it("picks the scene lines from from_line to to_line, in scene order", () => {
     expect(clipLines(scene, { from_line: "L11", to_line: "L13" }).map((line) => line.it)).toEqual([
-      "Che bello! Ma c'è un problema: in cucina la luce non funziona.",
+      "Che bello! Ma c'è un [[problema|v-problema]]: in cucina la [[luce|v-luce]] non funziona.",
       "Ah, sì, il problema della luce… Domani chiamo un elettricista.",
       "Non serve, signora: sono un ingegnere elettrico!",
     ]);

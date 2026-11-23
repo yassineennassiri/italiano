@@ -8,6 +8,7 @@
 import { z } from "zod";
 import { GAP_MARKER } from "./gap-text";
 import { LESSON_ID_PATTERN, unitId } from "./ids";
+import { vocabLinkProblems } from "./vocab-links";
 
 const id = z.string().min(1);
 /** A path under `content/media`, e.g. `images/a2/u01/l01/poster.webp`. */
@@ -454,6 +455,7 @@ export const lessonSchema = lessonFields.superRefine((lesson, ctx) => {
   });
 
   checkIds(lesson, ctx);
+  for (const problem of vocabLinkProblems(lesson)) report(ctx, problem.path, problem.message);
 
   const last = lesson.steps.length - 1;
   if (!lesson.steps[last].items.some((item) => item.type === "parla")) {

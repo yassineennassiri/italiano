@@ -24,14 +24,14 @@
     "lines": [
       { "id": "L1",  "speaker": "pina", "it": "Buongiorno! Lei è Adam, vero?", "en": "Good morning! You're Adam, right?" },
       { "id": "L2",  "speaker": "adam", "it": "Sì, sono io. Buongiorno, signora Pina!", "en": "Yes, that's me. Good morning, Signora Pina!" },
-      { "id": "L3",  "speaker": "pina", "it": "Benvenuto a Genova! Com'è andato il viaggio?", "en": "Welcome to Genoa! How was the journey?" },
-      { "id": "L4",  "speaker": "adam", "it": "Bene, grazie. Il treno era un po' in ritardo, ma va bene così.", "en": "Fine, thanks. The train was a bit late, but that's OK." },
-      { "id": "L5",  "speaker": "pina", "it": "Ha tutto? La valigia, lo zaino…?", "en": "Have you got everything? The suitcase, the backpack…?" },
-      { "id": "L6",  "speaker": "adam", "it": "Sì: la valigia, lo zaino e l'ombrello.", "en": "Yes: the suitcase, the backpack and the umbrella." },
+      { "id": "L3",  "speaker": "pina", "it": "Benvenuto a Genova! Com'è andato il [[viaggio|v-viaggio]]?", "en": "Welcome to Genoa! How was the journey?" },
+      { "id": "L4",  "speaker": "adam", "it": "Bene, grazie. Il treno era un po' [[in ritardo|v-ritardo]], ma va bene così.", "en": "Fine, thanks. The train was a bit late, but that's OK." },
+      { "id": "L5",  "speaker": "pina", "it": "Ha tutto? La [[valigia|v-valigia]], lo [[zaino|v-zaino]]…?", "en": "Have you got everything? The suitcase, the backpack…?" },
+      { "id": "L6",  "speaker": "adam", "it": "Sì: la valigia, lo zaino e l'[[ombrello|v-ombrello]].", "en": "Yes: the suitcase, the backpack and the umbrella." },
       { "id": "L7",  "speaker": "pina", "it": "L'ombrello? Bravo, a Genova serve!", "en": "The umbrella? Good, you need one in Genoa!" },
-      { "id": "L8",  "speaker": "pina", "it": "Allora andiamo: l'appartamento è vicino, nei caruggi.", "en": "Let's go then: the flat is close by, in the caruggi." },
+      { "id": "L8",  "speaker": "pina", "it": "Allora andiamo: l'[[appartamento|v-appartamento]] è vicino, nei [[caruggi|v-caruggio]].", "en": "Let's go then: the flat is close by, in the caruggi." },
       { "id": "L9",  "speaker": "adam", "it": "I caruggi?", "en": "The caruggi?" },
-      { "id": "L10", "speaker": "pina", "it": "Sì, i vicoli del centro storico. Gli stranieri si perdono sempre!", "en": "Yes, the alleys of the old town. Foreigners always get lost!" },
+      { "id": "L10", "speaker": "pina", "it": "Sì, i [[vicoli|v-vicolo]] del centro storico. Gli [[stranieri|v-straniero]] [[si perdono|v-perdersi]] sempre!", "en": "Yes, the alleys of the old town. Foreigners always get lost!" },
       { "id": "L11", "speaker": "adam", "it": "Allora resto con Lei, signora!", "en": "Then I'll stick with you, signora!" }
     ]
   },
@@ -51,7 +51,7 @@
         },
         {
           "id": "a2.u01.l01.s01.i02", "type": "single_choice",
-          "prompt": "Com'è andato il viaggio di Adam?",
+          "prompt": "Com'è andato il [[viaggio|v-viaggio]] di Adam?",
           "options": ["Bene, ma il treno era in ritardo.", "Male: ha perso il treno.", "Benissimo, il treno era in anticipo."],
           "answer": 0
         },
@@ -122,7 +122,7 @@
         },
         {
           "id": "a2.u01.l01.s04.i02", "type": "word_order",
-          "prompt": "Dov'è l'appartamento?",
+          "prompt": "Dov'è l'[[appartamento|v-appartamento]]?",
           "tiles": ["L'appartamento", "è", "vicino,", "nel", "centro storico", "."],
           "solvable": true,
           "error_tags": ["article.elision", "prep.articulated"]

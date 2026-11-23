@@ -7,7 +7,8 @@
  * offline and across a reload and two tabs (issue #43), a first
  * review session of item cards (issue #44) and vocab flip cards
  * (issue #45), corrections with error cards (issue #46), and top error
- * tags with tag drills (issue #47), against the
+ * tags with tag drills (issue #47), and vocab-link popovers (issue #49),
+ * against the
  * Neon `dev` branch only (ADR-0001, SPEC §12). It starts
  * `npm run dev:test` on port 3001, or reuses one that is already running;
  * `e2e/global-setup.ts` refuses to go on unless the app says it uses `dev`.

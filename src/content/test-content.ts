@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach } from "vitest";
 import { CONTENT_DIR } from "./files";
+import { plainVocabLinks } from "./vocab-links";
 
 export { CONTENT_DIR };
 export const LESSON_FILE = "levels/a2/units/01-arrivo-a-genova/lessons/01-benvenuto-a-genova.json";
@@ -31,4 +32,10 @@ export function editJson(dir: string, file: string, edit: (data: Json) => void) 
   const data = JSON.parse(readFileSync(full, "utf8"));
   edit(data);
   writeFileSync(full, JSON.stringify(data, null, 2));
+}
+
+/** Empties a raw lesson's vocab, and turns its vocab links into plain words so it stays valid. */
+export function removeVocab(lesson: Json) {
+  Object.assign(lesson, JSON.parse(plainVocabLinks(JSON.stringify(lesson))));
+  lesson.vocab = [];
 }

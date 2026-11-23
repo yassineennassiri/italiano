@@ -4,6 +4,7 @@
  * Pure: the scene player and the audio service share it.
  */
 import type { Scene, ScriptLine } from "@/content/schema";
+import { plainVocabLinks } from "@/content/vocab-links";
 
 /** Roughly how fast an Italian voice reads at 1×. */
 export const CHARS_PER_SECOND = 14;
@@ -12,9 +13,9 @@ export const LINE_GAP_S = 0.4;
 /** Even "Sì." takes a moment. */
 export const MIN_LINE_S = 1;
 
-/** How long a line takes to say at `rate` (1 = normal, 0.75 = slower). */
+/** How long a line takes to say at `rate` (1 = normal, 0.75 = slower); vocab links count as their words. */
 export function estimateLineSeconds(text: string, rate = 1): number {
-  return Math.max(MIN_LINE_S, text.length / CHARS_PER_SECOND / rate);
+  return Math.max(MIN_LINE_S, plainVocabLinks(text).length / CHARS_PER_SECOND / rate);
 }
 
 /** How long the scene takes: every line, with a gap between each two. */

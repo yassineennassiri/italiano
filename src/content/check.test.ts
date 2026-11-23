@@ -152,11 +152,11 @@ describe("checkContent", () => {
     const dir = copyContent();
     editJson(dir, LESSON_FILE, (lesson) => {
       lesson.steps[0].items[1].id = "a2.u01.l01.s01.i01";
-      lesson.vocab[1].id = "v-appartamento";
+      lesson.vocab.push({ ...lesson.vocab[0] });
     });
     expect(checkContent(dir)).toEqual([
       `${LESSON_FILE}: steps[0].items[1].id: duplicate item id "a2.u01.l01.s01.i01"`,
-      `${LESSON_FILE}: vocab[1].id: duplicate vocab id "v-appartamento"`,
+      `${LESSON_FILE}: vocab[10].id: duplicate vocab id "v-appartamento"`,
     ]);
   });
 
@@ -247,6 +247,80 @@ describe("checkContent", () => {
       `course.json: levels[0].units[1].id: "b1.u02" must be "a2.u02" (level a2, unit 2)`,
       `course.json: levels[0].units[3].id: "a2.u04" must be "a2.u03" (level a2, unit 3)`,
       `course.json: levels[0].units[3].number: duplicate unit number 3`,
+    ]);
+  });
+
+  it("accepts vocab links to the lesson's own vocab in prompts, script lines, readings and gap text", () => {
+    const dir = copyContent();
+    editJson(dir, LESSON_FILE, (lesson) => {
+      lesson.scene.lines[5].it = "Sì: la [[valigia|v-valigia]], lo [[zaino|v-zaino]] e l'[[ombrello|v-ombrello]].";
+      lesson.steps[0].items[1].prompt = "Com'è andato il [[viaggio|v-viaggio]] di Adam?";
+      lesson.steps[2].items[0].text = "il [[vicolo|v-vicolo]] → {{g1}} vicoli";
+      lesson.steps[2].items[0].gaps = [{ id: "g1", answer: "i" }];
+      lesson.steps[3].reading = "# I [[caruggi|v-caruggio]]";
+      lesson.steps[3].script = [{ id: "x1", speaker: "pina", it: "Ecco l'[[appartamento|v-appartamento]].", en: "Here's the flat." }];
+    });
+    expect(checkContent(dir)).toEqual([]);
+  });
+
+  it("reports a vocab link to an entry that is not in the same lesson's vocab", () => {
+    const dir = copyContent();
+    editJson(dir, LESSON_FILE, (lesson) => {
+      lesson.steps[0].items[0].prompt = "Chi aspetta Adam alla [[stazione|v-stazione]]?";
+      // v-cucina is lesson 2's.
+      lesson.scene.lines[7].it = "Allora andiamo: la [[cucina|v-cucina]] è vicina.";
+    });
+    expect(checkContent(dir)).toEqual([
+      `${LESSON_FILE}: scene.lines[7].it: vocab link "v-cucina" is not in this lesson's vocab`,
+      `${LESSON_FILE}: steps[0].items[0].prompt: vocab link "v-stazione" is not in this lesson's vocab`,
+    ]);
+  });
+
+  it("reports a vocab link where it would give the answer away: options, tiles, bank and gap answers", () => {
+    const dir = copyContent();
+    const lesson2 = "levels/a2/units/01-arrivo-a-genova/lessons/02-la-casa-della-signora-pina.json";
+    editJson(dir, LESSON_FILE, (lesson) => {
+      lesson.steps[0].items[0].options[1] = "La [[valigia|v-valigia]]";
+      lesson.steps[1].items[0].gaps[0].options[0] = "[[la|v-valigia]]";
+      lesson.steps[2].items[0].gaps[1].answer = "[[gli|v-zaino]]";
+      lesson.steps[3].items[0].tiles[3] = "il [[treno|v-viaggio]]";
+    });
+    editJson(dir, lesson2, (lesson) => {
+      // steps[8] is "Un messaggio a casa", a word_bank.
+      lesson.steps[8].items[0].bank.push("[[bagno|v-bagno]]");
+      lesson.steps[8].items[0].gaps[0].accept = ["[[una|v-bagno]]"];
+    });
+    const answerAway = "a vocab link here would give the answer away";
+    expect(checkContent(dir)).toEqual([
+      `${LESSON_FILE}: steps[0].items[0].options[1]: ${answerAway}`,
+      `${LESSON_FILE}: steps[1].items[0].gaps[0].options[0]: ${answerAway}`,
+      `${LESSON_FILE}: steps[2].items[0].gaps[1].answer: ${answerAway}`,
+      `${LESSON_FILE}: steps[3].items[0].tiles[3]: ${answerAway}`,
+      `${lesson2}: steps[8].items[0].bank[7]: ${answerAway}`,
+      `${lesson2}: steps[8].items[0].gaps[0].accept[0]: ${answerAway}`,
+    ]);
+  });
+
+  it("reports a vocab link outside prompts, script lines, readings and gap text, where it would show as markup", () => {
+    const dir = copyContent();
+    editJson(dir, LESSON_FILE, (lesson) => {
+      lesson.steps[0].title = "Il [[viaggio|v-viaggio]]";
+      lesson.vocab[0].en = "[[flat|v-appartamento]]";
+    });
+    const elsewhere = "vocab links are allowed only in prompts, script lines, readings and gap text";
+    expect(checkContent(dir)).toEqual([
+      `${LESSON_FILE}: steps[0].title: ${elsewhere}`,
+      `${LESSON_FILE}: vocab[0].en: ${elsewhere}`,
+    ]);
+  });
+
+  it("reports a malformed vocab link", () => {
+    const dir = copyContent();
+    editJson(dir, LESSON_FILE, (lesson) => {
+      lesson.steps[0].items[1].prompt = "Com'è andato il [[viaggio]] di Adam?";
+    });
+    expect(checkContent(dir)).toEqual([
+      `${LESSON_FILE}: steps[0].items[1].prompt: malformed vocab link: write [[word|v-id]]`,
     ]);
   });
 

@@ -7,6 +7,7 @@ import { estimateSceneSeconds, panelIndexAt } from "@/audio/scene-timeline";
 import { SUBTITLE_MODES, type SubtitleMode } from "@/audio/subtitles";
 import { mediaUrl } from "@/content/media-url";
 import type { Scene } from "@/content/schema";
+import { plainVocabLinks } from "@/content/vocab-links";
 import { ui } from "@/ui-it";
 import { PAUSE_PATH, PLAY_PATH, PlayerIcon } from "./player-icons";
 import { useAudio } from "./use-audio";
@@ -159,7 +160,7 @@ export function ScenePlayer({ scene, lessonTitle }: { scene: Scene; lessonTitle:
         )}
         {started && shownSubtitles !== "off" && (
           <div aria-live="polite" className="absolute inset-x-0 bottom-0 bg-black/65 px-4 py-2 text-center text-white">
-            <p className="font-semibold">{current.it}</p>
+            <p className="font-semibold">{plainVocabLinks(current.it)}</p>
             {shownSubtitles === "it_en" && <p className="text-sm opacity-90">{current.en}</p>}
           </div>
         )}

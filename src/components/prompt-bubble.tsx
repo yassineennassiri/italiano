@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Clip } from "@/audio/audio-service";
 import type { Item } from "@/content/schema";
+import { LinkedText } from "./linked-text";
 import { SpeakButton } from "./speak-button";
 
 /**
@@ -18,11 +19,16 @@ export function PromptBubble({ speak, children }: { speak?: { id: string; clip: 
 
 /**
  * An item's prompt bubble with its 🔊, or nothing when the item has no prompt.
+ * Its vocab links render as links (SPEC §4.3).
  * The 🔊 reads the prompt, unless `clips` says what it plays instead (an
  * `audio_choice` clip, SPEC §5.2.8); `null` means no 🔊.
  */
 export function ItemPrompt({ item, clips }: { item: Pick<Item, "id" | "prompt" | "prompt_audio">; clips?: readonly Clip[] | null }) {
   if (!item.prompt) return null;
   const clip = clips === undefined ? { text: item.prompt, audio: item.prompt_audio } : clips;
-  return <PromptBubble speak={clip ? { id: `prompt:${item.id}`, clip } : undefined}>{item.prompt}</PromptBubble>;
+  return (
+    <PromptBubble speak={clip ? { id: `prompt:${item.id}`, clip } : undefined}>
+      <LinkedText text={item.prompt} />
+    </PromptBubble>
+  );
 }

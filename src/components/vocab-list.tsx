@@ -33,21 +33,22 @@ export function VocabList({ entries }: { entries: readonly VocabEntry[] }) {
 
 /**
  * 🔊 and the Italian term, a noun with its plural and gender dot, over the
- * forms line: a vocabulary page row's left side, and a vocab card's back
- * (SPEC §10.5).
+ * forms line: a vocabulary page row's left side, a vocab card's back
+ * (SPEC §10.5) and a vocab link's popover (§4.3).
  */
 export function VocabTerm({ entry, className = "" }: { entry: VocabEntry; className?: string }) {
+  // Spans, so a vocab link's popover can hold it inside a line of text.
   return (
-    <div className={`flex items-start gap-2 ${className}`}>
+    <span className={`flex items-start gap-2 ${className}`}>
       <SpeakButton id={`vocab:${entry.id}`} clip={{ text: entry.it, audio: entry.audio }} />
-      <div className="min-w-0 pt-1.5">
-        <p className="font-semibold text-brand">
+      <span className="block min-w-0 pt-1.5">
+        <span className="block font-semibold text-brand">
           {entry.pos === "noun" && entry.plural ? ui.lesson.nounWithPlural(entry.it, entry.plural) : entry.it}
           {entry.gender && <GenderDot gender={entry.gender} />}
-        </p>
-        {entry.forms && <p className="text-sm text-muted">{entry.forms}</p>}
-      </div>
-    </div>
+        </span>
+        {entry.forms && <span className="block text-sm text-muted">{entry.forms}</span>}
+      </span>
+    </span>
   );
 }
 
