@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { LevelFeedbackCard } from "@/components/feedback-forms";
 import { LanternaLogo } from "@/components/lanterna-logo";
 import { LevelResetButton } from "@/components/reset-dialog";
 import { StatusCircle } from "@/components/status-circle";
@@ -74,6 +75,7 @@ async function LevelOverviewView({ params, searchParams }: Pick<PageProps<"/[lev
           <p className="font-bold">{ui.level.finalTest}</p>
           <p className="mt-1 text-sm">{ui.comingSoon}</p>
         </div>
+        <LevelFeedbackCard levelId={overview.id} />
       </div>
     </>
   );

@@ -11,7 +11,7 @@ import { databaseUrl, loadLocalEnv } from "@/db/env";
 import { migrateDatabase } from "@/db/migrate";
 import { feedbackNote, profile } from "@/db/schema";
 import type { FeedbackWrite } from "./notes";
-import { loadOpenNotes, saveFeedbackDone, saveFeedbackNote } from "./store";
+import { loadOpenNoteGroups, loadOpenNotes, saveFeedbackDone, saveFeedbackNote } from "./store";
 
 loadLocalEnv();
 const db = connect(databaseUrl("dev"));
@@ -98,5 +98,18 @@ describe("saveFeedbackDone (Fatto)", () => {
     expect(await saveFeedbackDone(db, other, { noteId: note.eventId, done: true })).toEqual({ result: "ignored" });
     expect(await saveFeedbackDone(db, user, { noteId: randomUUID(), done: true })).toEqual({ result: "ignored" });
     expect(await loadOpenNotes(db, user)).toHaveLength(1);
+  });
+});
+
+describe("loadOpenNoteGroups", () => {
+  it("groups the open notes by level and lesson, titled from the content", async () => {
+    const user = await newUser();
+    await saveFeedbackNote(db, user, write({ scope: "lesson", refId: "a2.u01.l02/esercizi/4", text: "Gap." }));
+    await saveFeedbackNote(db, user, write({ scope: "level", refId: "a2", text: "Livello." }));
+    const groups = await loadOpenNoteGroups(db, user);
+    expect(groups.map((group) => [group.id, group.title, group.notes.length])).toEqual([
+      ["a2", "Ripasso A2", 1],
+      ["a2.u01.l02", "La casa della signora Pina", 1],
+    ]);
   });
 });

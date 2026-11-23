@@ -9,6 +9,7 @@
 import { applyAction, type Exercise, type ExerciseAction } from "@/items/engine";
 import type { ExerciseEntry } from "@/items/entry";
 import { applyEvent } from "@/scoring/exercise";
+import type { FeedbackWrite } from "@/feedback/notes";
 import type { NewCorrectionWrite } from "@/review/error-card";
 import type { DrillWrite, ReviewWrite } from "@/review/plan";
 import { LocalSettings } from "@/settings/local";
@@ -16,6 +17,8 @@ import type { Settings, SettingsWrite } from "@/settings/settings";
 import {
   fetchSettings,
   recordCorrection,
+  recordFeedback,
+  recordFeedbackDone,
   recordDrill,
   recordExercise,
   recordFinish,
@@ -54,6 +57,10 @@ function send(write: ProgressWrite): Promise<ProgressResponse> {
       return recordNewCorrection(write.newCorrection);
     case "settings":
       return recordSettings(write.settings);
+    case "feedback":
+      return recordFeedback(write.feedback);
+    case "feedbackDone":
+      return recordFeedbackDone(write.feedbackDone);
   }
 }
 
@@ -181,6 +188,16 @@ export function submitDrill(drill: DrillWrite): void {
 /** Aggiungi una correzione (SPEC §10.5): queued like every other write, so a correction saved offline isn't lost. */
 export function submitNewCorrection(correction: Omit<NewCorrectionWrite, "eventId" | "at">): void {
   progressQueue.enqueue({ type: "newCorrection", newCorrection: { eventId: crypto.randomUUID(), at: new Date().toISOString(), ...correction } });
+}
+
+/** A feedback note (SPEC §10.6): queued like every other write, so a note written offline isn't lost. */
+export function submitFeedback(note: Pick<FeedbackWrite, "scope" | "refId" | "text">): void {
+  progressQueue.enqueue({ type: "feedback", feedback: { eventId: crypto.randomUUID(), at: new Date().toISOString(), ...note } });
+}
+
+/** *Fatto* ticked or unticked on `/feedback` (SPEC §10.6). */
+export function submitFeedbackDone(noteId: string, done: boolean): void {
+  progressQueue.enqueue({ type: "feedbackDone", feedbackDone: { noteId, done } });
 }
 
 let lastVisit: VisitWrite | undefined;

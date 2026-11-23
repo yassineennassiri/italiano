@@ -3,12 +3,12 @@
  * *Fatto*, and reading the open ones.
  */
 import { and, asc, eq } from "drizzle-orm";
-import { loadLesson } from "@/content/load";
+import { loadCourse, loadLesson } from "@/content/load";
 import type { Db } from "@/db/connect";
 import { feedbackNote } from "@/db/schema";
 import type { WriteResponse } from "@/progress/store";
 import { gradedAt } from "@/review/item-card";
-import type { FeedbackDoneWrite, FeedbackWrite, OpenNote } from "./notes";
+import { type FeedbackDoneWrite, type FeedbackWrite, groupOpenNotes, type NoteGroup, type OpenNote } from "./notes";
 
 /**
  * Saves a new note, dated when I wrote it (never later than now). "ignored"
@@ -42,4 +42,14 @@ export async function loadOpenNotes(db: Db, userId: string): Promise<OpenNote[]>
     .from(feedbackNote)
     .where(and(eq(feedbackNote.userId, userId), eq(feedbackNote.done, false)))
     .orderBy(asc(feedbackNote.createdAt), asc(feedbackNote.id));
+}
+
+/** A level's or lesson's title from the content files. */
+function contentTitle(id: string): string | undefined {
+  return loadCourse().levels.find((level) => level.id === id)?.title ?? loadLesson(id)?.title;
+}
+
+/** The open notes grouped by level and lesson, in course order, for `/feedback` and `npm run feedback:list`. */
+export async function loadOpenNoteGroups(db: Db, userId: string): Promise<NoteGroup[]> {
+  return groupOpenNotes(await loadOpenNotes(db, userId), contentTitle);
 }

@@ -16,6 +16,7 @@ import {
   type SavedEntry,
   settleLocal,
 } from "./merge";
+import type { FeedbackDoneWrite, FeedbackWrite } from "@/feedback/notes";
 import type { NewCorrectionWrite } from "@/review/error-card";
 import type { DrillWrite, ReviewWrite } from "@/review/plan";
 import type { SettingsWrite } from "@/settings/settings";
@@ -38,7 +39,10 @@ export type ProgressWrite =
   /** Aggiungi una correzione: an error_log row and its error card; no lesson entry changes. */
   | { type: "newCorrection"; newCorrection: NewCorrectionWrite }
   /** A change in Impostazioni: `LocalSettings` shows it; no lesson entry changes. */
-  | { type: "settings"; settings: SettingsWrite };
+  | { type: "settings"; settings: SettingsWrite }
+  /** A feedback note, or *Fatto* on one: no lesson entry changes. */
+  | { type: "feedback"; feedback: FeedbackWrite }
+  | { type: "feedbackDone"; feedbackDone: FeedbackDoneWrite };
 
 type Rejected = { result: "rejected" };
 
@@ -115,6 +119,8 @@ export class LocalProgress {
       case "drill":
       case "newCorrection":
       case "settings":
+      case "feedback":
+      case "feedbackDone":
         return;
     }
     this.changed();
@@ -155,6 +161,8 @@ export class LocalProgress {
       case "drill":
       case "newCorrection":
       case "settings":
+      case "feedback":
+      case "feedbackDone":
         return;
     }
     this.changed();

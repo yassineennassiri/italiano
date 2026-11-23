@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { MenuEntry } from "@/content/lesson-nav";
 import { ui } from "@/ui-it";
 import { ChevronIcon } from "./chevron-icon";
+import { useReportDialog } from "./feedback-forms";
 import { useResetDialog } from "./reset-dialog";
 import { usePopover } from "./use-popover";
 
@@ -11,9 +12,20 @@ const ITEM_CLASS = "block w-full rounded px-4 py-3 text-left font-semibold text-
 
 /**
  * The lesson menu behind the lesson bar's chevron (SPEC §3.1, `[23]`), with
- * *Azzera gli esercizi* before *Panoramica del corso* (§4.10).
+ * *Segnala un problema* (§10.6) and *Azzera gli esercizi* (§4.10) before
+ * *Panoramica del corso*.
  */
-export function LessonMenu({ entries, lessonId, lessonTitle }: { entries: MenuEntry[]; lessonId: string; lessonTitle: string }) {
+export function LessonMenu({
+  entries,
+  lessonId,
+  lessonPath,
+  lessonTitle,
+}: {
+  entries: MenuEntry[];
+  lessonId: string;
+  lessonPath: string;
+  lessonTitle: string;
+}) {
   const { open, close, rootRef, buttonProps, panelProps } = usePopover();
   // The menu item that opened the dialog is hidden by then: focus goes back to the chevron.
   const reset = useResetDialog({
@@ -21,6 +33,7 @@ export function LessonMenu({ entries, lessonId, lessonTitle }: { entries: MenuEn
     title: lessonTitle,
     onClose: () => buttonProps.ref.current?.focus(),
   });
+  const report = useReportDialog({ lessonId, lessonPath, onClose: () => buttonProps.ref.current?.focus() });
   return (
     <div ref={rootRef} className="relative">
       <button
@@ -37,6 +50,20 @@ export function LessonMenu({ entries, lessonId, lessonTitle }: { entries: MenuEn
       >
         <ul>
           {entries.flatMap((entry) => [
+            entry.page === "corso" && (
+              <li key="segnala">
+                <button
+                  type="button"
+                  onClick={() => {
+                    close();
+                    report.open();
+                  }}
+                  className={ITEM_CLASS}
+                >
+                  {ui.feedback.report}
+                </button>
+              </li>
+            ),
             entry.page === "corso" && (
               <li key="azzera">
                 <button
@@ -60,6 +87,7 @@ export function LessonMenu({ entries, lessonId, lessonTitle }: { entries: MenuEn
         </ul>
       </nav>
       {reset.dialog}
+      {report.dialog}
     </div>
   );
 }
