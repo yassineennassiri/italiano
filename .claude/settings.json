@@ -1,4 +1,11 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(gh api -X PUT repos/yassineennassiri/italiano/pulls/*/merge -f merge_method=squash)",
+      "Bash(gh api -X PUT $R/pulls/*/merge -f merge_method=squash)",
+      "Bash(gh pr merge * --squash --delete-branch)"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {
